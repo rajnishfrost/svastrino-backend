@@ -1,0 +1,68 @@
+{
+  "slug": "law",
+  "name": "Law",
+  "overview": "Law is a vibrant and complex field that significantly influences and regulates societies, encompassing various specialties and serving as the backbone for keeping peace, settling conflicts, and ensuring fairness. The field includes judiciary, legislative, and regulatory functions alongside alternative dispute resolution mechanisms. Legal professionals operate at the intersection of ethics, morality, and the practical application of rules and regulations.",
+  "topQualities": [
+    "Analytical Skills",
+    "Communication Skills",
+    "Research Skills",
+    "Attention to Detail",
+    "Ethical Standards",
+    "Negotiation Abilities",
+    "Relational Skills",
+    "Resilience",
+    "Teamwork"
+  ],
+  "topJobs": [
+    {
+      "role": "Legal Practitioner (Lawyer)",
+      "description": "Professionals providing counsel and representing clients in legal proceedings across specializations",
+      "indiaSalary": "INR 5-8 lakhs entry; INR 10+ lakhs experienced",
+      "globalSalary": "~$126,930 median (US)"
+    },
+    {
+      "role": "Corporate Lawyers",
+      "description": "In-house counsel advising on contracts, compliance, and company-specific legal issues",
+      "indiaSalary": "INR 6-10 lakhs entry; INR 12+ lakhs experienced",
+      "globalSalary": "~$134,540 median (US)"
+    },
+    {
+      "role": "Legal Consultant",
+      "description": "Specialists providing advice on intellectual property, tax law, or compliance matters",
+      "indiaSalary": "INR 5-8 lakhs entry; INR 10+ lakhs experienced",
+      "globalSalary": "~$118,160 median (US)"
+    },
+    {
+      "role": "Public Defender",
+      "description": "Legal advocates ensuring fair representation for defendants unable to afford private counsel",
+      "indiaSalary": "INR 4-6 lakhs entry; INR 8+ lakhs experienced",
+      "globalSalary": "~$61,810 average (US)"
+    }
+  ],
+  "institutesIndia": [
+    "National Law School of India University (NLSIU), Bangalore",
+    "National Law University (NLU), Delhi",
+    "NALSAR University of Law, Hyderabad",
+    "Symbiosis Law School, Pune",
+    "Jindal Global Law School (JGLS), Sonipat"
+  ],
+  "institutesInternational": [
+    "Harvard Law School, USA",
+    "University of Cambridge, Faculty of Law, UK",
+    "Yale Law School, USA",
+    "Oxford University, Faculty of Law, UK",
+    "Stanford Law School, USA"
+  ],
+  "careerLadder": [
+    "Complete high school education",
+    "Pursue Bachelor's degree in law (5-year integrated or 3-year LLB program)",
+    "Engage in internships, moot court, or debate competitions",
+    "Enroll with Bar Council and pass All India Bar Examination (AIBE)",
+    "Choose specialization (Cyber Law, Patent Law, Commercial Law, Litigation, Family Law, Corporate Law)",
+    "For academia: pursue Master of Laws (LLM), then Doctor of Laws (LLD), clear UGC NET/SET",
+    "For litigation: establish practice after bar admission",
+    "For public sector: prepare for judicial exams or competitive examinations",
+    "Advance to roles as Legal Advisors, Legal Managers, or Assistant Professors"
+  ],
+  "sourceUrl": "https://svastrino.com/law/"
+}

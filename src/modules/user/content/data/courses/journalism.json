@@ -1,0 +1,65 @@
+{
+  "slug": "journalism",
+  "name": "Journalism",
+  "overview": "Journalism is a critical and dynamic field that informs, educates, and engages the public to make a significant contribution to society. The profession has evolved from printed newspapers to encompass digital platforms, television, radio, and podcasts. Modern journalism requires storytelling abilities combined with investigative rigor and adaptability to changing technologies and media landscapes.",
+  "topQualities": [
+    "Curiosity",
+    "Strong Communication Skills",
+    "Integrity and Ethical Judgment",
+    "Research Skills",
+    "Adaptability and Flexibility",
+    "Critical Thinking",
+    "Persistence and Resilience",
+    "Attention to Detail",
+    "Empathy and Cultural Sensitivity"
+  ],
+  "topJobs": [
+    {
+      "role": "Reporter",
+      "description": "Gathering information and crafting news stories for various media platforms",
+      "indiaSalary": "INR 2-6 lakhs/year",
+      "globalSalary": "$30,000-$60,000/year"
+    },
+    {
+      "role": "Editor",
+      "description": "Reviewing and approving articles; ensuring accuracy and quality of content",
+      "indiaSalary": "INR 3-10 lakhs/year",
+      "globalSalary": "$40,000-$80,000/year"
+    },
+    {
+      "role": "Photojournalist",
+      "description": "Using photography to capture and convey the essence of news stories",
+      "indiaSalary": "INR 2-8 lakhs/year",
+      "globalSalary": "$30,000-$70,000/year"
+    },
+    {
+      "role": "Broadcast Journalist",
+      "description": "Presenting news on radio and television as anchors, correspondents, or producers",
+      "indiaSalary": "INR 3-12 lakhs/year",
+      "globalSalary": "$40,000-$100,000/year"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Mass Communication (IIMC), New Delhi",
+    "Asian College of Journalism, Chennai",
+    "Symbiosis Institute of Media and Communication, Pune",
+    "Jamia Millia Islamia, New Delhi",
+    "Xavier Institute of Communications, Mumbai"
+  ],
+  "institutesInternational": [
+    "Columbia University, New York, USA",
+    "University of California, Berkeley, USA",
+    "London School of Economics and Political Science, UK",
+    "University of Amsterdam, Netherlands",
+    "University of Southern California, USA"
+  ],
+  "careerLadder": [
+    "High school completion",
+    "Bachelor's degree in Journalism/Mass Communication",
+    "Internships and practical field experience",
+    "Master's degree specialization (optional)",
+    "Senior reporter, editor, or correspondent roles",
+    "Specialized positions (political reporting, foreign correspondence, digital media)"
+  ],
+  "sourceUrl": "https://svastrino.com/journalism/"
+}

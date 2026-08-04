@@ -1,0 +1,16 @@
+{
+  "slug": "liberal-arts",
+  "name": "Liberal Arts",
+  "overview": "Liberal arts represents a vibrant tapestry, weaving together different aspects of creativity and expression that encompasses painting, sculpture, drawing, and digital media. The field explores deep ideas, talks about society, and expresses personal feelings while blending creative ideas with technical expertise. Modern practitioners question the usual ways of doing things and use diverse materials and technologies.",
+  "topQualities": ["Creativity", "Critical Thinking", "Communication Skills", "Open-mindedness", "Adaptability", "Empathy", "Problem-Solving", "Time Management", "Interdisciplinary Thinking", "Cultural Competence", "Ethical Awareness"],
+  "topJobs": [
+    {"role": "Public Relations Specialist", "description": "Cultivates favorable public perception through communication strategies and media relationships.", "indiaSalary": "INR 4-8 lakhs annually", "globalSalary": "$45,000-$70,000 annually"},
+    {"role": "Human Resources Specialist", "description": "Oversees recruitment, employee relations, and training initiatives.", "indiaSalary": "INR 5-8 lakhs annually", "globalSalary": "$50,000-$70,000 annually"},
+    {"role": "Marketing Coordinator", "description": "Supports marketing strategy development, conducts research, and creates promotional content.", "indiaSalary": "INR 4-6 lakhs annually", "globalSalary": "$45,000-$60,000 annually"},
+    {"role": "Social Media Manager", "description": "Manages online presence, develops content, and optimizes digital strategies.", "indiaSalary": "INR 5-8 lakhs annually", "globalSalary": "$50,000-$70,000 annually"}
+  ],
+  "institutesIndia": ["Ashoka University (Department of English and Creative Writing)", "FLAME University (School of Liberal Education)", "Christ University (Department of Humanities and Social Sciences)"],
+  "institutesInternational": ["Harvard University (Harvard College - BA Liberal Arts and Sciences)", "University of Cambridge (School of Arts and Humanities - BA Liberal Arts)", "University of Oxford (Humanities Division - BA Humanities)"],
+  "careerLadder": ["High school completion", "Bachelor's degree in Liberal Arts or related field", "Internships, apprenticeships, entry-level positions", "Professional certifications and continuous learning", "Mid-level roles (Project Coordinators, specialists)", "Senior positions with portfolio development and networking"],
+  "sourceUrl": "https://svastrino.com/liberal-arts/"
+}

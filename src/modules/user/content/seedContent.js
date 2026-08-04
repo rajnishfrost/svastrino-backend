@@ -1,0 +1,622 @@
+// Seeds site content migrated from the legacy svastrino.com site: mentoring
+// programs, FAQs, success stories and the career library.
+// Idempotent — upserts by slug / natural key. Run:  npm run seed:content
+import '../../../config/env.js'
+import fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+import mongoose from 'mongoose'
+import { connectDB } from '../../../config/db.js'
+import { localMedia } from '../../../utils/media.js'
+import { MentoringProgram } from './program.model.js'
+import { Faq } from './faq.model.js'
+import { Testimonial } from './testimonial.model.js'
+import { CareerField } from './careerField.model.js'
+import { Course } from './course.model.js'
+import { SitePage } from './sitePage.model.js'
+import { NewsItem } from './newsItem.model.js'
+
+const here = dirname(fileURLToPath(import.meta.url))
+
+// ---------------------------------------------------------------------------
+// Mentoring programs  (source: svastrino.com program pages)
+// ---------------------------------------------------------------------------
+const PROGRAMS = [
+  {
+    slug: 'model-session',
+    name: 'Model Session',
+    tagline: "Chart your path towards a 'Fulfilling Career'",
+    summary:
+      'A quick and engaging 15-minute session that helps you identify your career needs, ' +
+      'verify a decision you have already made, and see which mentoring program fits you ' +
+      'before committing to anything longer.',
+    duration: '15–20 minutes (extendable to 30)',
+    sessions: '1 introductory session',
+    mode: 'Online',
+    chooseIf: [
+      'You want to identify what you actually need help with',
+      'You want a professional to verify a career decision you have made',
+      'You want a glimpse of how the mentoring process works',
+      'You want to be matched to the right program for your personality',
+      'You want to make an informed decision before a long-term commitment',
+    ],
+    journey: [
+      { label: 'Step 1', title: 'Getting to know your concerns', description: 'A one-on-one conversation to identify what you need.' },
+      { label: 'Step 2', title: 'Verifying your background', description: 'Reviewing your academic and personal history.' },
+      { label: 'Step 3', title: 'Resolving your immediate queries', description: 'Quick solutions to your pressing career questions.' },
+      { label: 'Step 4', title: 'Exploring programs for your future needs', description: 'Recommending the mentoring program that suits you.' },
+    ],
+    benefits: [
+      'Quick evaluation of your career fit',
+      'Career options from 8th grade to post-graduation',
+      'Guidance on educational application processes',
+      'A mentoring program tailored to your strengths and interests',
+      'Fully online — attend from home',
+    ],
+    sourceUrl: 'https://svastrino.com/model-session/',
+    order: 1,
+  },
+  {
+    slug: 'bulls-eye',
+    name: "Bull's Eye Program",
+    tagline: "Get a quick yet accurate solution for your 'Career Confusion'",
+    summary:
+      'A focused 2-hour session designed to achieve clarity when you are stuck between ' +
+      'options or facing a deadline — ending with concrete career recommendations and a plan.',
+    duration: '2 hours (≈5 hours total with pre/post work)',
+    sessions: '1 main session + a follow-up',
+    mode: 'Online',
+    chooseIf: [
+      'You want a second opinion on a career plan with multiple options',
+      'You need guidance before an application deadline',
+      'You want clarity on your interests and possible career pathways',
+      'You are verifying a course, college or university selection',
+      'You want to explore your personality-based potential and build a vision',
+    ],
+    journey: [
+      { label: 'Stage 1', title: 'Pre-session', description: 'Your background, academics and personal development are reviewed via a form so the session starts informed.' },
+      { label: 'Stage 2 · 0–30 min', title: 'Personality identification', description: 'Identifying your personality and validating your strengths.' },
+      { label: 'Stage 2 · 31–70 min', title: 'Needs, vision and goals', description: 'Addressing your needs and understanding your vision and goals.' },
+      { label: 'Stage 2 · 71–95 min', title: 'Clarifying ambitions', description: 'Clarifying and prioritising what you actually want.' },
+      { label: 'Stage 2 · 95–120 min', title: 'Recommendations', description: 'Career recommendations and formulation of your plan.' },
+      { label: 'Stage 3', title: 'Post-session follow-up', description: 'A 30-minute follow-up one week later to reaffirm your choice and address concerns.' },
+    ],
+    benefits: [
+      'Quick evaluation for the right career alignment',
+      'Coverage from 8th grade through post-graduation',
+      'Guidance on the educational application process',
+      'Resolution of last-minute confusion',
+      'Personalised mentoring tailored to your strengths',
+      'Confidence and clarity for the road ahead',
+    ],
+    sourceUrl: 'https://svastrino.com/bulls-eye/',
+    order: 2,
+  },
+  {
+    slug: 'bloom',
+    name: 'Bloom Program',
+    tagline: 'Cultivate a visionary mindset and set goals for a bright future',
+    summary:
+      "Svastrino's personality-based mentoring program. Over 45–60 days it moves from a full " +
+      'personality analysis through self-discovery tasks and vision building, ending in a ' +
+      'personalised 5-year career plan.',
+    duration: '45–60 days',
+    sessions: '3 sessions of 2 hours each + regular follow-ups',
+    mode: 'Online',
+    chooseIf: [
+      'You want to discover your unique potential and build a customised vision',
+      'You want to explore career paths that align with your strengths and goals',
+      'You want to eliminate career options that do not suit you',
+      'You want a personality-based mentoring program',
+      'You want to find your career and life path through informed decisions',
+    ],
+    journey: [
+      { label: 'Day 1', title: 'Complete personality analysis', description: 'Personality, qualities and background check, self-introspective questions and guidance on your evolution.' },
+      { label: 'Days 2–20', title: 'Transformative self-discovery tasks', description: 'Tailored tasks for focus, alignment, balance and exploring hidden potential.' },
+      { label: 'Day 21', title: 'Vision development', description: 'Understanding your personality traits and setting a clear, achievable vision — plus attitude and routine building.' },
+      { label: 'Days 22–45', title: 'Regular practice & growth habits', description: 'Personalised daily development tasks and vision-to-career alignment activities.' },
+      { label: 'Day 46', title: 'Career pathway planning', description: 'Mindset verification, goal alignment and expert guidance to build a 5-year career plan across 5 development areas.' },
+    ],
+    benefits: [
+      'Uncover your true self via personality-based mentoring',
+      'Transform with tailored tasks for focus and balance',
+      'Discover futuristic global career opportunities',
+      'Get a personalised 5-year career plan',
+      'Enhance your personality and career profile',
+      'Fully online — attend from home',
+    ],
+    brochureUrl: 'https://svastrino.com/wp-content/uploads/2025/04/bloom-new-brochure.pdf',
+    sourceUrl: 'https://svastrino.com/bloom/',
+    order: 3,
+  },
+  {
+    slug: 'breakthrough',
+    name: 'Breakthrough Program',
+    tagline: "Ace the art of self-discipline and evolve into an 'Enterprising Leader'",
+    summary:
+      'A two-year personalised mentoring program to craft future leaders and entrepreneurs — ' +
+      'building mindset first, then attitude, with consistent mentoring and accountability ' +
+      'across academics, professional skills, experience, extracurriculars and social work.',
+    duration: '2 years',
+    sessions: '10 sessions of 2 hours each (1200+ minutes)',
+    mode: 'Online',
+    chooseIf: [
+      'You want a comprehensive analysis of your career needs and strengths',
+      'You want career development mentoring aligned with your life vision',
+      'You want to explore diverse career pathways',
+      'You want a personal mentor monitoring your progress',
+      'You want to develop self and people management skills',
+      'You want to cultivate a solution-seeking mindset',
+      'You want a path away from the competitive career rat race',
+      'You want to evolve into a charismatic leader',
+    ],
+    journey: [
+      { label: 'Stage 1 · Day 1', title: 'Life & background study', description: 'Understanding your life, background and starting point.' },
+      { label: 'Stage 1 · Days 2–20', title: 'Tailored tasks for self-discovery', description: 'Personalised tasks that surface your strengths and patterns.' },
+      { label: 'Stage 1 · Day 21', title: "Developing a leader's mindset", description: 'Building the mindset that leadership requires.' },
+      { label: 'Stage 1 · Days 22–45', title: 'Crafting the right environment', description: 'Shaping surroundings that support a budding leader.' },
+      { label: 'Stage 1 · Days 46–60', title: 'Aligning career plan with purpose', description: 'Connecting your career plan to your purpose of life.' },
+      { label: 'Stage 2 · Months 3–24', title: 'Attitude building', description: 'Encouraging action and exploration, integrating results, consistent mentoring, self-validation, accountability, progress tracking and independent execution.' },
+    ],
+    benefits: [
+      'Transform into a self-aware, focused and disciplined leader',
+      'Develop a charismatic personality',
+      'Gain exposure to futuristic career opportunities',
+      'Receive a personalised 5-year career plan',
+      'Create sustainable self-development processes',
+      'Consistent career development mentoring',
+      'Fully online — attend from home',
+    ],
+    sourceUrl: 'https://svastrino.com/breakthrough/',
+    order: 4,
+  },
+]
+
+// ---------------------------------------------------------------------------
+// FAQs  (source: svastrino.com/faqs)
+// ---------------------------------------------------------------------------
+const FAQS = [
+  // ---- About Svastrino ----
+  {
+    section: 'About Svastrino',
+    question: 'How and when did Svastrino start?',
+    answer:
+      'Founder Rohit Gala struggled to find proper career guidance himself and created Svastrino in 2009 ' +
+      'to help students discover their potential and align their goals with their personalities through ' +
+      'personalised mentoring programs.',
+  },
+  {
+    section: 'About Svastrino',
+    question: "What are Svastrino's vision and mission?",
+    answer:
+      'Our vision is to become the leading online career mentoring platform. Our mission is to empower ' +
+      "individuals to explore and discover their life's purpose.",
+  },
+
+  // ---- Process basics ----
+  {
+    section: 'Process Basics',
+    question: 'What is mentoring?',
+    answer:
+      "Mentoring is an ever-evolving process that plays a vital role in shaping one's personal and " +
+      'professional growth, using a personality-driven approach with tailored feedback.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'What is counseling?',
+    answer:
+      'Counseling is a process of meaningful conversation between a licensed counselor and an individual, ' +
+      'exploring challenges and developing the mental and emotional tools to handle them.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'How is counseling different from mentoring?',
+    answer:
+      'Counseling is short-term, problem-focused guidance. Mentoring is longer-term personalised training ' +
+      'that provides a detailed plan for achieving your career goals.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'How is mentoring done?',
+    answer:
+      'In five steps: we listen patiently, find the core issues, help you accept the facts, identify your ' +
+      'potential, and explore all available options with you.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'What attitude or mindset should I have?',
+    answer:
+      'Bring an open and honest attitude. Come as a patient learner who is comfortable sharing their ' +
+      'thoughts and aspirations.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'When should career mentoring be opted for?',
+    answer:
+      'The perfect time to start personalised career mentoring is now. Ideally, begin about a year before ' +
+      'any major education or career decision.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'How frequently should I get mentoring?',
+    answer:
+      'Annual mentoring is recommended so you can check your progress and plan based on the changes each ' +
+      'year brings.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'How should I prepare for sessions?',
+    answer:
+      'Reflect on your goals, list the issues you want to discuss, identify the root causes of your problems, ' +
+      'trust the process, be honest, stay patient and keep a positive attitude.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'What information should I share?',
+    answer:
+      'Share your background, qualifications, interests, passions and any factor relevant to your career plan. ' +
+      'Concealing information only limits the quality of the guidance we can give.',
+  },
+  {
+    section: 'Process Basics',
+    question: 'When should I enroll in a program?',
+    answer:
+      "Deciding to enroll in a program is a personal choice and can be done at any time when you feel it's " +
+      'right for you.',
+  },
+
+  // ---- Mentoring programs ----
+  {
+    section: 'Mentoring Programs',
+    question: 'What is neutral mentoring?',
+    answer:
+      'Neutral mentoring is a unique process of personalised training and guidance in which a mentor helps ' +
+      'the mentee achieve a particular outcome that is unbiased.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'How do I know which program to select?',
+    answer:
+      'Each program page has a "choose this program if…" section. Match those points against your own needs — ' +
+      'or take a Model Session and we will recommend one.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'What concerns are addressed?',
+    answer:
+      'Stream selection, course and university decisions, interest exploration, personality analysis, ' +
+      'leadership development, career clarity, aptitude assessment and entrepreneurship.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Is career mentoring a one-time thing?',
+    answer:
+      'It depends on your needs. Immediate queries can be handled in a single session, while detailed ' +
+      'personality and aptitude analysis requires a longer program.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'What documents should I prepare?',
+    answer:
+      'Academic records, extracurricular achievements, work experience letters, and any other documents ' +
+      'that help us understand your academic and professional background.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Will this program work online?',
+    answer:
+      'Yes. We have been successfully conducting online mentoring sessions since 2016, with clients across ' +
+      'the Middle East, Africa and the USA.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'How does Svastrino verify futuristic career options?',
+    answer:
+      'We compare insights from the corporate world against those from top educational institutes to ' +
+      'identify which career pathways are genuinely futuristic.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Are sessions individual or group?',
+    answer: 'All our sessions and programs are conducted on an individual level.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Will my information remain confidential?',
+    answer:
+      'Yes. Any personal or sensitive information shared during the program remains strictly confidential ' +
+      'and is never shared without your explicit consent.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'What if I need guidance after my session?',
+    answer:
+      'We follow up with you within a week after the session to provide additional suggestions and guidance.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Can I reconnect months after completion?',
+    answer: 'Yes — feel free to reconnect with us anytime you have queries or concerns.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'Will the same mentor guide me throughout?',
+    answer:
+      'We assign the same mentor to guide you throughout the entire program, though mentors can be changed ' +
+      'if you would prefer someone else.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'How do I book a program?',
+    answer:
+      'Visit the Book Online page, or use the "Book Now" button at the bottom of each program page.',
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'What programs are available?',
+    answer: "The Bull's Eye Program, the Bloom Program and the Breakthrough Program.",
+  },
+  {
+    section: 'Mentoring Programs',
+    question: 'How do I choose if I am unsure?',
+    answer:
+      'Take the Model Session — it is designed to clarify the differences between the programs based on ' +
+      'your specific needs.',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Success stories  (source: svastrino.com/success-stories)
+// ---------------------------------------------------------------------------
+const TESTIMONIALS = [
+  {
+    name: 'Dhrumil Satra',
+    role: 'MSc in Investment Banking, University College Dublin, Ireland',
+    quote:
+      'Rohit is an experienced professional with good knowledge and value to provide. He helped me land one ' +
+      'of the top universities in the world and guided me perfectly as a mentor throughout the process. I ' +
+      'would 100% recommend him to anyone seeking any academic or professional educational and/or career advice.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/46-Dhrumil.jpg',
+    program: 'bulls-eye',
+    featured: true,
+  },
+  {
+    name: 'Shaili Sheth',
+    role: 'MBA in International Management, Durham University Business School',
+    quote:
+      'A very good experience. Very easy to talk to and to clarify any doubts or uncertainties regarding my ' +
+      'career. Mr. Rohit Gala was able to provide various different career options along with its pros and ' +
+      'cons and an in-depth understanding of each of the options which helped me get a better perspective of ' +
+      'which career I should be choosing.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/47-Shaili.jpg',
+    program: 'bulls-eye',
+    featured: true,
+  },
+  {
+    name: 'Dhvanit Jain',
+    role: 'FYBBA Finance, Symbiosis Centre for Management Studies',
+    quote:
+      'The guidance provided by Mr. Rohit Gala helped me to clear my head and choose a career option. Not ' +
+      "only that, he suggested us the best possible means to reach the set goal as per our calibre. Clearly " +
+      "it is 'Value for Money'.",
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/48-Dhvanit.jpg',
+    program: 'bulls-eye',
+    featured: true,
+  },
+  {
+    name: 'Gurjas Sahni',
+    role: 'MBA in Media and Public Relations, Qatar',
+    quote:
+      'We got in touch with Svastrino in 2019. During our sessions, he helped us understand the value career ' +
+      'adds to our life, rather than the other way round. Our experience with Mr. Rohit Gala yielded great ' +
+      'results as he helped in clarifying our present, hence making us better prepared for what the future ' +
+      "has in store! One of the best people we've come across.",
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/55-Gurjas.jpg',
+    program: 'bloom',
+    featured: false,
+  },
+  {
+    name: 'Alpa Gangar',
+    role: 'Parent and Owner of Gangar Tutorials',
+    quote:
+      'Svastrino has an incredible team of motivators, especially Rohit Sir. His words really helped me ' +
+      'figure out my inner strength and to develop it even further. Also, his knowledge about career guidance ' +
+      'was very appropriate and helpful in selecting the best course for my career. I recommend him strongly ' +
+      'for a life changing experience.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/56-Alpa.jpg',
+    program: 'bloom',
+    featured: false,
+  },
+  {
+    name: 'Gnan Desai',
+    role: 'Parent · Territory Manager–Gulf, MINDWARE',
+    quote:
+      'This is honestly the best consultancy agency, hands down. The main focus of Mr. Rohit was to ' +
+      "understand the child's psyche and that's not something you find everywhere. Helping kids discover " +
+      'their full potential in any sector possible was also a major focus when we consulted him and it was ' +
+      'really eye-opening as to how many job options the world has to offer.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/04/57-gnan.jpg',
+    program: 'bloom',
+    featured: false,
+  },
+  {
+    name: 'Tara Chheda',
+    role: 'Mother of Khushi, FYJC, NM College, Mumbai',
+    quote:
+      'The counselling sessions were very fruitful for me. I appreciate the unique ways of mentorship and ' +
+      'the examples which were used to explain topics to me. It helped me choose my goal in my life. If my ' +
+      'friends or relatives are ever in a fix to choose their career, I would like to refer you to them.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/tara.jpg',
+    program: '',
+    featured: false,
+  },
+  {
+    name: 'Iqbal Warsi',
+    role: 'Brother of Actor Arshad Warsi',
+    quote:
+      "Svastrino & surely Mr. Rohit Gala have been a source of my kids' inspiration, guidance and support " +
+      'through his career counselling.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/70-Iqbal.jpg',
+    program: 'breakthrough',
+    featured: false,
+  },
+  {
+    name: 'Shameka Chitnis',
+    role: 'A+ levels Singhania International School, Thane',
+    quote:
+      "Rohit sir's detailed analysis in every field helped us figure out our child's true interests & capacity.",
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/71Shamika.jpg',
+    program: 'breakthrough',
+    featured: false,
+  },
+  {
+    name: 'Falguni Patil',
+    role: '',
+    quote:
+      'Initially when we started our process, I was worried that it was going to be really complicated and ' +
+      'very stressful. But what made it so much easier and seamless was Svastrino and their immaculate ' +
+      'support to us. As much as I am grateful for them to help us with our process, I am also extremely ' +
+      'thankful for their support and guidance to us throughout the entire process and after. I can say with ' +
+      'complete confidence that choosing with Svastrino Consultancy for our process was the best decision ' +
+      'that we made.',
+    photo: 'https://svastrino.com/wp-content/uploads/2024/03/newFalguniPatil.png',
+    program: 'model-session',
+    featured: false,
+  },
+  {
+    name: 'Heet Sardhara',
+    role: '',
+    quote:
+      'Having experienced a session myself conducted by Rohit Sir, I can happily say that the experience is ' +
+      'no short of spectacular and eye opening. Sir is absolutely professional and always on point, yet very ' +
+      'kind and someone who will help you get the best out of you. All worth it. Big thumbs up to Rohit Sir ' +
+      'and his team!',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/40-Heet.jpg',
+    program: 'model-session',
+    featured: false,
+  },
+  {
+    name: 'Manasi Jaguste',
+    role: "Shlok's mother",
+    quote:
+      'As a parent it was good knowledge for me with their vast experience. This will help me in taking ' +
+      'joint decision with my son.',
+    photo: 'https://svastrino.com/wp-content/uploads/2023/03/39-Manasi-.jpg',
+    program: 'model-session',
+    featured: false,
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Career library  (source: svastrino.com/courselist)
+//
+// 13 streams / 52 distinct courses, pulled from the site's own WordPress REST
+// API so the stream→course mapping is exact rather than inferred. Courses are
+// many-to-many: several are filed under more than one stream (Interior Design
+// is both Arts and Commercial Arts), which is why the link count (80) exceeds
+// the course count (52). Data lives in data/career-library.json.
+// ---------------------------------------------------------------------------
+const CAREER_FIELDS = JSON.parse(
+  fs.readFileSync(join(here, 'data', 'career-library.json'), 'utf8')
+)
+
+// ---------------------------------------------------------------------------
+
+async function run() {
+  await connectDB()
+
+  for (const p of PROGRAMS) {
+    // Brochures/photos point at the local copies once `fetch:media` has run.
+    const doc = { ...p, brochureUrl: localMedia(p.brochureUrl || '') }
+    await MentoringProgram.findOneAndUpdate({ slug: p.slug }, { $set: doc }, { upsert: true })
+    console.log(`  ✓ Program: ${p.name}`)
+  }
+  console.log(`✓ Mentoring programs: ${PROGRAMS.length}`)
+
+  // FAQs and testimonials have no natural slug — replace the set wholesale so
+  // reruns don't accumulate duplicates.
+  await Faq.deleteMany({})
+  await Faq.insertMany(FAQS.map((f, i) => ({ ...f, order: i, active: true })))
+  console.log(`✓ FAQs: ${FAQS.length} across ${new Set(FAQS.map((f) => f.section)).size} sections`)
+
+  await Testimonial.deleteMany({})
+  await Testimonial.insertMany(
+    TESTIMONIALS.map((t, i) => ({ ...t, photo: localMedia(t.photo), order: i, active: true }))
+  )
+  console.log(`✓ Testimonials: ${TESTIMONIALS.length}`)
+
+  for (const c of CAREER_FIELDS) {
+    await CareerField.findOneAndUpdate({ slug: c.slug }, { $set: c }, { upsert: true })
+  }
+  const courseLinks = CAREER_FIELDS.reduce((n, f) => n + f.courses.length, 0)
+  const distinct = new Set(CAREER_FIELDS.flatMap((f) => f.courses.map((c) => c.slug))).size
+  console.log(
+    `✓ Career library: ${CAREER_FIELDS.length} streams · ${distinct} courses (${courseLinks} stream links)`
+  )
+
+  // ---- Course detail pages (scraped into data/courses/<slug>.json) ----
+  // Each course records which streams it belongs to, denormalised from the
+  // career library above so the detail page can show breadcrumb chips.
+  const fieldsBySlug = new Map()
+  for (const f of CAREER_FIELDS) {
+    for (const c of f.courses) {
+      if (!fieldsBySlug.has(c.slug)) fieldsBySlug.set(c.slug, [])
+      fieldsBySlug.get(c.slug).push({ name: f.name, slug: f.slug })
+    }
+  }
+
+  const coursesDir = join(here, 'data', 'courses')
+  let courseCount = 0
+  if (fs.existsSync(coursesDir)) {
+    const files = fs.readdirSync(coursesDir).filter((f) => f.endsWith('.json'))
+    for (const file of files) {
+      const c = JSON.parse(fs.readFileSync(join(coursesDir, file), 'utf8'))
+      await Course.findOneAndUpdate(
+        { slug: c.slug },
+        { $set: { ...c, fields: fieldsBySlug.get(c.slug) || [], active: true } },
+        { upsert: true }
+      )
+      courseCount++
+    }
+  }
+  console.log(
+    courseCount
+      ? `✓ Course detail pages: ${courseCount}`
+      : '! No course detail pages found in data/courses/ — run the course scrape first'
+  )
+
+  // ---- Site pages: policies/legal (data/pages/<slug>.json) ----
+  const pagesDir = join(here, 'data', 'pages')
+  let pageCount = 0
+  if (fs.existsSync(pagesDir)) {
+    for (const file of fs.readdirSync(pagesDir).filter((f) => f.endsWith('.json'))) {
+      const pg = JSON.parse(fs.readFileSync(join(pagesDir, file), 'utf8'))
+      await SitePage.findOneAndUpdate(
+        { slug: pg.slug },
+        { $set: { ...pg, active: true } },
+        { upsert: true }
+      )
+      pageCount++
+    }
+  }
+  console.log(`✓ Site pages (policies): ${pageCount}`)
+
+  // ---- Quick News (data/news.json) — replace wholesale (no natural key) ----
+  const newsFile = join(here, 'data', 'news.json')
+  if (fs.existsSync(newsFile)) {
+    const news = JSON.parse(fs.readFileSync(newsFile, 'utf8'))
+    await NewsItem.deleteMany({})
+    await NewsItem.insertMany(
+      news.map((n) => ({ date: new Date(n.date), text: n.text, order: n.order, active: true }))
+    )
+    console.log(`✓ Quick News: ${news.length} headlines`)
+  }
+
+  await mongoose.disconnect()
+  console.log('✓ Site content seeded.')
+}
+
+run().catch((err) => {
+  console.error('✗ Seed failed:', err)
+  process.exit(1)
+})

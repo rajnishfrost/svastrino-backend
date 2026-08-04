@@ -1,0 +1,19 @@
+{
+  "slug": "advertising",
+  "name": "Advertising",
+  "overview": "Advertising is a dynamic field that plays a crucial role in business and marketing. It involves the creation and dissemination of messages, aiming to promote products, services, or ideas to a target audience. The field combines creativity with strategic thinking to build brand awareness, drive sales, and establish competitive advantage. Digital transformation has expanded advertising beyond traditional channels into social media, mobile, and programmatic approaches.",
+  "topQualities": ["Creativity and Innovation", "Communication Skills", "Strategic Thinking", "Analytical Skills and Data-driven Decision Making", "Adaptability and Agility", "Collaboration and Teamwork", "Attention to Detail", "Time Management and Organization"],
+  "topJobs": [
+    {"role": "Advertising Account Manager", "description": "Oversee marketing campaigns and maintain client relationships", "indiaSalary": "6-12 lakhs", "globalSalary": "$50,000-$90,000"},
+    {"role": "Copywriter", "description": "Create compelling written content for advertising campaigns", "indiaSalary": "4-8 lakhs", "globalSalary": "$45,000-$80,000"},
+    {"role": "Media Planner", "description": "Develop strategic campaigns by determining effective media channels", "indiaSalary": "5-10 lakhs", "globalSalary": "$45,000-$85,000"},
+    {"role": "Digital Marketer", "description": "Execute online advertising strategies across multiple channels", "indiaSalary": "5-12 lakhs", "globalSalary": "$50,000-$90,000"},
+    {"role": "Art Director", "description": "Shape visual elements and artistic direction of campaigns", "indiaSalary": "7-15 lakhs", "globalSalary": "$60,000-$120,000"},
+    {"role": "Creative Director", "description": "Lead creative teams and oversee campaign development", "indiaSalary": "12-25 lakhs", "globalSalary": "$80,000-$160,000"},
+    {"role": "Social Media Manager", "description": "Manage social media strategies and brand engagement", "indiaSalary": "4-10 lakhs", "globalSalary": "$40,000-$80,000"}
+  ],
+  "institutesIndia": ["Indian Institute of Mass Communication (IIMC), New Delhi", "Mudra Institute of Communications (MICA), Ahmedabad", "Xavier Institute of Communications (XIC), Mumbai", "Symbiosis Institute of Media and Communication (SIMC), Pune"],
+  "institutesInternational": ["University of Texas at Austin, USA", "London College of Communication, University of the Arts London, UK", "Northwestern University, USA"],
+  "careerLadder": ["Excel in high school subjects (English, communication, psychology)", "Pursue bachelor's degree in advertising, marketing, or communications", "Gain hands-on experience through internships and part-time work", "Consider master's degree in advertising or integrated marketing communications", "Take standardized exams (GRE) for advanced program admission", "Build portfolio showcasing creative work and campaigns", "Network with industry professionals and stay current with trends", "Progress into managerial or leadership roles"],
+  "sourceUrl": "https://svastrino.com/advertising/"
+}

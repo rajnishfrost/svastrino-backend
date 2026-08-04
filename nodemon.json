@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "js,json,html",
+  "ignore": ["src/templates/emails/*.png", "uploads/**"],
+  "delay": "300"
+}

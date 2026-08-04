@@ -1,0 +1,63 @@
+{
+  "slug": "aeronautical-engineering",
+  "name": "Aeronautical Engineering",
+  "overview": "Aeronautical engineering is an exciting and innovative field that combines scientific principles with engineering concepts to design, develop, and manufacture aircraft and spacecraft. It encompasses aerodynamics, materials science, propulsion systems, flight mechanics, and avionics. The field drives advancements in aviation safety, efficiency, and sustainability while contributing to space exploration.",
+  "topQualities": [
+    "Analytical and Problem-Solving Skills",
+    "Mathematical and Scientific Knowledge",
+    "Attention to Detail",
+    "Creativity and Innovation",
+    "Teamwork and Collaboration",
+    "Strong Communication Skills",
+    "Ethical and Safety Consciousness",
+    "Continuous Learning and Adaptability",
+    "Regulatory Compliance",
+    "Passion for Flight and Aerospace"
+  ],
+  "topJobs": [
+    {
+      "role": "Flight Mechanics Engineer",
+      "description": "Specialists who analyze and optimize aircraft performance, stability, and control through flight testing and dynamics analysis.",
+      "indiaSalary": "INR 6-8 lakhs (entry-level); INR 10-15 lakhs (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    },
+    {
+      "role": "Assistant Aircraft Engineer",
+      "description": "Professionals providing support in aircraft maintenance, repair, and troubleshooting alongside senior engineers.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 6-10 lakhs (experienced)",
+      "globalSalary": "$40,000-$80,000+"
+    },
+    {
+      "role": "Aircraft Production Engineer",
+      "description": "Engineers responsible for manufacturing and assembly adherence to quality standards throughout production cycles.",
+      "indiaSalary": "INR 4-8 lakhs+",
+      "globalSalary": "$50,000-$100,000+"
+    },
+    {
+      "role": "Assistant Technical Officers",
+      "description": "Professionals providing technical support in aircraft maintenance, inspection, and certification compliance.",
+      "indiaSalary": "INR 3-6 lakhs+",
+      "globalSalary": "$40,000-$80,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT), Bombay",
+    "Indian Institute of Technology (IIT), Madras",
+    "Indian Institute of Technology (IIT), Kanpur",
+    "Indian Institute of Space Science and Technology (IIST)"
+  ],
+  "institutesInternational": [
+    "Massachusetts Institute of Technology (MIT), USA",
+    "California Institute of Technology (Caltech), USA",
+    "Technische Universität München (TUM), Germany"
+  ],
+  "careerLadder": [
+    "Excel in high school mathematics, physics, and chemistry",
+    "Pursue Bachelor's degree (B.Tech/B.Sc in Aerospace Engineering)",
+    "Engage in internships, research projects, and extracurricular activities",
+    "Pursue Master's degree (M.Tech/M.Sc in Aeronautical Engineering)",
+    "Take standardized tests (GRE/GATE) for advanced admissions",
+    "Progress into specialized aerospace industry positions"
+  ],
+  "sourceUrl": "https://svastrino.com/aeronautical-engineering/"
+}

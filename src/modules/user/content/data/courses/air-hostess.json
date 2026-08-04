@@ -1,0 +1,17 @@
+{
+  "slug": "air-hostess",
+  "name": "Air Hostess",
+  "overview": "Being an air hostess is an exhilarating and fulfilling career that combines the essence of hospitality, customer service, and aviation. Air hostesses undergo intensive training covering safety, emergency procedures, and passenger service. They serve as brand ambassadors for airlines while ensuring passenger comfort and safety. The role offers opportunities to travel globally and experience cultural exchange.",
+  "topQualities": ["Excellent Communication Skills", "Customer Service Orientation", "Calmness and Composure", "Adaptability and Flexibility", "Teamwork and Collaboration", "Multilingual Proficiency", "First Aid and Safety Awareness"],
+  "topJobs": [
+    {"role": "Flight Attendant", "description": "Ensures passenger safety, comfort, and delivers exceptional customer service throughout flights.", "indiaSalary": "₹4-10 lakh annually", "globalSalary": "$25,000-$50,000 annually"},
+    {"role": "Cabin Crew Supervisor", "description": "Oversees cabin crew teams, coordinates schedules, ensures safety compliance, and handles inquiries.", "indiaSalary": "₹8-15 lakh annually", "globalSalary": "$40,000-$70,000 annually"},
+    {"role": "In-Flight Service Manager", "description": "Supervises cabin crew, establishes service guidelines, and ensures quality passenger experience.", "indiaSalary": "₹12-25 lakh annually", "globalSalary": "$50,000-$100,000 annually"},
+    {"role": "Airline Ground Staff", "description": "Assists with check-in, boarding, and customer service at airport locations.", "indiaSalary": "₹2-5 lakh annually", "globalSalary": "$25,000-$40,000 annually"},
+    {"role": "VIP/Private Jet Cabin Crew", "description": "Provides personalized service to high-profile individuals on private aircraft.", "indiaSalary": "₹5-15 lakh annually", "globalSalary": "$40,000-$100,000 annually"}
+  ],
+  "institutesIndia": ["Frankfinn Institute of Air Hostess Training", "Indira Gandhi Institute of Aeronautics", "NIMS University College of Aviation Management"],
+  "institutesInternational": ["Emirates Aviation University (United Arab Emirates)", "The Airline Academy (Florida)", "Academics of Flight (New York)"],
+  "careerLadder": ["Focus on high school academics and English/communication skills", "Enroll in specialized air hostess training programs", "Pursue extracurricular activities in hospitality/customer service", "Complete standardized language tests (IELTS/TOEFL)", "Apply to airlines emphasizing service excellence", "Begin career as Flight Attendant", "Pursue continuous training and specialized certifications", "Progress to supervisory/management positions"],
+  "sourceUrl": "https://svastrino.com/air-hostess/"
+}

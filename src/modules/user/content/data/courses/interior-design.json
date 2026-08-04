@@ -1,0 +1,16 @@
+{
+  "slug": "interior-design",
+  "name": "Interior Design",
+  "overview": "The field of interior design is a dynamic and ever-evolving arena that blends creativity with practicality to enhance the spaces where we live, work, and play. Modern practice combines innovative materials, sustainable practices, and technology like 3D modeling and virtual reality. The profession has evolved from simple room furnishing to encompassing space management, building codes, and the latest design trends.",
+  "topQualities": ["Creativity and Imagination", "Eye for Detail", "Problem-Solving Ability", "Trend Awareness", "Organizational Skills", "Collaborative Spirit", "Adaptability", "Business Acumen"],
+  "topJobs": [
+    {"role": "Residential Interior Designers", "description": "Transform houses and apartments into personalized homes through layout, furniture, color schemes, and lighting decisions.", "indiaSalary": "INR 3-10 lakhs/year", "globalSalary": "$50,000-$70,000/year"},
+    {"role": "Commercial Interior Designers", "description": "Create functional spaces for businesses while incorporating brand identity and strategic space planning.", "indiaSalary": "INR 4-12 lakhs/year", "globalSalary": "$55,000-$75,000/year"},
+    {"role": "Sustainable Design Consultants", "description": "Advise on eco-friendly materials, energy efficiency, and green building techniques.", "indiaSalary": "INR 4-10 lakhs/year", "globalSalary": "$50,000-$80,000/year"},
+    {"role": "Exhibit Designers", "description": "Create captivating displays for museums, galleries, trade shows, and events.", "indiaSalary": "INR 3-8 lakhs/year", "globalSalary": "$40,000-$60,000/year"}
+  ],
+  "institutesIndia": ["National Institute of Design (NID), Ahmedabad", "JJ School of Arts, Mumbai", "CEPT University, Ahmedabad", "Pearl Academy, Multiple Locations"],
+  "institutesInternational": ["Royal College of Art, London, UK", "Pratt Institute, New York, USA", "Florence Design Academy, Florence, Italy", "Savannah College of Art and Design (SCAD), USA"],
+  "careerLadder": ["High school completion", "Bachelor's degree in Interior Design", "Specialized Master's degree (optional)", "Internships/apprenticeships/entry-level positions", "Professional certification", "Senior designer roles or project manager positions", "Establish own design firm"],
+  "sourceUrl": "https://svastrino.com/interior-design/"
+}

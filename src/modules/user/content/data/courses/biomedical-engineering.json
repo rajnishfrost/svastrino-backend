@@ -1,0 +1,58 @@
+{
+  "slug": "biomedical-engineering",
+  "name": "Biomedical Engineering",
+  "overview": "Biomedical engineering is a fascinating and multidisciplinary area that combines engineering, biology, and healthcare concepts to create breakthrough medical solutions. The field encompasses bioinformatics, medical imaging, biomaterials, biomechanics, and tissue engineering. Professionals develop prostheses, artificial organs, diagnostic tools, and medical imaging systems while collaborating with healthcare professionals and researchers.",
+  "topQualities": [
+    "Analytical and Problem-Solving Skills",
+    "Scientific and Technical Knowledge",
+    "Interdisciplinary Thinking",
+    "Creativity and Innovation",
+    "Attention to Detail and Accuracy",
+    "Communication and Teamwork",
+    "Ethical and Professional Responsibility"
+  ],
+  "topJobs": [
+    {
+      "role": "Medical Device Designer",
+      "description": "Developing new healthcare technologies including prosthetics, imaging systems, and diagnostic instruments",
+      "indiaSalary": "INR 5-10 lakhs/year",
+      "globalSalary": "$60,000-$120,000/year"
+    },
+    {
+      "role": "Biomaterials Engineer",
+      "description": "Designing biocompatible materials for implants and tissue engineering scaffolds",
+      "indiaSalary": "INR 5-12 lakhs/year",
+      "globalSalary": "Varies significantly; higher in US, Canada, European countries"
+    },
+    {
+      "role": "Biomechanics Engineer",
+      "description": "Studying biological mechanics to enhance movement, prevent injuries, design prosthetics",
+      "indiaSalary": "INR 5-15 lakhs/year",
+      "globalSalary": "$60,000-$100,000+/year"
+    },
+    {
+      "role": "Biomedical Researcher",
+      "description": "Conducting research in drug discovery, genetics, regenerative medicine, clinical trials",
+      "indiaSalary": "INR 5-15 lakhs/year",
+      "globalSalary": "Competitive international rates"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT), Delhi",
+    "All India Institute of Medical Sciences (AIIMS), Delhi"
+  ],
+  "institutesInternational": [
+    "Johns Hopkins University, USA",
+    "Massachusetts Institute of Technology (MIT), USA",
+    "Imperial College London, UK"
+  ],
+  "careerLadder": [
+    "Excel in high school mathematics, physics, chemistry, biology",
+    "Pursue Bachelor's degree in Biomedical Engineering (B.Sc. Biomed Eng)",
+    "Participate in extracurricular activities, research projects, internships",
+    "Pursue Master's degree in Biomedical Engineering (M.Sc. Biomed Eng)",
+    "Take standardized exams (GRE) for competitive advantage",
+    "Advance into specialized roles in biomedical engineering"
+  ],
+  "sourceUrl": "https://svastrino.com/biomedical-engineering/"
+}

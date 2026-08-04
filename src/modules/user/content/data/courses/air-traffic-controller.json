@@ -1,0 +1,51 @@
+{
+  "slug": "air-traffic-controller",
+  "name": "Air Traffic Controller",
+  "overview": "Air Traffic Control (ATC) is a key field that guarantees aircraft movement in the sky and at airports is safe and efficient. The field requires technical expertise, situational awareness, and communication abilities. Controllers manage complex airspace systems using radar displays and real-time decision-making to maintain aircraft separation and prevent collisions. Modern ATC integrates satellite-based navigation and data-driven decision support systems for enhanced precision.",
+  "topQualities": [
+    "Situational Awareness",
+    "Decision-Making Under Pressure",
+    "Excellent Communication Skills",
+    "Multitasking and Prioritization",
+    "Attention to Detail",
+    "Adaptability and Flexibility"
+  ],
+  "topJobs": [
+    {
+      "role": "Junior Air Traffic Controller",
+      "description": "Manages air traffic under supervision in towers or radar centers",
+      "indiaSalary": "₹5-8 lakhs annually",
+      "globalSalary": "$40,000-$70,000 annually"
+    },
+    {
+      "role": "Senior Air Traffic Controller",
+      "description": "Manages and coordinates air traffic flow within designated airspace",
+      "indiaSalary": "₹10-25 lakhs annually",
+      "globalSalary": "$70,000-$150,000 annually"
+    },
+    {
+      "role": "Strategic Communicator",
+      "description": "Develops communication strategies and procedures within ATC systems",
+      "indiaSalary": "₹6-10 lakhs annually",
+      "globalSalary": "$60,000-$100,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "Indira Gandhi Rashtriya Uran Akademi (IGRUA)",
+    "Airports Authority of India (AAI) – Civil Aviation Training College"
+  ],
+  "institutesInternational": [
+    "Embry-Riddle Aeronautical University (ERAU) – United States",
+    "Massachusetts Institute of Technology (MIT) – United States",
+    "École Nationale de l'Aviation Civile (ENAC) – France"
+  ],
+  "careerLadder": [
+    "Excel in mathematics, physics, and geography during high school",
+    "Enroll in undergraduate programs in aviation or air traffic management",
+    "Complete practical training and internships at airports/control centers",
+    "Pass standardized examinations (AT-SAT or AT-CAST)",
+    "Pursue advanced degrees/certifications in Air Traffic Management",
+    "Advance to senior controller and leadership positions"
+  ],
+  "sourceUrl": "https://svastrino.com/air-traffic-controller/"
+}

@@ -1,0 +1,16 @@
+{
+  "slug": "communication-designs",
+  "name": "Communication Designs",
+  "overview": "Communication design is a dynamic and interdisciplinary field that merges design principles with information development to effectively communicate messages through various media. It encompasses creation of visual and interactive designs engaging target audiences. Designers analyze audiences strategically, utilizing graphic design, typography, illustration, photography, and multimedia elements. They collaborate with clients and stakeholders while embracing emerging technologies like social media, mobile apps, VR, and AR.",
+  "topQualities": ["Creativity", "Visual and Aesthetic Sensibility", "Strong Communication Skills", "Strategic Thinking", "Problem-Solving Abilities", "Technical Proficiency", "Attention to Detail", "Collaboration and Teamwork", "Adaptability and Learning", "Empathy and User-Centric Approach"],
+  "topJobs": [
+    {"role": "Multimedia Designer", "description": "Specialists creating visual content for digital platforms using graphics, animation, video, and sound.", "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15 lakhs+ (experienced)", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Web Designer", "description": "Experts developing aesthetically beautiful and user-friendly websites with UX design expertise.", "indiaSalary": "INR 2-4 lakhs (entry-level); INR 5-10 lakhs+ (experienced)", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Brand Identity Designer", "description": "Professionals developing visual systems defining and communicating unique brand identity.", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10 lakhs+ (experienced)", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Creative/Art Director", "description": "Senior-level professionals guiding and managing creative direction of projects.", "indiaSalary": "INR 8-12 lakhs (entry-level); INR 15 lakhs+ (experienced)", "globalSalary": "$70,000-$150,000+"}
+  ],
+  "institutesIndia": ["National Institute of Design (NID), Ahmedabad", "Industrial Design Centre (IDC), IIT Bombay", "Indian School of Design and Innovation (ISDI), Mumbai"],
+  "institutesInternational": ["Rhode Island School of Design (RISD), USA", "Parsons School of Design, USA", "Royal College of Art, UK", "Central Saint Martins, UK"],
+  "careerLadder": ["High school excellence with emphasis on art, design, and media studies", "Engage in creative activities and graphic design software practice", "Participate in workshops, art events, and extracurricular activities", "Undergraduate degree (BFA or B.Des) with internships and design projects", "Master's degree in Communication Design (M.Des) or related field", "Pursue standardized tests (GRE or Design Entrance Exam)", "Leadership roles and specialized positions within the industry"],
+  "sourceUrl": "https://svastrino.com/communication-designs/"
+}

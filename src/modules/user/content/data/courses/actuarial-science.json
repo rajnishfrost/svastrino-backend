@@ -1,0 +1,16 @@
+{
+  "slug": "actuarial-science",
+  "name": "Actuarial Science",
+  "overview": "The field of Actuarial Science revolves around the assessment and management of financial risks, primarily within the insurance and pension industries. Actuaries employ mathematical models, statistical methods, and financial theory to evaluate potential risks and uncertainties across insurance, finance, healthcare, and government sectors. They design insurance policies, maintain financial strategies aligned with organizational risk tolerance, and contribute to long-term financial planning decisions. With the increasing complexity of risks in today's world, the demand for skilled actuaries continues to grow.",
+  "topQualities": ["Strong Analytical Skills", "Mathematical Proficiency", "Attention to Detail", "Problem-Solving Abilities", "Effective Communication", "Business Acumen", "Ethical Judgment", "Adaptability", "Continuous Learning", "Attention to Regulatory Compliance"],
+  "topJobs": [
+    {"role": "Investment Actuary", "description": "Evaluates investment risks and provides strategic portfolio recommendations using financial modeling expertise.", "indiaSalary": "INR 8–15 lakhs annually", "globalSalary": "$100,000–$150,000 annually"},
+    {"role": "Risk Analyst", "description": "Evaluates financial risks, formulates risk models, and suggests mitigation strategies.", "indiaSalary": "INR 5–10 lakhs annually", "globalSalary": "$70,000–$120,000 annually"},
+    {"role": "Investment Banker", "description": "Manages mergers/acquisitions, assists with securities issuance, and provides strategic financial counsel.", "indiaSalary": "INR 10–30+ lakhs annually", "globalSalary": "$100,000–several million dollars annually"},
+    {"role": "Actuarial Analyst", "description": "Performs risk calculations, statistical analysis, and provides information supporting strategic decisions.", "indiaSalary": "INR 5–15+ lakhs annually", "globalSalary": "$60,000–$100,000+ annually"}
+  ],
+  "institutesIndia": ["Institute of Actuaries of India (IAI) — Actuarial Science courses (Associate/Fellowship levels)", "Amity University, Noida — B.Sc. Actuarial Sciences", "Christ University, Bangalore — B.Sc. in Actuarial Science"],
+  "institutesInternational": ["University of Cambridge (UK) — Bachelor of Arts in Actuarial Science", "University of Michigan (USA) — Bachelor of Science in Actuarial Mathematics", "University of New South Wales (Australia) — Bachelor of Actuarial Studies"],
+  "careerLadder": ["Bachelor's degree in Actuarial Science, Mathematics, or Statistics", "Professional certifications (Certified Data Scientist Finance, Introduction to Actuarial Science)", "Actuarial Analyst role", "Senior Actuary position", "Consultancy ventures or advanced specialist roles"],
+  "sourceUrl": "https://svastrino.com/actuarial-science/"
+}

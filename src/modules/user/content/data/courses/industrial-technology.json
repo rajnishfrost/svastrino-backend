@@ -1,0 +1,65 @@
+{
+  "slug": "industrial-technology",
+  "name": "Industrial Technology",
+  "overview": "The field of industrial technology is a dynamic and ever-evolving domain that encompasses a wide range of applications to enhance productivity, efficiency, and innovation in various industries. It has evolved from manual labor to highly automated systems with smart technologies and AI. Professionals integrate principles of engineering, automation, and management across diverse sectors.",
+  "topQualities": [
+    "Technical Proficiency",
+    "Problem-Solving Abilities",
+    "Adaptability",
+    "Project Management",
+    "Conscientiousness about safety",
+    "Ethical Responsibility",
+    "Innovation",
+    "Leadership Qualities",
+    "Resilience",
+    "Global Perspective"
+  ],
+  "topJobs": [
+    {
+      "role": "Industrial Engineers",
+      "description": "Streamline production and manufacturing by creating and improving processes",
+      "indiaSalary": "INR 4.5-12 lakhs/year",
+      "globalSalary": "~$80,300/year (US)"
+    },
+    {
+      "role": "Manufacturing Engineers",
+      "description": "Oversee entire lifecycle of manufacturing from design to maintenance",
+      "indiaSalary": "INR 4.5-10 lakhs/year",
+      "globalSalary": "~$78,860/year (US)"
+    },
+    {
+      "role": "Quality Control Analyst/Engineer",
+      "description": "Inspect and test products to ensure conformity to quality criteria",
+      "indiaSalary": "INR 3.5-8 lakhs/year",
+      "globalSalary": "$53,000-$93,000/year (US)"
+    },
+    {
+      "role": "Process Improvement Consultant",
+      "description": "Identify inefficiencies and optimize workflows to increase productivity",
+      "indiaSalary": "INR 5-15 lakhs/year",
+      "globalSalary": "$60,000-$130,000/year (US)"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology Bombay (IIT Bombay)",
+    "Indian Institute of Technology Delhi (IIT Delhi)",
+    "National Institute of Technology Tiruchirappalli (NIT Trichy)",
+    "Indian Institute of Technology Kharagpur (IIT Kharagpur)"
+  ],
+  "institutesInternational": [
+    "Massachusetts Institute of Technology (MIT), USA",
+    "National University of Singapore (NUS)",
+    "ETH Zurich, Switzerland"
+  ],
+  "careerLadder": [
+    "High school focus on mathematics, physics, and computer science",
+    "Undergraduate degree (B.Tech/B.E.) in Industrial Engineering, Manufacturing Engineering, or Mechanical Engineering",
+    "Gain practical experience in industrial settings",
+    "Advanced degree (M.Tech/M.E.) with specialization in Industrial Technology",
+    "Pursue relevant professional certifications",
+    "Engage in networking and attend industry conferences",
+    "Progress to supervisory or managerial roles",
+    "Leadership positions in industrial organizations"
+  ],
+  "sourceUrl": "https://svastrino.com/industrial-technology/"
+}

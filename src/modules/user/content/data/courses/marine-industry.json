@@ -1,0 +1,64 @@
+{
+  "slug": "marine-industry",
+  "name": "Marine Industry",
+  "overview": "The marine industry is a vibrant and continuously evolving field that stretches across various applications, all aimed at improving the ways we navigate, explore, and utilize the world's vast oceans. This multidisciplinary sector combines engineering, navigation, environmental science, and management. Modern maritime professionals leverage cutting-edge technologies like GPS, sonar systems, and automated controls. The field emphasizes innovation through autonomous vessels, digital mapping, and eco-friendly propulsion while balancing operational efficiency with marine ecosystem protection.",
+  "topQualities": [
+    "Adaptability",
+    "Technical Skills",
+    "Safety Awareness",
+    "Environmental Consciousness",
+    "Problem-Solving Abilities",
+    "Physical Stamina",
+    "Teamwork and Leadership",
+    "Communication Skills",
+    "Attention to Detail",
+    "Resilience and Perseverance"
+  ],
+  "topJobs": [
+    {
+      "role": "Marine Engineer",
+      "description": "Design, build, and maintain watercraft including ships, boats, and marine vessels while ensuring operational efficiency and safety standards.",
+      "indiaSalary": "INR 5-18 lakhs annually",
+      "globalSalary": "~$92,000 annually"
+    },
+    {
+      "role": "Naval Architect",
+      "description": "Specialize in designing and constructing marine vessels and structures ranging from cruise ships and cargo vessels to submarines and offshore structures.",
+      "indiaSalary": "INR 5-18 lakhs annually",
+      "globalSalary": "~$92,000 annually"
+    },
+    {
+      "role": "Marine Biologist",
+      "description": "Study marine organisms and ecosystems while conducting conservation efforts to protect marine biodiversity and habitats.",
+      "indiaSalary": "INR 3.5-8 lakhs annually",
+      "globalSalary": "$60,000-$70,000 annually"
+    },
+    {
+      "role": "Oceanographer",
+      "description": "Explore ocean processes, marine life, circulation patterns, geological formations, and chemical/physical properties of seawater.",
+      "indiaSalary": "INR 4-10 lakhs annually",
+      "globalSalary": "$60,000-$80,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Maritime University (IMU)",
+    "Cochin University of Science and Technology (CUSAT)",
+    "National Institute of Oceanography (NIO)",
+    "Vels University (School of Maritime Studies)",
+    "Tolani Maritime Institute"
+  ],
+  "institutesInternational": [
+    "University of Southampton, UK",
+    "Texas A&M University, USA",
+    "University of Queensland, Australia",
+    "National University of Singapore (NUS)"
+  ],
+  "careerLadder": [
+    "High school focus on biology, chemistry, physics, and mathematics",
+    "Undergraduate degree (B.Sc or B.E.) in Marine Biology, Oceanography, Marine Engineering, or Naval Architecture",
+    "Advanced degree (M.Sc or M.Eng) with marine specializations",
+    "Standardized test performance (GRE or relevant exams) for prestigious programs",
+    "Lifelong professional development through certifications, conferences, and industry networking"
+  ],
+  "sourceUrl": "https://svastrino.com/marine-industry/"
+}

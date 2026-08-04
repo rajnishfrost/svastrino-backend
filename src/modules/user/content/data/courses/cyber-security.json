@@ -1,0 +1,59 @@
+{
+  "slug": "cyber-security",
+  "name": "Cyber Security",
+  "overview": "Cyber Security Engineering is a dynamic and crucial field that intersects cutting-edge technology with the ever-evolving landscape of digital threats and vulnerabilities. The discipline involves designing protective measures to detect, prevent, and mitigate cyberattacks while balancing technological innovation with ethical responsibilities regarding data security and privacy.",
+  "topQualities": [
+    "Technical Expertise",
+    "Analytical Mindset",
+    "Problem-Solving Skills",
+    "Attention to Detail",
+    "Ethical Mindset",
+    "Adaptability",
+    "Resilience under Pressure",
+    "Awareness of Human Factors"
+  ],
+  "topJobs": [
+    {
+      "role": "Information Security Analysts",
+      "description": "Monitor networks to detect breaches and enact security protocols.",
+      "indiaSalary": "₹3-5 lakhs (entry), ₹6-12 lakhs (mid), ₹15+ lakhs (experienced)",
+      "globalSalary": "~$103,590 median (US)"
+    },
+    {
+      "role": "Ethical Hacker/Penetration Tester",
+      "description": "Orchestrate simulated attacks to expose system vulnerabilities.",
+      "indiaSalary": "₹3-6 lakhs (entry), ₹7-15 lakhs (mid), ₹18+ lakhs (experienced)",
+      "globalSalary": "~$92,000 median (US)"
+    },
+    {
+      "role": "Security Operations Center (SOC) Analyst",
+      "description": "Monitor security alerts in real-time for threat mitigation.",
+      "indiaSalary": "₹3-5 lakhs (entry), ₹6-10 lakhs (mid), ₹12+ lakhs (senior)",
+      "globalSalary": "~$75,000 median (US)"
+    },
+    {
+      "role": "Security Architect",
+      "description": "Design and implement impregnable systems and networks.",
+      "indiaSalary": "₹6-10 lakhs (entry), ₹12-20 lakhs (mid), ₹25+ lakhs (seasoned)",
+      "globalSalary": "~$129,000 median (US)"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Bombay",
+    "Indian Institute of Technology (IIT) Delhi",
+    "Indian Institute of Technology (IIT) Kanpur"
+  ],
+  "institutesInternational": [
+    "University of Maryland, College Park, USA",
+    "Carnegie Mellon University, USA"
+  ],
+  "careerLadder": [
+    "Excel in high school math, computer science, and statistics",
+    "Pursue Bachelor's degree (B.Tech/B.Sc) in Cybersecurity or Computer Science",
+    "Complete internships, research, and coding competitions",
+    "Pursue Master's degree (M.Tech/M.Sc) in Cybersecurity",
+    "Consider GRE or GATE examinations for global university admission",
+    "Continue lifelong learning and skill development"
+  ],
+  "sourceUrl": "https://svastrino.com/cyber-security/"
+}

@@ -1,0 +1,85 @@
+{
+  "slug": "army",
+  "name": "Army",
+  "overview": "A career in the Army involves defending the nation, maintaining peace, and assisting civil authorities. The Indian Army provides extensive training and education to prepare individuals for military service, covering military tactics, weaponry, leadership, and physical conditioning. This path offers opportunities for personal growth and meaningful contribution to national security.",
+  "topQualities": [
+    "Leadership",
+    "Physical Fitness",
+    "Discipline",
+    "Resilience",
+    "Teamwork",
+    "Problem-solving",
+    "Integrity",
+    "Adaptability",
+    "Mental Agility",
+    "Commitment and Patriotism"
+  ],
+  "topJobs": [
+    {
+      "role": "Indian Army Officer",
+      "description": "Hold positions from Lieutenant to higher ranks",
+      "indiaSalary": "₹10-20 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Infantry Officer",
+      "description": "Lead infantry troops during combat operations",
+      "indiaSalary": "₹8-15 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Army Engineer",
+      "description": "Design and construct military infrastructure",
+      "indiaSalary": "₹6-12 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Technical Officer",
+      "description": "Handle communications, electronics, mechanical engineering",
+      "indiaSalary": "₹8-15 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Army Doctor",
+      "description": "Provide medical care to military personnel",
+      "indiaSalary": "₹6-18 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Army Nurse",
+      "description": "Deliver healthcare services to soldiers",
+      "indiaSalary": "₹4-10 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Army Aviation Officer",
+      "description": "Pilot military aircraft and helicopters",
+      "indiaSalary": "₹8-20 lakh/annum",
+      "globalSalary": ""
+    },
+    {
+      "role": "Army JAG Officer",
+      "description": "Provide legal support and advice",
+      "indiaSalary": "₹8-15 lakh/annum",
+      "globalSalary": ""
+    }
+  ],
+  "institutesIndia": [
+    "National Defence Academy (NDA), Pune",
+    "Officers Training Academy (OTA), Chennai and Gaya",
+    "Army Cadet College (ACC), Dehradun",
+    "College of Military Engineering (CME), Pune",
+    "Armed Forces Medical College (AFMC), Pune"
+  ],
+  "institutesInternational": [],
+  "careerLadder": [
+    "Excel in high school academics, particularly mathematics, physics, and physical education",
+    "Enroll in undergraduate courses (B.A./B.Sc.) in Defense Studies or Military Science",
+    "Participate in physical fitness activities and extracurricular pursuits",
+    "Join institutions like NDA or Indian Military Academy",
+    "Pursue postgraduate programs (M.A./M.Sc.) in Defense/Strategic Studies",
+    "Appear for competitive examinations (CDS or Army CEE)",
+    "Secure commission as military officer"
+  ],
+  "sourceUrl": "https://svastrino.com/army/"
+}

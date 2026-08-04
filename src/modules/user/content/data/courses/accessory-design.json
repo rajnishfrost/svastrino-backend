@@ -1,0 +1,16 @@
+{
+  "slug": "accessory-design",
+  "name": "Accessory Design",
+  "overview": "Accessory design is a dynamic and creative field that revolves around the creation of fashion accessories including jewelry, handbags, hats, belts, and scarves. Professionals combine artistic skills, creativity, and technical knowledge to develop unique designs while staying current with fashion trends and manufacturing techniques. The field requires understanding of materials, production processes, and market demands.",
+  "topQualities": ["Inventiveness", "Knowledge of Fashion Trends", "Attention to Detail", "Technical Skills", "Color and Aesthetic Sense", "Market Awareness", "Problem-Solving Abilities", "Passion for Fashion", "Business Acumen"],
+  "topJobs": [
+    {"role": "Apparel Manufacturers", "description": "Develop accessories that enhance and complete clothing lines for fashion brands.", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10 lakhs+ (experienced)", "globalSalary": "$40,000-$100,000+"},
+    {"role": "Apparel Wholesalers", "description": "Design and produce accessories for distribution to retail stores and online platforms.", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10 lakhs+ (experienced)", "globalSalary": "$40,000-$100,000+"},
+    {"role": "Jewelry Designing", "description": "Create unique necklaces, bracelets, earrings, and rings using precious metals and gemstones.", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10 lakhs+ (experienced)", "globalSalary": "$40,000-$100,000+"},
+    {"role": "Freelance Accessory Designing", "description": "Work independently offering design services to multiple clients with creative freedom.", "indiaSalary": "Varies greatly; project-based or hourly/daily rates; moderate to high earnings possible", "globalSalary": ""}
+  ],
+  "institutesIndia": ["National Institute of Fashion Technology (NIFT)", "National Institute of Design (NID)", "Pearl Academy"],
+  "institutesInternational": ["Central Saint Martins, University of the Arts London (United Kingdom)", "Parsons School of Design, The New School (United States)", "Royal College of Art (United Kingdom)"],
+  "careerLadder": ["High school focus on art, design, and fashion subjects", "Elementary and Intermediate certificates (up to 10th grade)", "Engage in creative activities, design competitions, exhibitions, and workshops", "Undergraduate degree in accessory design or related fields", "Collaborate with industry professionals, internships, and portfolio building", "Master's degree for advanced specialization and leadership roles"],
+  "sourceUrl": "https://svastrino.com/accessory-design/"
+}

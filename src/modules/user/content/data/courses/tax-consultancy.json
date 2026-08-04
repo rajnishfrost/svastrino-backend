@@ -1,0 +1,66 @@
+{
+  "slug": "tax-consultancy",
+  "name": "Tax Consultancy",
+  "overview": "Tax Consultancy is a specialized domain within finance that revolves around providing expert advice on taxation matters to individuals, businesses, and organizations. Tax consultants navigate complex tax regulations, ensure compliance, and optimize clients' financial positions. They leverage technology and specialized knowledge across personal, corporate, and international tax domains. The field offers rewarding career paths with continuous learning opportunities.",
+  "topQualities": [
+    "Analytical Skills",
+    "Attention to Detail",
+    "Problem-Solving Ability",
+    "Communication Skills",
+    "Ethical Judgment",
+    "Continuous Learning",
+    "Client Relationship Management",
+    "Business Acumen",
+    "Legal Knowledge",
+    "Team Collaboration"
+  ],
+  "topJobs": [
+    {
+      "role": "Tax Consultant/Advisor",
+      "description": "Professional offering in-depth tax guidance to optimize strategies and ensure regulatory compliance",
+      "indiaSalary": "INR 5-10 lakhs/annum",
+      "globalSalary": "$50,000-$120,000/year"
+    },
+    {
+      "role": "Property Tax Analyst",
+      "description": "Specialist analyzing property tax assessments and advising on liability minimization strategies",
+      "indiaSalary": "INR 4-8 lakhs/annum",
+      "globalSalary": "$60,000-$100,000/year"
+    },
+    {
+      "role": "International Tax Analyst",
+      "description": "Professional managing international tax compliance across multiple jurisdictions",
+      "indiaSalary": "INR 6-12 lakhs/annum",
+      "globalSalary": "$70,000-$120,000/year"
+    },
+    {
+      "role": "Payroll Tax Analyst",
+      "description": "Professional responsible for payroll tax compliance, calculations, and regulatory updates",
+      "indiaSalary": "INR 4-8 lakhs/annum",
+      "globalSalary": "$50,000-$80,000/year"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Management (IIM), Bangalore - Post Graduate Program in Enterprise Management",
+    "National Law School of India University (NLSIU), Bangalore - Master of Business Laws",
+    "Symbiosis Law School, Pune - MBA with Taxation specialization"
+  ],
+  "institutesInternational": [
+    "London School of Economics and Political Science (LSE), UK - LLM in Tax Law",
+    "University of Sydney Law School, Australia - Master of Laws in Taxation",
+    "INSEAD, France - Executive Master in Finance with Taxation focus"
+  ],
+  "careerLadder": [
+    "Pursue Bachelor's degree in Accounting, Finance, or Business Administration",
+    "Earn professional certifications (CPA, CA, or EA)",
+    "Secure entry-level positions as Tax Associate or Junior Tax Consultant",
+    "Accumulate on-the-job experience with diverse client cases",
+    "Consider advanced education (Master's in Taxation or MBA)",
+    "Specialize in specific taxation areas",
+    "Pursue additional certifications (CFP, CTRS)",
+    "Progress into client management and portfolio roles",
+    "Explore business development and entrepreneurship opportunities",
+    "Seek industry recognition through professional organizations"
+  ],
+  "sourceUrl": "https://svastrino.com/tax-consultancy/"
+}

@@ -1,0 +1,45 @@
+{
+  "name": "svastrino-server",
+  "version": "0.1.0",
+  "description": "Svastrino — career mentoring & courses backend · Express + MongoDB (module-based)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "seed:scholarship": "node src/modules/user/scholarship/seedScholarship.js",
+    "seed:admin": "node src/modules/admin/credentials/seedAdmin.js",
+    "migrate:admins": "node src/modules/admin/credentials/migrateAdminsToUsers.js",
+    "seed:skillbuild": "node src/modules/user/skillbuild/seedSkillBuild.js",
+    "seed:blogs": "node src/modules/user/blogs/seedBlogs.js",
+    "seed:content": "node src/modules/user/content/seedContent.js",
+    "fetch:media": "node src/scripts/fetchMedia.js",
+    "reset:progress": "node src/modules/user/learn/resetProgress.js",
+    "reset:user": "node src/modules/user/learn/resetUser.js",
+    "seed:questions": "node src/modules/user/learn/seedQuestions.js",
+    "send:reminders": "node src/modules/user/learn/sendReminders.js",
+    "seed:mentoring": "node src/modules/user/mentoring/seedMentoring.js",
+    "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-rate-limit": "^8.5.2",
+    "ffmpeg-static": "^5.3.0",
+    "ffprobe-static": "^3.1.0",
+    "google-auth-library": "^10.9.0",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.7.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.0.3",
+    "razorpay": "^2.9.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

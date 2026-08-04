@@ -1,0 +1,64 @@
+{
+  "slug": "automobile-engineering",
+  "name": "Automobile Engineering",
+  "overview": "Automobile engineering is a dynamic and evolving field that combines engineering principles with technological advancements to design, develop, and manufacture automobiles. The field encompasses automotive design, vehicle dynamics, powertrain systems, safety, and manufacturing. Professionals contribute to developing advanced, eco-friendly vehicles while shaping sustainable transportation solutions and driving innovation across the automotive industry.",
+  "topQualities": [
+    "Strong Analytical Skills",
+    "Proficiency in Mathematics and Physics",
+    "Mechanical Aptitude",
+    "Problem-solving Abilities",
+    "Creativity and Innovation",
+    "Strong Technical Knowledge",
+    "Communication and Collaboration Skills",
+    "Attention to Detail",
+    "Adaptability and Flexibility",
+    "Passion for Automotive Technology"
+  ],
+  "topJobs": [
+    {
+      "role": "Driver Instrumentation Engineer",
+      "description": "Designing and developing instrumentation systems for vehicles by integrating sensors and control units.",
+      "indiaSalary": "INR 6-8 lakhs (entry-level); INR 10-15 lakhs+ (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    },
+    {
+      "role": "Production Engineer",
+      "description": "Overseeing the manufacturing process of automobiles while optimizing production lines.",
+      "indiaSalary": "INR 4-6 lakhs (entry-level); INR 8-12 lakhs+ (experienced)",
+      "globalSalary": "$50,000-$100,000+"
+    },
+    {
+      "role": "Automobile Designer",
+      "description": "Shaping the aesthetic and functional design of vehicles using CAD software and creativity.",
+      "indiaSalary": "INR 4-6 lakhs (entry-level); INR 8-12 lakhs+ (experienced)",
+      "globalSalary": "$50,000-$100,000+"
+    },
+    {
+      "role": "Quality Engineer",
+      "description": "Maintaining high standards of quality through audits, inspections, and continuous improvement processes.",
+      "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10 lakhs+ (experienced)",
+      "globalSalary": "$50,000-$90,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Madras",
+    "Indian Institute of Technology (IIT) Delhi",
+    "Indian Institute of Technology (IIT) Bombay",
+    "Birla Institute of Technology and Science (BITS), Pilani"
+  ],
+  "institutesInternational": [
+    "University of California, Berkeley (UC Berkeley), USA",
+    "University of Michigan, USA",
+    "Imperial College London, UK"
+  ],
+  "careerLadder": [
+    "Excel in high school mathematics, physics, and chemistry",
+    "Pursue undergraduate degree (B.E./B.Tech.) in Automobile Engineering",
+    "Engage in internships, design projects, and research activities",
+    "Complete Master's degree (M.E./M.Tech.) in Automobile Engineering",
+    "Prepare for standardized tests (GRE, GATE)",
+    "Secure admission to top universities",
+    "Launch professional career with continuous learning commitment"
+  ],
+  "sourceUrl": "https://svastrino.com/automobile-engineering/"
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "creative-writing",
+  "name": "Creative Writing",
+  "overview": "Creative writing is an art form that allows individuals to express their imagination, thoughts, and emotions through various literary genres. It encompasses storytelling, poetry, fiction, and playwriting. The field is dynamic and diverse, encouraging writers to develop unique voices while mastering character development, plot construction, and literary techniques. Writers can pursue careers in publishing, media, advertising, education, or as freelancers.",
+  "topQualities": ["Imagination and Creativity", "Strong Writing Skills", "Passion for Storytelling", "Keen Observation", "Adaptability and Openness to Feedback", "Discipline and Persistence", "Curiosity and Research Skills", "Empathy and Emotional Intelligence", "Perceptive Editing Skills", "Resilience and Risk-Taking"],
+  "topJobs": [
+    {"role": "Writer", "description": "Creates original content across novels, stories, poetry, and scripts", "indiaSalary": "INR 2-8 lakhs", "globalSalary": "$30,000-$100,000+"},
+    {"role": "Copywriter", "description": "Specializes in persuasive advertising and marketing content", "indiaSalary": "INR 3-15 lakhs", "globalSalary": "$40,000-$100,000+"},
+    {"role": "Journalist", "description": "Gathers and reports news stories for various media outlets", "indiaSalary": "INR 3-15 lakhs", "globalSalary": "$30,000-$70,000+"},
+    {"role": "Web Content Editor", "description": "Manages and curates website content for organizations", "indiaSalary": "INR 2-8 lakhs", "globalSalary": "$40,000-$80,000+"},
+    {"role": "SEO Executive", "description": "Increases online presence and generates organic traffic", "indiaSalary": "INR 2-8 lakhs", "globalSalary": "$40,000-$80,000+"}
+  ],
+  "institutesIndia": ["Jawaharlal Nehru University, New Delhi", "University of Calcutta, Kolkata", "Jamia Millia Islamia, New Delhi"],
+  "institutesInternational": ["Columbia University, New York City, USA", "University of California, Irvine, USA", "University of Manchester, Manchester, UK", "University of St Andrews, St Andrews, UK"],
+  "careerLadder": ["High school engagement in literary activities and writing competitions", "Expand reading repertoire across genres and authors", "Participate in writing workshops and seminars", "Pursue undergraduate degree in creative writing or related fields", "Build portfolio and submit work for publication", "Gain practical experience through internships and freelance writing", "Pursue Master's degree (MFA) in Creative Writing", "Submit work to literary agents and publishers", "Attend writing conferences and literary events", "Establish professional network and online presence"],
+  "sourceUrl": "https://svastrino.com/creative-writing/"
+}

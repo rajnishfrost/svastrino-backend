@@ -1,0 +1,64 @@
+{
+  "slug": "literature",
+  "name": "Literature",
+  "overview": "The world of literature is always changing and growing, turning words into stories, thoughts, and feelings that touch many parts of our lives. Literature encompasses diverse writing forms including books, poems, and essays, extending across traditional and digital platforms. Professionals blend creative imagination with linguistic proficiency to explore themes of identity, society, and human experience. The field offers exciting opportunities for those passionate about exploring and expressing the myriad facets of human experience.",
+  "topQualities": [
+    "Creativity",
+    "Strong Writing Skills",
+    "Passion for Reading",
+    "Curiosity",
+    "Empathy",
+    "Attention to Detail",
+    "Open-mindedness",
+    "Making Connections",
+    "Research skills",
+    "Staying Strong",
+    "Being Ethical"
+  ],
+  "topJobs": [
+    {
+      "role": "Author/Novelist",
+      "description": "Individuals who craft original works of fiction or non-fiction across novels, short stories, and essays.",
+      "indiaSalary": "INR 2-5 lakhs (entry-level) to INR 10+ lakhs (established)",
+      "globalSalary": "~$62,170 average (USA); varies significantly by success level"
+    },
+    {
+      "role": "Journalist",
+      "description": "Professionals who investigate, report, and craft articles for newspapers, magazines, and online publications.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level) to INR 8+ lakhs (seasoned)",
+      "globalSalary": "$40,000-$70,000 (USA); £25,000+ (UK); CAD 60,000+ (Canada)"
+    },
+    {
+      "role": "Editor",
+      "description": "Specialists who review and revise written content for clarity, coherence, and style adherence.",
+      "indiaSalary": "INR 4-8 lakhs (entry-level) to INR 10+ lakhs (experienced)",
+      "globalSalary": "$50,000-$80,000 (USA); freelance varies by project"
+    },
+    {
+      "role": "Content Writer/Copywriter",
+      "description": "Creators of written materials for digital platforms, websites, advertising, and marketing.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level) to INR 6+ lakhs (skilled)",
+      "globalSalary": "$50,000-$75,000 (USA); freelance rates vary by clientele"
+    }
+  ],
+  "institutesIndia": [
+    "Jawaharlal Nehru University (JNU), New Delhi (MA English, MPhil Comparative Literature, PhD English)",
+    "University of Delhi, New Delhi (BA Hons English, MA English, PhD English)",
+    "English and Foreign Languages University (EFLU), Hyderabad (BA Hons English, MA English Literature, PhD English Literature)"
+  ],
+  "institutesInternational": [
+    "University of Oxford, UK (BA English Language and Literature, MSt English, DPhil English)",
+    "University of Cambridge, UK (BA English, MPhil Criticism and Culture, PhD English)",
+    "Harvard University, USA (PhD in English, English Secondary Field)",
+    "University of California, Berkeley, USA (PhD in English, English Major)"
+  ],
+  "careerLadder": [
+    "High school completion",
+    "Bachelor's degree in Literature, Creative Writing, or related field",
+    "Internships, editorial roles, or entry-level positions in publishing/media",
+    "Master's degree in Literature, Poetry, or Creative Writing",
+    "Advanced professional roles (Lead Writers, Senior Editors)",
+    "Establishment of independent publishing ventures or specialized positions"
+  ],
+  "sourceUrl": "https://svastrino.com/literature/"
+}

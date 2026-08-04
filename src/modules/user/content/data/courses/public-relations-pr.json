@@ -1,0 +1,16 @@
+{
+  "slug": "public-relations-pr",
+  "name": "Public Relations (PR)",
+  "overview": "The field of public relations (PR) is a dynamic and multifaceted domain that revolves around strategic communication to shape public perception and maintain positive relationships between organizations and their stakeholders. PR professionals employ storytelling, message crafting, relationship building, and crisis communication skills. They adapt continuously to new technologies and emerging trends while leveraging data-driven insights. The field offers opportunities for those passionate about authentic communication and navigating complex media landscapes.",
+  "topQualities": ["Communication Skills", "Strong Interpersonal Skills", "Creativity", "Strategic Thinking", "Adaptability", "Problem-Solving Skills", "Attention to Detail", "Resilience", "Media Savvy", "Ethical Conduct"],
+  "topJobs": [
+    {"role": "Public Relations Specialist", "description": "Manages public image, crafts campaigns, drafts press releases, handles crisis communication", "indiaSalary": "INR 3-8 lakhs", "globalSalary": "$40,000-$70,000"},
+    {"role": "Corporate Communications Manager", "description": "Creates communication strategies for stakeholders; manages internal/external channels", "indiaSalary": "INR 6-15 lakhs", "globalSalary": "$60,000-$120,000"},
+    {"role": "Public Affairs Officer", "description": "Manages relationships with public, government, stakeholders; monitors public opinion", "indiaSalary": "INR 5-12 lakhs", "globalSalary": "$50,000-$100,000"},
+    {"role": "Public Relations Consultant", "description": "Provides strategic advice, develops communication plans, handles crisis management", "indiaSalary": "INR 4-10 lakhs", "globalSalary": "$40,000-$80,000"}
+  ],
+  "institutesIndia": ["Symbiosis Institute of Media and Communication (SIMC), Pune – MBA in Communication Management", "MICA, Ahmedabad – Post Graduate Diploma in Management (Communication)", "Amity School of Communication, Noida – MA in Public Relations and Event Management"],
+  "institutesInternational": ["University of Southern California (USC) – Master of Communication Management", "New York University (NYU) – MS in Public Relations and Corporate Communication", "London School of Economics (LSE) – MSc in Media and Communications", "University of Sydney – Master of Strategic Public Relations"],
+  "careerLadder": ["Complete 12th grade; pursue Bachelor's in PR, Communications, or Journalism", "Seek internships/entry-level roles in PR firms, media outlets, or corporate communications", "Stay updated through workshops, seminars, conferences; obtain certifications (APR, CPRS)", "Identify and specialize in specific PR niches (media relations, crisis communication, etc.)", "Consider Master's degree or specialized certificates in areas like social media management", "Advance to leadership positions: PR Manager, PR Director, Chief Communications Officer", "Transition into PR consulting or establish your own agency/consultancy firm", "Maintain adaptability and commit to continuous learning throughout career"],
+  "sourceUrl": "https://svastrino.com/public-relations-pr/"
+}

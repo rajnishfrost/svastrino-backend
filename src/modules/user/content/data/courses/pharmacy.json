@@ -1,0 +1,66 @@
+{
+  "slug": "pharmacy",
+  "name": "Pharmacy",
+  "overview": "Pharmacy is a dynamic and important field that bridges the gap between scientific knowledge and patient care. It encompasses the study of pharmaceuticals, their interactions with the human body, and their role in promoting health. The field combines biology, pharmacology, technology, and patient care, with pharmacists playing crucial roles in medication safety, healthcare research, patient education, and public health efforts.",
+  "topQualities": [
+    "Analytical Thinking",
+    "Curiosity and Research Drive",
+    "Attention to Detail",
+    "Problem-Solving Skills",
+    "Scientific Rigor and Methodology",
+    "Ethical Considerations",
+    "Collaborative Attitude"
+  ],
+  "topJobs": [
+    {
+      "role": "Pharmacist",
+      "description": "Ensuring safe and effective medication use for patients. They dispense medications, provide patient education, collaborate with healthcare teams.",
+      "indiaSalary": "INR 2-8 lakhs",
+      "globalSalary": "$50,000-$120,000+"
+    },
+    {
+      "role": "Clinical Pharmacist",
+      "description": "Optimizing medication regimens and ensuring safe and effective drug therapy. They collaborate with healthcare teams, analyze patients' medical histories.",
+      "indiaSalary": "INR 3-10 lakhs",
+      "globalSalary": "$50,000-$120,000+"
+    },
+    {
+      "role": "Pharmaceutical Research Scientist",
+      "description": "Driving innovation by investigating and developing new drugs and treatments. They conduct in-depth research to uncover medication mechanisms.",
+      "indiaSalary": "INR 4-12 lakhs",
+      "globalSalary": "$60,000-$130,000+"
+    },
+    {
+      "role": "Pharmacovigilance Specialist",
+      "description": "Guardians of patient safety, responsible for monitoring and assessing adverse effects of medications.",
+      "indiaSalary": "INR 4-10 lakhs",
+      "globalSalary": "$50,000-$120,000+"
+    },
+    {
+      "role": "Regulatory Affairs Specialist",
+      "description": "Navigating the intricate landscape of pharmaceutical regulations. They ensure drugs meet regulatory standards and obtain market approvals.",
+      "indiaSalary": "INR 4-12 lakhs",
+      "globalSalary": "$60,000-$130,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Jamia Hamdard, New Delhi",
+    "Banaras Hindu University (BHU), Varanasi",
+    "Institute of Chemical Technology (ICT), Mumbai",
+    "Manipal Academy of Higher Education, Manipal"
+  ],
+  "institutesInternational": [
+    "University of California, San Francisco (UCSF), USA",
+    "University of Cambridge, UK",
+    "Swiss Federal Institute of Technology (ETH Zurich), Switzerland"
+  ],
+  "careerLadder": [
+    "Excel in high school biology, chemistry, and mathematics",
+    "Enroll in undergraduate Bachelor of Pharmacy (B.Pharm) programs",
+    "Engage in internships, research projects, and practical experiences",
+    "Advance through Master's degree (M.Pharm) or Doctorate in Pharmacy (Pharm.D)",
+    "Specialize in areas like clinical pharmacology, pharmaceutical research, or drug regulation",
+    "Secure positions in research organizations, pharmaceutical firms, regulatory agencies, or healthcare settings"
+  ],
+  "sourceUrl": "https://svastrino.com/pharmacy/"
+}

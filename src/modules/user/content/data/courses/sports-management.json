@@ -1,0 +1,63 @@
+{
+  "slug": "sports-management",
+  "name": "Sports Management",
+  "overview": "The world of sports management involves smart strategies, team effort, and a love for sports across diverse roles like event planning, marketing, and organizational management. The field extends way beyond just the usual sports stuff, using new tech and working together in new ways. Sports managers come from various educational backgrounds and combine sports knowledge with management expertise. This exciting area continues growing with significant community and cultural impact.",
+  "topQualities": [
+    "Passion for Sports",
+    "Communication Skills",
+    "Organizational Skills",
+    "Leadership Abilities",
+    "Business Acumen",
+    "Negotiation Skills",
+    "Problem-Solving Ability",
+    "Networking Skills",
+    "Ethical Conduct"
+  ],
+  "topJobs": [
+    {
+      "role": "Sports Agent",
+      "description": "Represents athletes in contract negotiations, sponsorship deals, and career guidance within the sports industry.",
+      "indiaSalary": "INR 6-15 lakhs annually",
+      "globalSalary": "$60,000 to several million dollars annually"
+    },
+    {
+      "role": "Sports Marketing Manager",
+      "description": "Creates and executes marketing strategies to boost visibility of teams, events, or athletes.",
+      "indiaSalary": "INR 5-12 lakhs annually",
+      "globalSalary": "$50,000-$120,000 annually"
+    },
+    {
+      "role": "Athletic Director",
+      "description": "Oversees complete athletic programs at educational institutions, managing budgets and sports development.",
+      "indiaSalary": "INR 8-20 lakhs annually",
+      "globalSalary": "$60,000-$150,000 annually"
+    },
+    {
+      "role": "Event Coordinator",
+      "description": "Plans and executes sports events with logistical arrangements, marketing, and stakeholder coordination.",
+      "indiaSalary": "INR 3-8 lakhs annually",
+      "globalSalary": "$40,000-$80,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "International Institute of Sports Management (IISM) – Mumbai",
+    "Amity School of Physical Education and Sports Sciences – Noida",
+    "National Academy of Sports Management (NASM) – Mumbai",
+    "Symbiosis International University – Pune"
+  ],
+  "institutesInternational": [
+    "University of Massachusetts Amherst – United States",
+    "University of London – United Kingdom",
+    "AISTS – Switzerland",
+    "University of Bayreuth – Germany"
+  ],
+  "careerLadder": [
+    "High school completion",
+    "Bachelor's degree in Sports Management or related field",
+    "Internships/entry-level positions in sports organizations",
+    "Master's degree in specialized sports field",
+    "Advanced roles (Sports Marketing Manager, Athlete Agent, Event Coordinator)",
+    "Leadership positions or independent consultancy ventures"
+  ],
+  "sourceUrl": "https://svastrino.com/sports-management/"
+}

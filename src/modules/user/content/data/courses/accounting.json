@@ -1,0 +1,16 @@
+{
+  "slug": "accounting",
+  "name": "Accounting",
+  "overview": "Accounting is the recording of financial transactions, as well as their storage, sorting, retrieval, summarization, and presentation in different reports and analyses. The discipline has evolved from basic record-keeping to a sophisticated field leveraging advanced technologies and specialized expertise. Modern accounting encompasses financial, managerial, tax, and sustainability accounting while professionals provide strategic guidance on financial matters and compliance.",
+  "topQualities": ["Analytical Skills", "Attention to Detail", "Ethical Standards and Integrity", "Strong Communication Skills", "Problem-Solving Abilities", "Technological Proficiency", "Time Management and Organization", "Adaptability and Continuous Learning"],
+  "topJobs": [
+    {"role": "Financial Analyst", "description": "Assess financial health and provide insights for investment decisions through analysis of financial accounts and market research.", "indiaSalary": "6-12 lakhs INR/year", "globalSalary": "$50,000-$100,000/year"},
+    {"role": "Tax Consultant", "description": "Experts in tax planning and compliance who help minimize tax liabilities while ensuring adherence to tax laws.", "indiaSalary": "6-15 lakhs INR/year", "globalSalary": "$50,000-$120,000/year"},
+    {"role": "Financial Controller", "description": "Oversee financial operations including reporting, budgeting, and maintaining internal controls in large organizations.", "indiaSalary": "12-30 lakhs INR/year", "globalSalary": "$80,000-$150,000/year"},
+    {"role": "Certified Public Accountant (CPA)", "description": "Professionals offering financial statement audits, tax planning, and consulting services across various sectors.", "indiaSalary": "6-20 lakhs INR/year", "globalSalary": "$60,000-$150,000/year"}
+  ],
+  "institutesIndia": ["Indian Institute of Management, Ahmedabad (IIMA)", "Indian Institute of Management, Bangalore (IIMB)", "Xavier School of Management, Jamshedpur (XLRI)", "Institute of Chartered Accountants of India (ICAI)"],
+  "institutesInternational": ["Harvard University, United States", "London School of Economics and Political Science (LSE), United Kingdom", "University of Oxford, United Kingdom"],
+  "careerLadder": ["Focus on academics during high school (mathematics, economics, business studies)", "Pursue undergraduate degree in accounting or related field with internship participation", "Obtain professional certifications (CPA, CA, ACCA, CMA)", "Complete Master's degree in Accounting or specialized area", "Take standardized exams (GRE/GMAT) for advanced program admission", "Combine academic excellence, practical experience, and continuous professional development"],
+  "sourceUrl": "https://svastrino.com/accounting/"
+}

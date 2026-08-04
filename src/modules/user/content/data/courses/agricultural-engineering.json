@@ -1,0 +1,82 @@
+{
+  "slug": "agricultural-engineering",
+  "name": "Agricultural Engineering",
+  "overview": "Agricultural engineering merges engineering principles with agricultural practices to enhance productivity and efficiency through machinery, equipment, and structures while minimizing environmental impact. The field has evolved from ancient irrigation techniques through the Industrial Revolution to incorporate modern technologies like precision agriculture, drones, robotics, and biotechnology. Agricultural engineers apply the principles of mechanical and electrical engineering, construction technology, hydraulics, and soil mechanics to optimize agricultural processes.",
+  "topQualities": [
+    "Technical Knowledge and Expertise",
+    "Problem-solving Skills",
+    "Creativity and Innovation",
+    "Communication Skills",
+    "Analytical Skills",
+    "Attention to Detail",
+    "Flexibility & Adaptability"
+  ],
+  "topJobs": [
+    {
+      "role": "Agricultural Engineer",
+      "description": "Design equipment and systems to optimize crop yields and sustainability",
+      "indiaSalary": "6-8 lakhs p.a.",
+      "globalSalary": "$65,254 p.a."
+    },
+    {
+      "role": "Plant Physiologist",
+      "description": "Study plant growth under environmental conditions to improve yields and pest management",
+      "indiaSalary": "4-6 lakhs p.a.",
+      "globalSalary": "$66,000 p.a."
+    },
+    {
+      "role": "Survey Research Agricultural Engineer",
+      "description": "Design surveys and analyze agricultural production data",
+      "indiaSalary": "4-6 lakhs p.a.",
+      "globalSalary": "$69,000 p.a."
+    },
+    {
+      "role": "Environmental Controls Engineer",
+      "description": "Design systems managing temperature, humidity, and air quality",
+      "indiaSalary": "6-8 lakhs p.a.",
+      "globalSalary": "$76,000 p.a."
+    },
+    {
+      "role": "Microbiologist",
+      "description": "Study microorganisms affecting plants and soil health",
+      "indiaSalary": "4-6 lakhs p.a.",
+      "globalSalary": "$70,000 p.a."
+    },
+    {
+      "role": "Food Supervisor",
+      "description": "Oversee processing and packaging of agricultural products",
+      "indiaSalary": "3-5 lakhs p.a.",
+      "globalSalary": "$50,000 p.a."
+    },
+    {
+      "role": "Agricultural Inspector",
+      "description": "Ensure products meet government regulations and safety standards",
+      "indiaSalary": "3-5 lakhs p.a.",
+      "globalSalary": "$45,000 p.a."
+    },
+    {
+      "role": "Agricultural Specialist",
+      "description": "Provide technical support in crop, livestock, or soil management",
+      "indiaSalary": "4-6 lakhs p.a.",
+      "globalSalary": "$60,000 p.a."
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Kharagpur",
+    "Indian Institute of Science (IISc) Bangalore"
+  ],
+  "institutesInternational": [
+    "University of California, Davis, USA",
+    "Purdue University, USA",
+    "North Carolina State University, USA",
+    "University of Florida (Werthiem), USA"
+  ],
+  "careerLadder": [
+    "Excel in high school mathematics, physics, and biology",
+    "Pursue Bachelor's degree (B.Tech/B.E.) in Agricultural Engineering",
+    "Participate in internships, research projects, and extracurricular activities",
+    "Complete Master's degree (M.Tech/M.E.) in Agricultural Engineering",
+    "Take standardized examinations (GRE/GATE) for elite college admission"
+  ],
+  "sourceUrl": "https://svastrino.com/agricultural-engineering/"
+}

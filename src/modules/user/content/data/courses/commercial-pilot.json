@@ -1,0 +1,65 @@
+{
+  "slug": "commercial-pilot",
+  "name": "Commercial Pilot",
+  "overview": "Commercial piloting is a specialist area that involves operating aircraft for business purposes such as transporting people, freight, or doing aerial surveys. The profession requires rigorous training and adherence to strict safety regulations. Commercial pilots ensure safe and efficient transport while managing pre-flight checks, aircraft operation, and emergency procedures. With a strong emphasis on regulations and safety, commercial pilots contribute to maintaining the highest standards in commercial aviation.",
+  "topQualities": [
+    "Excellent Decision-Making and Communication abilities",
+    "Strong Problem-Solving and Analytical Abilities",
+    "Adaptability and resilience",
+    "Attention to Detail and Focus",
+    "Leadership and Teamwork Skills"
+  ],
+  "topJobs": [
+    {
+      "role": "Airline Pilot",
+      "description": "Operates flights, transports passengers/cargo, ensures aircraft and crew safety",
+      "indiaSalary": "INR 10-50 lakhs/year",
+      "globalSalary": "Several hundred thousand $/year"
+    },
+    {
+      "role": "Charter Pilot",
+      "description": "Provides on-demand air transportation services via private/chartered aircraft",
+      "indiaSalary": "INR 8-40 lakhs/year",
+      "globalSalary": "Several hundred thousand $/year"
+    },
+    {
+      "role": "Corporate Pilot",
+      "description": "Operates private aircraft for business travel of executives and clients",
+      "indiaSalary": "INR 12-60 lakhs/year",
+      "globalSalary": "Several hundred thousand $/year"
+    },
+    {
+      "role": "Flight Instructor",
+      "description": "Provides comprehensive training and guidance to aspiring pilots",
+      "indiaSalary": "INR 5-12 lakhs/year",
+      "globalSalary": "$30,000-$80,000/year"
+    },
+    {
+      "role": "Cargo Pilot",
+      "description": "Transports freight and cargo to different destinations globally",
+      "indiaSalary": "INR 10-25 lakhs/year",
+      "globalSalary": "$60,000-$150,000/year"
+    }
+  ],
+  "institutesIndia": [
+    "Indira Gandhi Rashtriya Uran Akademi (IGRUA)",
+    "Rajiv Gandhi Academy for Aviation Technology (RGAAT)",
+    "National Flying Training Institute (NFTI)"
+  ],
+  "institutesInternational": [
+    "Embry-Riddle Aeronautical University (ERAU) – United States",
+    "Oxford Aviation Academy – United Kingdom",
+    "Lufthansa Aviation Training (LAT) – Germany"
+  ],
+  "careerLadder": [
+    "Strong academic foundation in high school (mathematics, physics, aeronautics)",
+    "Professional pilot training program at recognized aviation academy/flight school",
+    "Accumulate required flight hours for licensing",
+    "Obtain Commercial Pilot License (CPL)",
+    "Obtain Instrument Rating (IR) and Multi-Engine Rating (MER)",
+    "Pursue Bachelor's degree in Aviation or related field",
+    "Take standardized examinations (Aviation English Language Proficiency Test, Airline Transport Pilot License)",
+    "Build successful career with dedication and practical flight experience"
+  ],
+  "sourceUrl": "https://svastrino.com/commercial-pilot/"
+}

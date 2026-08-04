@@ -1,0 +1,72 @@
+{
+  "slug": "creative-writing-2",
+  "name": "Creative Writing",
+  "overview": "Creative writing is an art form that allows individuals to express their imagination, thoughts, and emotions through various literary genres. It encompasses storytelling, poetry, fiction, non-fiction, and playwriting. The field encourages writers to develop unique voices while mastering character development, plot construction, and literary techniques like symbolism and metaphor.",
+  "topQualities": [
+    "Imagination and Creativity",
+    "Strong Writing Skills",
+    "Passion for Storytelling",
+    "Keen Observation",
+    "Adaptability and Openness to Feedback",
+    "Discipline and Persistence",
+    "Curiosity and Research Skills",
+    "Empathy and Emotional Intelligence",
+    "Perceptive Editing Skills",
+    "Resilience and Risk-Taking"
+  ],
+  "topJobs": [
+    {
+      "role": "Writer",
+      "description": "Produce original content across novels, stories, poetry, articles, and scripts",
+      "indiaSalary": "INR 2-8 lakhs",
+      "globalSalary": "$30,000-$100,000+"
+    },
+    {
+      "role": "Copywriter",
+      "description": "Create persuasive content for advertising and marketing purposes",
+      "indiaSalary": "INR 3-15 lakhs",
+      "globalSalary": "$40,000-$100,000+"
+    },
+    {
+      "role": "Journalist",
+      "description": "Gather and report news stories for various media platforms",
+      "indiaSalary": "INR 3-15 lakhs",
+      "globalSalary": "$30,000-$70,000+"
+    },
+    {
+      "role": "Web Content Editor",
+      "description": "Manage and curate website content for accuracy and engagement",
+      "indiaSalary": "INR 2-8 lakhs",
+      "globalSalary": "$40,000-$80,000+"
+    },
+    {
+      "role": "SEO Executive",
+      "description": "Increase online presence through keyword research and optimization strategies",
+      "indiaSalary": "INR 2-8 lakhs",
+      "globalSalary": "$40,000-$80,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Jawaharlal Nehru University, New Delhi",
+    "University of Calcutta, Kolkata",
+    "Jamia Millia Islamia, New Delhi"
+  ],
+  "institutesInternational": [
+    "Columbia University, New York City, USA",
+    "University of California, Irvine, USA",
+    "University of Manchester, Manchester, UK",
+    "University of St Andrews, St Andrews, UK"
+  ],
+  "careerLadder": [
+    "High school engagement in writing clubs, poetry slams, and competitions",
+    "Expand reading repertoire across genres and authors",
+    "Participate in writing workshops and creative communities",
+    "Pursue undergraduate degree in Creative Writing or English Literature",
+    "Seek internships at publishing houses and media organizations",
+    "Build professional portfolio and online presence",
+    "Pursue Master's degree (MFA) in Creative Writing",
+    "Submit work to literary agents, publishers, and contests",
+    "Attend writing conferences and literary events"
+  ],
+  "sourceUrl": "https://svastrino.com/creative-writing-2/"
+}

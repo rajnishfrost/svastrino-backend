@@ -1,0 +1,413 @@
+[
+  {
+    "slug": "arts",
+    "name": "Arts",
+    "courses": [
+      {
+        "name": "Accessory Design",
+        "slug": "accessory-design"
+      },
+      {
+        "name": "Advertising",
+        "slug": "advertising"
+      },
+      {
+        "name": "Air Hostess",
+        "slug": "air-hostess"
+      },
+      {
+        "name": "Archaeology",
+        "slug": "archaeology"
+      },
+      {
+        "name": "Athletics",
+        "slug": "athletics"
+      },
+      {
+        "name": "Bachelor of Education",
+        "slug": "bachelor-of-education"
+      },
+      {
+        "name": "Ceramic and Glass Design",
+        "slug": "ceramic-and-glass-design"
+      },
+      {
+        "name": "Communication Designs",
+        "slug": "communication-designs"
+      },
+      {
+        "name": "Creative Writing",
+        "slug": "creative-writing"
+      },
+      {
+        "name": "Global Studies",
+        "slug": "global-studies"
+      },
+      {
+        "name": "Hotel Management",
+        "slug": "hotel-management"
+      },
+      {
+        "name": "Interior Design",
+        "slug": "interior-design"
+      },
+      {
+        "name": "Liberal Arts",
+        "slug": "liberal-arts"
+      },
+      {
+        "name": "Political Science",
+        "slug": "political-science"
+      }
+    ],
+    "order": 1
+  },
+  {
+    "slug": "commerce",
+    "name": "Commerce",
+    "courses": [
+      {
+        "name": "Accounting",
+        "slug": "accounting"
+      },
+      {
+        "name": "Actuarial Science",
+        "slug": "actuarial-science"
+      },
+      {
+        "name": "Air Hostess",
+        "slug": "air-hostess"
+      },
+      {
+        "name": "Athletics",
+        "slug": "athletics"
+      },
+      {
+        "name": "Bachelor of Education",
+        "slug": "bachelor-of-education"
+      },
+      {
+        "name": "Company Secretary",
+        "slug": "company-secretary"
+      },
+      {
+        "name": "Corporate Training",
+        "slug": "corporate-training"
+      },
+      {
+        "name": "Human Resources (HR)",
+        "slug": "human-resources-hr"
+      },
+      {
+        "name": "Land Economy",
+        "slug": "land-economy"
+      },
+      {
+        "name": "Operations management",
+        "slug": "operations-management"
+      },
+      {
+        "name": "Public Relations (PR)",
+        "slug": "public-relations-pr"
+      },
+      {
+        "name": "Real Estate Management",
+        "slug": "real-estate-management"
+      },
+      {
+        "name": "Sports Management",
+        "slug": "sports-management"
+      },
+      {
+        "name": "Tax Consultancy",
+        "slug": "tax-consultancy"
+      }
+    ],
+    "order": 2
+  },
+  {
+    "slug": "commercial-arts",
+    "name": "Commercial Arts",
+    "courses": [
+      {
+        "name": "Accessory Design",
+        "slug": "accessory-design"
+      },
+      {
+        "name": "Advertising",
+        "slug": "advertising"
+      },
+      {
+        "name": "Communication Designs",
+        "slug": "communication-designs"
+      },
+      {
+        "name": "Interior Design",
+        "slug": "interior-design"
+      }
+    ],
+    "order": 3
+  },
+  {
+    "slug": "engineering",
+    "name": "Engineering",
+    "courses": [
+      {
+        "name": "Aeronautical Engineering",
+        "slug": "aeronautical-engineering"
+      },
+      {
+        "name": "Aerospace Engineering",
+        "slug": "aerospace-engineering"
+      },
+      {
+        "name": "Agricultural Engineering",
+        "slug": "agricultural-engineering"
+      },
+      {
+        "name": "Artificial Intelligence Engineering",
+        "slug": "artificial-intelligence-engineering"
+      },
+      {
+        "name": "Automobile Engineering",
+        "slug": "automobile-engineering"
+      },
+      {
+        "name": "Biomedical Engineering",
+        "slug": "biomedical-engineering"
+      },
+      {
+        "name": "Chemical Engineering",
+        "slug": "chemical-engineering"
+      },
+      {
+        "name": "Cyber Security",
+        "slug": "cyber-security"
+      },
+      {
+        "name": "Industrial Technology",
+        "slug": "industrial-technology"
+      },
+      {
+        "name": "Marine Industry",
+        "slug": "marine-industry"
+      }
+    ],
+    "order": 4
+  },
+  {
+    "slug": "fine-arts",
+    "name": "Fine Arts",
+    "courses": [
+      {
+        "name": "Ceramic and Glass Design",
+        "slug": "ceramic-and-glass-design"
+      },
+      {
+        "name": "Creative Writing",
+        "slug": "creative-writing-2"
+      },
+      {
+        "name": "Fine Arts",
+        "slug": "fine-arts"
+      },
+      {
+        "name": "Graphic Design",
+        "slug": "graphic-design"
+      }
+    ],
+    "order": 5
+  },
+  {
+    "slug": "literary-arts",
+    "name": "Literary Arts",
+    "courses": [
+      {
+        "name": "Creative Writing",
+        "slug": "creative-writing"
+      },
+      {
+        "name": "Journalism",
+        "slug": "journalism"
+      },
+      {
+        "name": "Law",
+        "slug": "law"
+      },
+      {
+        "name": "Literature",
+        "slug": "literature"
+      }
+    ],
+    "order": 6
+  },
+  {
+    "slug": "management",
+    "name": "Management",
+    "courses": [
+      {
+        "name": "Advertising",
+        "slug": "advertising"
+      },
+      {
+        "name": "Corporate Training",
+        "slug": "corporate-training"
+      }
+    ],
+    "order": 7
+  },
+  {
+    "slug": "medical",
+    "name": "Medical",
+    "courses": [
+      {
+        "name": "Ayurvedic Medicine",
+        "slug": "ayurvedic-medicine"
+      }
+    ],
+    "order": 8
+  },
+  {
+    "slug": "other-science-courses",
+    "name": "Other Science Courses",
+    "courses": [
+      {
+        "name": "Environmental Studies",
+        "slug": "environmental-studies"
+      }
+    ],
+    "order": 9
+  },
+  {
+    "slug": "paramedical",
+    "name": "Paramedical",
+    "courses": [
+      {
+        "name": "Audiology and Speech Therapy",
+        "slug": "audiology-and-speech-therapy"
+      }
+    ],
+    "order": 10
+  },
+  {
+    "slug": "performing-arts",
+    "name": "Performing Arts",
+    "courses": [
+      {
+        "name": "Hotel Management",
+        "slug": "hotel-management"
+      }
+    ],
+    "order": 11
+  },
+  {
+    "slug": "professional-commerce-courses",
+    "name": "Professional Commerce Courses",
+    "courses": [
+      {
+        "name": "Accounting",
+        "slug": "accounting"
+      },
+      {
+        "name": "Company Secretary",
+        "slug": "company-secretary"
+      },
+      {
+        "name": "Corporate Training",
+        "slug": "corporate-training"
+      }
+    ],
+    "order": 12
+  },
+  {
+    "slug": "science",
+    "name": "Science",
+    "courses": [
+      {
+        "name": "Aeronautical Engineering",
+        "slug": "aeronautical-engineering"
+      },
+      {
+        "name": "Aerospace Engineering",
+        "slug": "aerospace-engineering"
+      },
+      {
+        "name": "Agricultural Engineering",
+        "slug": "agricultural-engineering"
+      },
+      {
+        "name": "Air Force",
+        "slug": "air-force"
+      },
+      {
+        "name": "Air Hostess",
+        "slug": "air-hostess"
+      },
+      {
+        "name": "Air Traffic Controller",
+        "slug": "air-traffic-controller"
+      },
+      {
+        "name": "Archaeology",
+        "slug": "archaeology"
+      },
+      {
+        "name": "Architecture",
+        "slug": "architecture"
+      },
+      {
+        "name": "Army",
+        "slug": "army"
+      },
+      {
+        "name": "Artificial Intelligence Engineering",
+        "slug": "artificial-intelligence-engineering"
+      },
+      {
+        "name": "Astronomy",
+        "slug": "astronomy"
+      },
+      {
+        "name": "Athletics",
+        "slug": "athletics"
+      },
+      {
+        "name": "Audiology and Speech Therapy",
+        "slug": "audiology-and-speech-therapy"
+      },
+      {
+        "name": "Automobile Engineering",
+        "slug": "automobile-engineering"
+      },
+      {
+        "name": "Bachelor of Education",
+        "slug": "bachelor-of-education"
+      },
+      {
+        "name": "Biology",
+        "slug": "biology"
+      },
+      {
+        "name": "Biomedical Engineering",
+        "slug": "biomedical-engineering"
+      },
+      {
+        "name": "Chemical Engineering",
+        "slug": "chemical-engineering"
+      },
+      {
+        "name": "Commercial Pilot",
+        "slug": "commercial-pilot"
+      },
+      {
+        "name": "Marine Industry",
+        "slug": "marine-industry"
+      },
+      {
+        "name": "Pharmacy",
+        "slug": "pharmacy"
+      }
+    ],
+    "order": 13
+  }
+]

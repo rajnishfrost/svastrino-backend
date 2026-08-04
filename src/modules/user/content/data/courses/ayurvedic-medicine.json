@@ -1,0 +1,63 @@
+{
+  "slug": "ayurvedic-medicine",
+  "name": "Ayurvedic Medicine",
+  "overview": "Ayurvedic Medicine is an enthralling profession that combines old knowledge with current scientific methods to enhance overall health and well-being. The field emphasizes holistic healthcare integrating ancient wisdom with modern practices, utilizing herbal remedies, lifestyle modifications, yoga, meditation, and therapeutic treatments to restore mind-body-spirit balance.",
+  "topQualities": [
+    "Holistic Approach",
+    "In-depth Knowledge",
+    "Diagnostic Skills",
+    "Herbal Medicine and Therapies",
+    "Communication and Empathy",
+    "Continual Learning",
+    "Ethical Practice"
+  ],
+  "topJobs": [
+    {
+      "role": "Ayurvedic Doctor/Practitioner",
+      "description": "Diagnose illnesses and create personalized treatment plans using Ayurvedic principles.",
+      "indiaSalary": "4-15 lacs/year",
+      "globalSalary": "$40,000-$80,000/year"
+    },
+    {
+      "role": "Ayurvedic Therapist",
+      "description": "Apply therapeutic treatments including herbal massages, oil therapies, and rejuvenation procedures.",
+      "indiaSalary": "2-6 lacs/year",
+      "globalSalary": "$20,000-$40,000/year"
+    },
+    {
+      "role": "Ayurvedic Researcher",
+      "description": "Conduct research and clinical trials exploring effectiveness and safety of Ayurvedic treatments.",
+      "indiaSalary": "4-8 lacs/year",
+      "globalSalary": "$30,000-$60,000/year"
+    },
+    {
+      "role": "Ayurvedic Product Developer",
+      "description": "Formulate Ayurvedic medications, herbal supplements, and skincare products.",
+      "indiaSalary": "4-8 lacs/year",
+      "globalSalary": "$30,000-$60,000/year"
+    },
+    {
+      "role": "Ayurvedic Consultant",
+      "description": "Offer expert guidance on personalized recommendations for diet, lifestyle, and treatments.",
+      "indiaSalary": "4,00,000-8,00,000 rupees/year",
+      "globalSalary": "$30,000-$60,000/year"
+    }
+  ],
+  "institutesIndia": [
+    "Banaras Hindu University (BHU) – Varanasi, Uttar Pradesh",
+    "Gujarat Ayurved University – Jamnagar, Gujarat",
+    "Rajiv Gandhi University of Health Sciences – Bangalore, Karnataka"
+  ],
+  "institutesInternational": [
+    "California College of Ayurveda – United States"
+  ],
+  "careerLadder": [
+    "Focus on high school subjects: biology, chemistry, and holistic health",
+    "Pursue undergraduate degree (BAMS or B.A.M.S. & P)",
+    "Complete standardized exams (GRE or Ayurvedic Medicine Entrance Exams)",
+    "Gain practical experience through internships and clinical rotations",
+    "Pursue postgraduate degrees (MAM or M.D. Ayurveda)",
+    "Establish professional practice or specialization"
+  ],
+  "sourceUrl": "https://svastrino.com/ayurvedic-medicine/"
+}

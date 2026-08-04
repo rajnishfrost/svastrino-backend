@@ -1,0 +1,60 @@
+{
+  "slug": "fine-arts",
+  "name": "Fine Arts",
+  "overview": "The realm of fine arts is a dynamic and ever-evolving domain that seamlessly intertwines creativity with expression. It encompasses painting, sculpture, drawing, and digital artistry while going beyond mere aesthetics, delving into conceptual depth, societal commentary, and personal expression. Contemporary fine artists challenge norms by exploring identity, culture, and environment themes. The field offers opportunities for those passionate about exploring and expressing the myriad facets of human experience.",
+  "topQualities": [
+    "Creativity",
+    "Technical Proficiency",
+    "Passion and Dedication",
+    "Emotional Intelligence",
+    "Open-mindedness",
+    "Communication Skills",
+    "Critical Thinking",
+    "Curiosity"
+  ],
+  "topJobs": [
+    {
+      "role": "Visual Artist",
+      "description": "Creates paintings, drawings, sculptures, or digital artworks independently or on commission",
+      "indiaSalary": "INR 3-10 lakhs annually",
+      "globalSalary": "$30,000-$70,000 annually"
+    },
+    {
+      "role": "Graphic Designer",
+      "description": "Conceptualizes and creates visual content for digital and print media",
+      "indiaSalary": "INR 2.5-6 lakhs annually",
+      "globalSalary": "$40,000-$70,000 annually"
+    },
+    {
+      "role": "Art Director",
+      "description": "Guides and supervises visual elements of projects and leads artist teams",
+      "indiaSalary": "INR 5-15 lakhs annually",
+      "globalSalary": "$60,000-$120,000 annually"
+    },
+    {
+      "role": "Art Educator",
+      "description": "Inspires and guides students in honing artistic skills across educational levels",
+      "indiaSalary": "INR 3-8 lakhs annually",
+      "globalSalary": "$40,000-$70,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "Sir J.J. School of Art, Mumbai",
+    "Faculty of Fine Arts, MS University of Baroda",
+    "College of Art, Delhi University"
+  ],
+  "institutesInternational": [
+    "Royal College of Art (RCA), United Kingdom",
+    "School of the Art Institute of Chicago (SAIC), USA",
+    "École des Beaux-Arts, France",
+    "Central Saint Martins, United Kingdom"
+  ],
+  "careerLadder": [
+    "Complete high school education",
+    "Pursue Bachelor's degree in Fine Arts or related field",
+    "Gain real-world experience through internships, apprenticeships, and entry-level gallery/studio positions",
+    "Obtain professional certifications and participate in workshops",
+    "Progress to roles such as Lead Artists, curators, or establish independent art studios"
+  ],
+  "sourceUrl": "https://svastrino.com/fine-arts/"
+}

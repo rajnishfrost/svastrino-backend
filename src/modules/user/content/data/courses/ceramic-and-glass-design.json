@@ -1,0 +1,16 @@
+{
+  "slug": "ceramic-and-glass-design",
+  "name": "Ceramic and Glass Design",
+  "overview": "Ceramic and Glass Design is an enthralling and artistic discipline that combines design concepts with the media of ceramics and glass. It blends traditional craftsmanship with modern technologies like digital modeling and 3D printing. Contemporary designers create functional objects, architectural installations, and wearable art while emphasizing sustainable practices.",
+  "topQualities": ["Creativity", "Artistic Skills", "Technical Proficiency", "Attention to Detail", "Adaptability", "Problem-Solving Skills", "Collaboration", "Knowledge of Art, History and Culture", "Sustainability Awareness", "Entrepreneurial Spirit"],
+  "topJobs": [
+    {"role": "Ceramic and Glass Designer", "description": "Creates innovative ceramic and glass products including tableware, home decor, and sculptures.", "indiaSalary": "INR 3-6 lakhs (entry-level); INR 6-10 lakhs+ (experienced)", "globalSalary": "$40,000-$70,000+"},
+    {"role": "Ceramic and Glass Educator", "description": "Imparts knowledge of techniques, history, and theory at institutions or private studios.", "indiaSalary": "INR 4-8 lakhs (entry-level); INR 8-15 lakhs+ (experienced)", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Artisan Glassblower", "description": "Shapes molten glass into exquisite forms using traditional glassblowing techniques.", "indiaSalary": "INR 2-4 lakhs (entry-level); INR 6-12 lakhs+ (expert)", "globalSalary": "$30,000-$70,000+"},
+    {"role": "Entrepreneur in Ceramic and Glass Design", "description": "Creates and operates own business producing innovative ceramic and glass products.", "indiaSalary": "Variable based on business success", "globalSalary": "Variable based on business success"}
+  ],
+  "institutesIndia": ["National Institute of Design (NID) Ahmedabad", "Indian Institute of Crafts and Design (IICD), Jaipur", "University of Visva-Bharati"],
+  "institutesInternational": ["Royal College of Art (RCA), London, UK"],
+  "careerLadder": ["Excel in high school art, design, and physics subjects", "Enroll in undergraduate programs in Ceramic and Glass Design or Fine Arts", "Participate in workshops, internships, and hands-on projects", "Build a strong portfolio showcasing creativity and technical skills", "Pursue Master's degree (MFA) or specialized Ceramic and Glass Design program", "Seek opportunities in home decor, art installations, studios, and manufacturing"],
+  "sourceUrl": "https://svastrino.com/ceramic-and-glass-design/"
+}

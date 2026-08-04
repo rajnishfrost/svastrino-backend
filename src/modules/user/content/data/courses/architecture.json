@@ -1,0 +1,60 @@
+{
+  "slug": "architecture",
+  "name": "Architecture",
+  "overview": "Architecture is a fascinating field that combines artistic expression with rational principles to construct the physical environment. It involves planning, designing, and constructing structures that satisfy functional needs while evoking positive emotions. Architecture shapes how we live, work, and interact with our surroundings, addressing social and environmental challenges like sustainability and climate change.",
+  "topQualities": [
+    "Creativity and Design Skills",
+    "Technical and Engineering Proficiency",
+    "Strong Visual and Spatial Awareness",
+    "Effective Communication and Collaboration",
+    "Attention to Detail and Problem-Solving Abilities"
+  ],
+  "topJobs": [
+    {
+      "role": "Architects",
+      "description": "Skilled professionals who design and manage construction of buildings and structures",
+      "indiaSalary": "3 to 15 lakh rupees annually",
+      "globalSalary": "$50,000 to $100,000 annually"
+    },
+    {
+      "role": "Urban Planners",
+      "description": "Experts in strategic planning and development of cities and urban areas",
+      "indiaSalary": "3 to 15 lakh rupees annually",
+      "globalSalary": "$50,000 to $80,000 annually"
+    },
+    {
+      "role": "Interior Designers",
+      "description": "Professionals specializing in creating functional and visually appealing interior spaces",
+      "indiaSalary": "2 to 8 lakh rupees annually",
+      "globalSalary": "$40,000 to $60,000 annually"
+    },
+    {
+      "role": "Landscape Architects",
+      "description": "Designers of outdoor areas combining natural features with constructed structures",
+      "indiaSalary": "3 to 12 lakh rupees annually",
+      "globalSalary": "$45,000 to $75,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Kharagpur",
+    "Indian Institute of Technology (IIT) Roorkee",
+    "School of Planning and Architecture (SPA) Delhi",
+    "Sir J.J. College of Architecture, Mumbai",
+    "Chandigarh College of Architecture, Chandigarh"
+  ],
+  "institutesInternational": [
+    "ETH Zurich – Swiss Federal Institute of Technology, Switzerland",
+    "University College London (UCL), United Kingdom",
+    "University of California, Berkeley, United States"
+  ],
+  "careerLadder": [
+    "Excel in high school with focus on mathematics, physics, and art",
+    "Prepare for entrance exams (NATA or JEE Mains in India)",
+    "Pursue undergraduate degree (B.Arch or B.Sc Arch)",
+    "Engage in internships, design studios, and extracurricular activities",
+    "Complete Master's degree (M.Arch) or similar advanced qualification",
+    "Take standardized exams (GRE or ARE) for competitive advancement",
+    "Pursue specialized fields and advanced career roles"
+  ],
+  "sourceUrl": "https://svastrino.com/architecture/"
+}

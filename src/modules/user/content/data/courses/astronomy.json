@@ -1,0 +1,64 @@
+{
+  "slug": "astronomy",
+  "name": "Astronomy",
+  "overview": "A career in astronomy is a fascinating and intellectually rewarding path that allows individuals to explore the mysteries of the universe and contribute to scientific knowledge. The field encompasses astrophysics, celestial mechanics, observational techniques, planetary science, and cosmology, combining theoretical knowledge with practical research experience using advanced telescopes and computational tools.",
+  "topQualities": [
+    "Curiosity",
+    "Analytical and Critical Thinking",
+    "Problem-Solving Abilities",
+    "Mathematical and Computational Skills",
+    "Attention to Detail",
+    "Patience and Perseverance",
+    "Adaptability and Flexibility",
+    "Passion and Enthusiasm"
+  ],
+  "topJobs": [
+    {
+      "role": "Astronomer",
+      "description": "Researchers exploring celestial objects through observations, data analysis, and theory development.",
+      "indiaSalary": "INR 6 lakhs to 15+ lakhs annually",
+      "globalSalary": "$60,000–$100,000+ annually"
+    },
+    {
+      "role": "Astrophysicist",
+      "description": "Physics-based investigators of cosmic phenomena including galaxy formation, stellar evolution, and dark matter.",
+      "indiaSalary": "INR 6 lakhs to 15+ lakhs annually",
+      "globalSalary": "$60,000–$100,000+ annually"
+    },
+    {
+      "role": "Planetary Scientist",
+      "description": "Specialists studying planets, moons, and planetary bodies through spacecraft data and laboratory analysis.",
+      "indiaSalary": "INR 6 lakhs to 15+ lakhs annually",
+      "globalSalary": "$60,000–$100,000+ annually"
+    },
+    {
+      "role": "Observational Astronomer",
+      "description": "Telescope-based researchers collecting and analyzing data from celestial objects and cosmic phenomena.",
+      "indiaSalary": "INR 6 lakhs to 15+ lakhs annually",
+      "globalSalary": "$60,000–$100,000+ annually"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Astrophysics (IIA), Bengaluru",
+    "Tata Institute of Fundamental Research (TIFR)",
+    "Inter-University Centre for Astronomy and Astrophysics (IUCAA)",
+    "Indian Institute of Science (IISc)",
+    "Birla Institute of Scientific Research (BITS Pilani)",
+    "Physical Research Laboratory (PRL)"
+  ],
+  "institutesInternational": [
+    "California Institute of Technology (Caltech)",
+    "Harvard University, USA",
+    "Max Planck Institute for Astronomy (MPIA), Germany",
+    "European Space Agency (ESA)",
+    "Space Telescope Science Institute (USA)",
+    "Harvard-Smithsonian Center for Astrophysics (USA)"
+  ],
+  "careerLadder": [
+    "Bachelor's degree in Astronomy, Astrophysics, or related field (3-4 years)",
+    "Master's degree in Astronomy or Astrophysics (2 years, advanced specialization)",
+    "Ph.D. in Astronomy (several years, extensive research and original contributions)",
+    "Advanced research positions, professorships, and leadership roles"
+  ],
+  "sourceUrl": "https://svastrino.com/astronomy/"
+}

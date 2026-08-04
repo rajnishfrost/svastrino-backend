@@ -1,0 +1,16 @@
+{
+  "slug": "athletics",
+  "name": "Athletics",
+  "overview": "A career as an athlete is an exhilarating pursuit that involves pushing the boundaries of physical strength, speed, and endurance. Athletes compete across various sports while adhering to established rules, dedicating themselves to rigorous training under professional coaches. The field combines continuous training, physical conditioning, and honing skills with opportunities for personal growth and the pursuit of excellence.",
+  "topQualities": ["Discipline", "Determination", "Perseverance", "Focus", "Physical Fitness", "Mental Toughness", "Teamwork", "Competitive Spirit", "Sportsmanship"],
+  "topJobs": [
+    {"role": "Sports Psychologist", "description": "Professionals who help athletes improve mental well-being and competitive performance through mental resilience and stress management.", "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15+ lakhs (experienced)", "globalSalary": "$50,000-$150,000+"},
+    {"role": "Referee", "description": "Officials ensuring fair play and enforcing rules during sports competitions.", "indiaSalary": "INR 2-5 lakhs (entry-level); INR 5-15+ lakhs (experienced)", "globalSalary": "$20,000-$200,000+"},
+    {"role": "Coach", "description": "Mentors guiding athletes to reach full potential through instruction and motivation.", "indiaSalary": "INR 3-8 lakhs (entry-level); INR 10-30+ lakhs (professional)", "globalSalary": "$30,000-$100,000+"},
+    {"role": "Physical Therapist", "description": "Specialists in sports rehabilitation treating injuries and preventing future damage.", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-10+ lakhs (experienced)", "globalSalary": "$50,000-$100,000+"}
+  ],
+  "institutesIndia": ["Sports Authority of India (SAI)", "Indira Gandhi Institute of Physical Education and Sports Sciences (IGIPESS)", "Lakshmibai National Institute of Physical Education (LNIPE)", "National Institute of Sports (NIS)"],
+  "institutesInternational": ["University of Oregon (United States)", "University of Texas at Austin (United States)", "Loughborough University (United Kingdom)"],
+  "careerLadder": ["Excel in chosen sport during high school with competitive training", "Maintain strong academic record alongside athletic performance", "Pursue undergraduate degrees in sports science, kinesiology, or related fields", "Engage in internships and sports-related extracurricular activities", "Continue postgraduate studies in sports management, coaching, or sports medicine", "Develop specialized expertise and pursue advanced career opportunities"],
+  "sourceUrl": "https://svastrino.com/athletics/"
+}

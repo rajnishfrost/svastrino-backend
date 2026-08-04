@@ -1,0 +1,69 @@
+{
+  "slug": "biology",
+  "name": "Biology",
+  "overview": "Biology is a fascinating and diverse field of study that explores the intricate workings of living organisms across molecular, cellular, and ecosystem levels. Biologists investigate structures, functions, and behaviors to advance knowledge in biotechnology, medicine, agriculture, and environmental protection. The field utilizes cutting-edge tools like DNA sequencing and computational biology to make groundbreaking discoveries.",
+  "topQualities": [
+    "Strong Scientific Curiosity",
+    "Analytical and Critical Thinking Skills",
+    "Attention to Detail",
+    "Strong Communication Skills",
+    "Adaptability and Flexibility",
+    "Teamwork and Collaboration",
+    "Ethical Conduct",
+    "Problem-Solving Abilities",
+    "Resilience and Perseverance",
+    "Lifelong Learning"
+  ],
+  "topJobs": [
+    {
+      "role": "Biological Technician",
+      "description": "Essential members of laboratory teams, providing crucial support to scientists in conducting research and experiments",
+      "indiaSalary": "INR 2-10 lakhs (entry); 5-8 lakhs+ (experienced)",
+      "globalSalary": "$30,000-$60,000+"
+    },
+    {
+      "role": "Biochemist",
+      "description": "Specialize in studying the chemical processes and substances that occur within living organisms",
+      "indiaSalary": "INR 4-6 lakhs (entry); 8-12 lakhs+ (experienced)",
+      "globalSalary": "$50,000-$100,000+"
+    },
+    {
+      "role": "Research Scientist",
+      "description": "Play a pivotal role in conducting scientific studies and advancing knowledge in their specialized fields",
+      "indiaSalary": "INR 6-10 lakhs (entry); 12-20 lakhs+ (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    },
+    {
+      "role": "Pharmacologist",
+      "description": "Study the effects of drugs and medications on biological systems and evaluate safety and efficacy",
+      "indiaSalary": "INR 6-8 lakhs (entry); 10-15 lakhs+ (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    },
+    {
+      "role": "Biologist",
+      "description": "Study living organisms and their interactions with the environment in microbiology, zoology, botany, or ecology",
+      "indiaSalary": "INR 4-6 lakhs (entry); 8-12 lakhs+ (experienced)",
+      "globalSalary": "$40,000-$80,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Science (IISc), Bangalore",
+    "Jawaharlal Nehru University (JNU), New Delhi",
+    "Banaras Hindu University (BHU), Varanasi",
+    "All India Institute of Medical Sciences (AIIMS), New Delhi"
+  ],
+  "institutesInternational": [
+    "Stanford University, United States",
+    "University of California, Berkeley, United States",
+    "California Institute of Technology (Caltech), United States"
+  ],
+  "careerLadder": [
+    "High school excellence in biology, chemistry, and mathematics",
+    "Bachelor of Science (B.Sc.) in Biology with research projects and internships",
+    "Master's degree (M.Sc.) in biology or specialized fields",
+    "Ph.D. in biology or specialized disciplines",
+    "Standardized exams (GRE, GAT-B)",
+    "Professional roles in research, academia, healthcare, or conservation"
+  ],
+  "sourceUrl": "https://svastrino.com/biology/"
+}

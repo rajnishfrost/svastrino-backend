@@ -1,0 +1,61 @@
+{
+  "slug": "artificial-intelligence-engineering",
+  "name": "Artificial Intelligence Engineering",
+  "overview": "Artificial Intelligence Engineering is an exciting field that merges the power of advanced technology with the complexity of human intelligence. The discipline involves developing intelligent systems and algorithms that simulate human-like thinking and decision-making, with profound impacts across healthcare, finance, transportation, and communication sectors. Ethical considerations are paramount in responsible AI development and deployment.",
+  "topQualities": [
+    "Mathematical and Statistical Knowledge",
+    "Programming and Technical Expertise",
+    "Collaboration and Communication",
+    "Ethical Awareness",
+    "Attention to Detail",
+    "Adaptability",
+    "Passion and Creativity",
+    "Problem-Solving Abilities"
+  ],
+  "topJobs": [
+    {
+      "role": "Big Data Engineer",
+      "description": "Manages and processes large data volumes to develop AI systems using advanced tools and data infrastructures.",
+      "indiaSalary": "INR 6-8 lakhs (entry-level); INR 10-15 lakhs+ (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    },
+    {
+      "role": "Data Scientist",
+      "description": "Applies AI/ML techniques to extract meaningful insights enabling data-driven organizational decisions.",
+      "indiaSalary": "INR 6-10 lakhs (entry-level); INR 15-25 lakhs+ (experienced)",
+      "globalSalary": "$80,000-$150,000+"
+    },
+    {
+      "role": "Machine Learning Engineer",
+      "description": "Designs and develops AI models enabling machines to learn and make predictions from data.",
+      "indiaSalary": "INR 6-10 lakhs (entry-level); INR 15-25 lakhs+ (experienced)",
+      "globalSalary": "$80,000-$150,000+"
+    },
+    {
+      "role": "AI Data Analyst",
+      "description": "Analyzes data to identify patterns, trends, and anomalies contributing to AI system improvement.",
+      "indiaSalary": "INR 4-8 lakhs (entry-level); INR 10-15 lakhs+ (experienced)",
+      "globalSalary": "$60,000-$120,000+"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Bombay",
+    "Indian Institute of Technology (IIT) Hyderabad",
+    "International Institute of Information Technology (IIIT) Hyderabad",
+    "Indian Institute of Technology (IIT) Kharagpur"
+  ],
+  "institutesInternational": [
+    "Massachusetts Institute of Technology (MIT)",
+    "Stanford University",
+    "University of Oxford"
+  ],
+  "careerLadder": [
+    "Excel in high school (mathematics, computer science, statistics)",
+    "Pursue undergraduate degree (B.Tech or B.Sc in AI/Computer Science)",
+    "Engage in internships, research projects, and coding competitions",
+    "Pursue Master's degree (M.Tech or M.Sc in AI Engineering)",
+    "Take standardized examinations (GRE or GATE)",
+    "Advance into specialized and leadership roles"
+  ],
+  "sourceUrl": "https://svastrino.com/artificial-intelligence-engineering/"
+}

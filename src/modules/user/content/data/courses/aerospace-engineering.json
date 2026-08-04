@@ -1,0 +1,58 @@
+{
+  "slug": "aerospace-engineering",
+  "name": "Aerospace Engineering",
+  "overview": "Aerospace engineering is an exciting and multidisciplinary field that combines engineering principles with the exploration of aerospace technologies. It encompasses design, development, testing, and production of aircraft, spacecraft, and satellites. The field drives innovation in aviation and space exploration while addressing sustainability through alternative fuels and noise reduction technologies.",
+  "topQualities": [
+    "Analytical and Problem-Solving Skills",
+    "Creativity and Innovation",
+    "Attention to Detail and Precision",
+    "Strong Mathematical and Computational Skills",
+    "Communication and Teamwork Skills"
+  ],
+  "topJobs": [
+    {
+      "role": "Aerospace Engineers",
+      "description": "Design, develop, and test aircraft, spacecraft, and associated systems",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); increases with experience",
+      "globalSalary": "$80,000-$120,000 annually"
+    },
+    {
+      "role": "Aircraft Design Engineers",
+      "description": "Create and enhance aircraft designs using aerodynamics and materials science",
+      "indiaSalary": "INR 8-15 lakhs (entry-level)",
+      "globalSalary": "$70,000-$120,000 annually"
+    },
+    {
+      "role": "Avionics Engineers",
+      "description": "Design aircraft electronics and systems including navigation and flight controls",
+      "indiaSalary": "INR 6-12 lakhs (entry-level)",
+      "globalSalary": "$70,000-$120,000 annually"
+    },
+    {
+      "role": "Systems Engineers",
+      "description": "Oversee integration and operation of complex aerospace systems",
+      "indiaSalary": "INR 6-12 lakhs (entry-level)",
+      "globalSalary": "$70,000-$120,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Bombay",
+    "Indian Institute of Technology (IIT) Madras",
+    "Indian Institute of Technology (IIT) Kanpur",
+    "Indian Institute of Technology (IIT) Kharagpur"
+  ],
+  "institutesInternational": [
+    "Massachusetts Institute of Technology (MIT), United States",
+    "Stanford University, United States",
+    "California Institute of Technology (Caltech), United States"
+  ],
+  "careerLadder": [
+    "Excel in high school mathematics, physics, and computer science",
+    "Pursue undergraduate degree (B.Tech/B.E.) in Aerospace Engineering",
+    "Seek internships and research projects during undergraduate studies",
+    "Complete Master's degree (M.Tech/M.E.) in Aerospace Engineering",
+    "Prepare for standardized exams (GRE/GATE) for global opportunities",
+    "Advance into specialized aerospace engineering roles"
+  ],
+  "sourceUrl": "https://svastrino.com/aerospace-engineering/"
+}

@@ -1,0 +1,61 @@
+{
+  "slug": "real-estate-management",
+  "name": "Real Estate Management",
+  "overview": "Real Estate Management is a dynamic and multifaceted domain that holds a pivotal role in overseeing the development, operation, and maintenance of real estate assets. Professionals manage property acquisition, leasing, tenant relations, maintenance, and financial matters while driving innovation in sustainable development and community well-being.",
+  "topQualities": [
+    "Strong Analytical Skills",
+    "Excellent Communication Skills",
+    "Negotiation Skills",
+    "Financial Acumen",
+    "Customer Service Orientation",
+    "Adaptability and Resilience",
+    "Strategic Thinking"
+  ],
+  "topJobs": [
+    {
+      "role": "Property Manager",
+      "description": "Oversee day-to-day operations of residential, commercial, and industrial properties.",
+      "indiaSalary": "INR 3-7 lakhs annually",
+      "globalSalary": "$40,000-$80,000 annually"
+    },
+    {
+      "role": "Real Estate Development Manager",
+      "description": "Oversee the complete lifecycle of real estate projects from conception to completion.",
+      "indiaSalary": "INR 8-20 lakhs annually",
+      "globalSalary": "$70,000-$150,000 annually"
+    },
+    {
+      "role": "Real Estate Investment Analyst",
+      "description": "Examine and evaluate potential real estate investment opportunities for informed decision-making.",
+      "indiaSalary": "INR 6-15 lakhs annually",
+      "globalSalary": "$70,000-$120,000 annually"
+    },
+    {
+      "role": "Commercial Real Estate Broker",
+      "description": "Facilitate transactions involving commercial properties between owners and buyers/renters.",
+      "indiaSalary": "INR 5-20 lakhs annually",
+      "globalSalary": "$50,000-$150,000 annually"
+    }
+  ],
+  "institutesIndia": [
+    "NICMAR, Pune – Post Graduate Programme in Real Estate and Urban Infrastructure Management",
+    "RICS School of Built Environment, Amity University, Noida – MBA in Real Estate & Urban Infrastructure"
+  ],
+  "institutesInternational": [
+    "Harvard University (USA) – Master in Design Studies (Real Estate and the Built Environment)",
+    "University of Pennsylvania (USA) – MBA with Real Estate Concentration",
+    "London School of Economics (UK) – MSc in Real Estate Economics and Finance",
+    "National University of Singapore – Master of Science (Real Estate)"
+  ],
+  "careerLadder": [
+    "Pursue Bachelor's degree in Real Estate Management, Business Administration, Economics, or related field",
+    "Search for internships or entry-level positions at real estate firms",
+    "Attend conferences, seminars, and obtain professional certifications",
+    "Identify specialization areas and gain in-depth expertise",
+    "Consider pursuing Master's degree in business administration with real estate concentration",
+    "Aim for leadership positions such as Property Manager or Director of Real Estate Operations",
+    "Establish own consultant or real estate management firm",
+    "Stay informed on industry developments and pursue continuous professional growth"
+  ],
+  "sourceUrl": "https://svastrino.com/real-estate-management/"
+}

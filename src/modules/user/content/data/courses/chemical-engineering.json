@@ -1,0 +1,63 @@
+{
+  "slug": "chemical-engineering",
+  "name": "Chemical Engineering",
+  "overview": "Chemical Engineering is an intriguing discipline that combines scientific knowledge with engineering principles to develop innovative solutions for various industries. It involves applying chemistry, physics, biology, and mathematics to transform raw materials into valuable products. The field encompasses thermodynamics, reaction kinetics, process design, materials science, and fluid mechanics, with applications spanning pharmaceuticals, energy, environmental protection, and biotechnology.",
+  "topQualities": [
+    "Analytical and Problem-Solving Skills",
+    "Scientific Knowledge",
+    "Technical Aptitude",
+    "Safety and Environmental Awareness",
+    "Effective Communication and Teamwork",
+    "Adaptability and Continuous Learning"
+  ],
+  "topJobs": [
+    {
+      "role": "Process Engineer",
+      "description": "Essential to the planning, improvement, and management of manufacturing procedures",
+      "indiaSalary": "INR 4-12 lakhs/year",
+      "globalSalary": "Up to $100,000+/year"
+    },
+    {
+      "role": "R&D Engineer",
+      "description": "Responsible for creating new products, procedures, and technologies",
+      "indiaSalary": "INR 4-12 lakhs/year",
+      "globalSalary": "Up to $120,000+/year"
+    },
+    {
+      "role": "Environmental Engineer",
+      "description": "Specializes in developing sustainable solutions and mitigating environmental impact",
+      "indiaSalary": "INR 4-10 lakhs/year",
+      "globalSalary": "Up to $100,000/year"
+    },
+    {
+      "role": "Bioprocess Engineer",
+      "description": "Develops and optimizes processes for biofuels and pharmaceutical production",
+      "indiaSalary": "INR 4-10 lakhs/year",
+      "globalSalary": "$50,000-$100,000+/year"
+    },
+    {
+      "role": "Quality Control Engineer",
+      "description": "Ensures products and procedures adhere to high quality standards",
+      "indiaSalary": "INR 3-8 lakhs/year",
+      "globalSalary": "Up to $100,000/year"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT), Bombay",
+    "Indian Institute of Technology (IIT), Delhi",
+    "Indian Institute of Technology (IIT), Kanpur"
+  ],
+  "institutesInternational": [
+    "California Institute of Technology (Caltech), United States",
+    "University of Cambridge, United Kingdom",
+    "University of Texas at Austin, United States"
+  ],
+  "careerLadder": [
+    "High school focus on math, physics, chemistry, and biology",
+    "Undergraduate degree (B.Tech or B.Sc in Chemical Engineering)",
+    "Internships, industrial training, and research projects",
+    "Master's degree (M.Tech or M.Sc) or Ph.D. specialization",
+    "Standardized exams (GRE or GATE) for prestigious university admission"
+  ],
+  "sourceUrl": "https://svastrino.com/chemical-engineering/"
+}

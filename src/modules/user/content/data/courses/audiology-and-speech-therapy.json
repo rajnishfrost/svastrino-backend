@@ -1,0 +1,60 @@
+{
+  "slug": "audiology-and-speech-therapy",
+  "name": "Audiology and Speech Therapy",
+  "overview": "Audiology and Speech Therapy is a dynamic and specialized field that focuses on assessing, diagnosing, and treating individuals with communication and hearing disorders. This profession combines anatomy, physiology, linguistics, and psychology knowledge to help patients of all ages improve their communication and hearing abilities through evidence-based interventions and advanced technology.",
+  "topQualities": [
+    "Empathy and Compassion",
+    "Excellent Communication Skills",
+    "Strong Observation Skills",
+    "Patience and Persistence",
+    "Problem-Solving Abilities",
+    "Lifelong Learning",
+    "Collaboration and Interpersonal Skills",
+    "Cultural Sensitivity",
+    "Ethical and Professional Conduct"
+  ],
+  "topJobs": [
+    {
+      "role": "General Audiology or Speech Pathology Assistant",
+      "description": "Provide support during evaluations, therapy sessions, and administrative tasks.",
+      "indiaSalary": "INR 2-4 lakhs (entry-level); INR 5-8 lakhs (experienced)",
+      "globalSalary": "$30,000-$60,000+"
+    },
+    {
+      "role": "Speech Therapist",
+      "description": "Assess and treat speech, language, and swallowing disorders through personalized plans.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15 lakhs+ (experienced)",
+      "globalSalary": "$40,000-$80,000+"
+    },
+    {
+      "role": "Audiologist",
+      "description": "Assess hearing loss and manage hearing/balance disorders with personalized treatment.",
+      "indiaSalary": "INR 4-6 lakhs (entry-level); INR 8-15 lakhs+ (experienced)",
+      "globalSalary": "~$50,000 average"
+    },
+    {
+      "role": "Research Assistant",
+      "description": "Support research studies through data collection, analysis, and literature reviews.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 6-10 lakhs+ (experienced)",
+      "globalSalary": "$30,000-$60,000+"
+    }
+  ],
+  "institutesIndia": [
+    "All India Institute of Speech and Hearing (AIISH), Mysore",
+    "National Institute of Mental Health and Neurosciences (NIMHANS), Bengaluru"
+  ],
+  "institutesInternational": [
+    "University of Western Ontario, Canada",
+    "Vanderbilt University, USA",
+    "University College London (UCL), United Kingdom"
+  ],
+  "careerLadder": [
+    "Excel in high school biology, psychology, and physics",
+    "Pursue undergraduate degree (BASLP or related program)",
+    "Complete clinical internships and practical training",
+    "Earn Master's degree (MASLP or specialization)",
+    "Take standardized tests (GRE or program entrance exams)",
+    "Engage in continuous professional development"
+  ],
+  "sourceUrl": "https://svastrino.com/audiology-and-speech-therapy/"
+}

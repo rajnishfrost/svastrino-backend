@@ -1,0 +1,17 @@
+{
+  "slug": "archaeology",
+  "name": "Archaeology",
+  "overview": "Archaeology is a fascinating and multidisciplinary field that delves into the study of human history and culture through the analysis of material remains and artifacts. It combines scientific methods with cultural sensitivity to uncover ancient civilizations. Through the careful study and interpretation of material remains, archaeologists shed light on ancient civilizations and their contributions to our collective heritage.",
+  "topQualities": ["Analytical Thinking", "Attention to Detail", "Problem-solving Skills", "Patience and Perseverance", "Collaboration and Communication"],
+  "topJobs": [
+    {"role": "Archaeologist", "description": "Conducts research, excavation, and analysis to study past human civilizations", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-12 lakhs (experienced)", "globalSalary": "$40,000-$80,000 annually"},
+    {"role": "Cultural Resource Manager", "description": "Assesses and manages cultural heritage sites to ensure preservation and sustainable use", "indiaSalary": "INR 4-6 lakhs (entry-level); INR 8-15 lakhs (experienced)", "globalSalary": "$50,000-$90,000 annually"},
+    {"role": "Museum Curator", "description": "Curates and preserves archaeological artifacts while organizing exhibitions", "indiaSalary": "INR 3-5 lakhs (entry-level); INR 6-12 lakhs (experienced)", "globalSalary": "$40,000-$80,000 annually"},
+    {"role": "Cultural Heritage Consultant", "description": "Provides expertise on heritage management, conservation, and policy development", "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15 lakhs (experienced)", "globalSalary": "$40,000-$100,000 annually"},
+    {"role": "Academic Researcher/Professor", "description": "Conducts archaeological research and teaches at educational institutions", "indiaSalary": "INR 6-10 lakhs (entry-level); INR 12-25 lakhs (experienced)", "globalSalary": "$50,000-$150,000+ annually"}
+  ],
+  "institutesIndia": ["Deccan College Post-Graduate and Research Institute, Pune", "Banaras Hindu University, Varanasi", "Jawaharlal Nehru University, New Delhi"],
+  "institutesInternational": ["University of Cambridge, United Kingdom", "University of Oxford, United Kingdom", "University College London, United Kingdom"],
+  "careerLadder": ["Excel in high school (history, anthropology, geography, biology)", "Pursue undergraduate degree (B.A./B.Sc. in Archaeology)", "Engage in fieldwork, internships, and volunteer opportunities", "Complete Master's degree (M.A./M.Sc. in Archaeology)", "Take standardized tests (GRE or relevant exams)", "Participate in research projects, conferences, and scholarly publications", "Build portfolio and establish credibility in archaeological community"],
+  "sourceUrl": "https://svastrino.com/archaeology/"
+}

@@ -1,0 +1,74 @@
+{
+  "slug": "air-force",
+  "name": "Air Force",
+  "overview": "A career in the Air Force provides individuals with a one-of-a-kind opportunity to serve their country and contribute to national security. The Indian Aviation Force's primary mission involves protecting airspace against aviation threats while collaborating with other military branches. Beyond defense, the Air Force assists during natural disasters and internal crises. The career demands rigorous training in aerospace engineering, aviation technology, combat tactics, leadership, and physical fitness.",
+  "topQualities": [
+    "Commitment and Dedication",
+    "Integrity and Ethical Conduct",
+    "Leadership Skills",
+    "Resilience and Adaptability",
+    "Teamwork and Collaboration",
+    "Discipline and Self-Discipline",
+    "Physical Fitness and Mental Agility",
+    "Problem-Solving Skills",
+    "Professionalism and Respect",
+    "Continuous Learning and Adaptation"
+  ],
+  "topJobs": [
+    {
+      "role": "Pilot",
+      "description": "Flying and operating various aircraft, including fighter jets, transport planes, and helicopters",
+      "indiaSalary": "INR 8-14 lakh/year",
+      "globalSalary": ""
+    },
+    {
+      "role": "Aircraft Maintenance Engineer",
+      "description": "Inspects, repairs, and maintains aircraft systems for safety and operational readiness",
+      "indiaSalary": "INR 6-12 lakh/year",
+      "globalSalary": ""
+    },
+    {
+      "role": "Air Traffic Controller",
+      "description": "Oversees aircraft movement and provides guidance on takeoff, landing, and flight routes",
+      "indiaSalary": "INR 5-10 lakh/year",
+      "globalSalary": ""
+    },
+    {
+      "role": "Intelligence Officer",
+      "description": "Gathers and analyzes information to support military operations",
+      "indiaSalary": "INR 7-15 lakh/year",
+      "globalSalary": ""
+    },
+    {
+      "role": "Logistics Officer",
+      "description": "Manages transportation, supply, and resource distribution operations",
+      "indiaSalary": "INR 6-12 lakh/year",
+      "globalSalary": ""
+    },
+    {
+      "role": "Cybersecurity Specialist",
+      "description": "Protects military networks from cyber threats",
+      "indiaSalary": "INR 7-15 lakh/year",
+      "globalSalary": ""
+    }
+  ],
+  "institutesIndia": [
+    "National Defence Academy (NDA), Pune",
+    "Air Force Academy (AFA), Dundigal",
+    "Indian Air Force Technical College (IAFTC), Bengaluru",
+    "Defence Institute of Advanced Technology (DIAT), Pune",
+    "College of Air Warfare (CAW), Secunderabad",
+    "Institute of Aerospace Medicine (IAM), Bengaluru"
+  ],
+  "institutesInternational": [],
+  "careerLadder": [
+    "Excel in high school academics, particularly mathematics, physics, and physical education",
+    "Enroll in undergraduate programs (B.Tech in Aeronautical, Mechanical, or Electronics Engineering)",
+    "Participate in physical fitness activities, sports, and extracurricular pursuits",
+    "Join National Defence Academy (NDA) after 10+2 education for three-year program",
+    "Pursue competitive examinations (CDS or AFCAT)",
+    "Complete postgraduate programs (M.Tech in Aeronautical/Aerospace Engineering)",
+    "Commission as officer in Air Force with specialized role assignment"
+  ],
+  "sourceUrl": "https://svastrino.com/air-force/"
+}

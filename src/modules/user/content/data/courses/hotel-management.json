@@ -1,0 +1,17 @@
+{
+  "slug": "hotel-management",
+  "name": "Hotel Management",
+  "overview": "Hotel management is an exciting and diverse field that encompasses various aspects of managing and operating hotels, resorts, and other hospitality establishments. The profession revolves around providing exceptional guest experiences while ensuring the smooth functioning of all hotel operations. Modern hotel management involves front desk operations, housekeeping, food and beverage management, event planning, marketing, and finance.",
+  "topQualities": ["Customer Service Orientation", "Communication Skills", "Leadership", "Problem-Solving Abilities", "Flexibility", "Financial Acumen", "Cultural Awareness", "Diplomacy", "Teamwork"],
+  "topJobs": [
+    {"role": "Hotel General Manager", "description": "Oversees all operational aspects of the hotel and coordinates guest services, finances, marketing, and staff management.", "indiaSalary": "INR 10-20 lakhs (mid-range); exceeds INR 30 lakhs (luxury)", "globalSalary": "$60,000-$150,000+"},
+    {"role": "Front Office Manager", "description": "Manages reception, guest services, reservations, and guest concerns during check-ins and check-outs.", "indiaSalary": "INR 4-10 lakhs (mid-range); beyond INR 15 lakhs (luxury)", "globalSalary": "$30,000-$60,000+"},
+    {"role": "Guest Relations Manager", "description": "Focuses on guest satisfaction, manages feedback and concerns, and builds guest loyalty.", "indiaSalary": "INR 5-12 lakhs (mid-range); beyond INR 15 lakhs (luxury)", "globalSalary": "$30,000-$60,000+"},
+    {"role": "Events Manager", "description": "Orchestrates conferences, weddings, and special events hosted by hotels.", "indiaSalary": "INR 4-10 lakhs (mid-range); higher in five-star establishments", "globalSalary": "$40,000-$70,000+"},
+    {"role": "Food and Beverage Manager", "description": "Oversees dining facilities including restaurants, bars, and banquets.", "indiaSalary": "INR 6-18 lakhs (mid-range); higher in luxury establishments", "globalSalary": "$50,000-$80,000+"}
+  ],
+  "institutesIndia": ["Institute of Hotel Management (IHM), Mumbai", "Welcomgroup Graduate School of Hotel Administration (WGSHA), Manipal", "Institute of Hotel Management (IHM), Delhi", "Christ University, Bangalore"],
+  "institutesInternational": ["Ecole hôtelière de Lausanne (EHL), Switzerland", "Les Roches Global Hospitality Education, Switzerland"],
+  "careerLadder": ["Excel in high school, particularly in business studies, communication, and languages", "Pursue Bachelor's degree in Hotel Administration or Hospitality Management", "Engage in internships, practical training, or part-time hospitality work", "Pursue Master's degree in Hotel Management for specialization and leadership roles", "Explore diverse career paths as hotel managers, event planners, or revenue managers in luxury hotels, resorts, or consulting firms"],
+  "sourceUrl": "https://svastrino.com/hotel-management/"
+}

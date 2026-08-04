@@ -1,0 +1,16 @@
+{
+  "slug": "operations-management",
+  "name": "Operations Management",
+  "overview": "Operations management is a dynamic and essential component of organizational management, managing the design, planning, implementation, and optimization of corporate operations to guarantee efficiency and effectiveness. It encompasses production planning, inventory management, supply chain logistics, quality control, and risk management. Modern operations managers leverage technology and data analytics to streamline processes and drive organizational success while maintaining alignment with broader company objectives.",
+  "topQualities": ["Analytical Thinking", "Problem-Solving Skills", "Leadership Skills", "Attention to Detail", "Adaptability", "Strategic Thinking", "Conflict Resolution", "Continuous Learning"],
+  "topJobs": [
+    {"role": "Operations Manager", "description": "Supervises day-to-day operations, optimizes processes, and manages resources for seamless delivery.", "indiaSalary": "INR 8–15 lakhs annually", "globalSalary": "$60,000–$120,000 annually"},
+    {"role": "Materials Manager", "description": "Oversees material purchases, inventory management, and supplier coordination.", "indiaSalary": "INR 6–12 lakhs annually", "globalSalary": "$50,000–$100,000 annually"},
+    {"role": "Logistics Manager", "description": "Coordinates transportation, storage, and distribution across supply chains.", "indiaSalary": "INR 6–15 lakhs annually", "globalSalary": "$50,000–$120,000 annually"},
+    {"role": "Quality Assurance Manager", "description": "Ensures products/services meet standards and develops quality control protocols.", "indiaSalary": "INR 6–18 lakhs annually", "globalSalary": "$60,000–$130,000 annually"}
+  ],
+  "institutesIndia": ["IIMA Ahmedabad – PGP with Operations Management Electives", "IIMB Bangalore – PGP with Operations Management Specialization", "IIT Delhi – MBA with Operations Management Electives"],
+  "institutesInternational": ["MIT Sloan School of Management (USA) – MBA with Operations Management Focus", "University of Cambridge Judge Business School (UK) – MPhil in Management Studies", "INSEAD (France/Singapore) – MBA with Operations Management Specialization"],
+  "careerLadder": ["Obtain Bachelor's degree in Operations Management or related field", "Seek internships or entry-level operational positions", "Pursue professional certifications (CSCP, CPIM) and stay updated on trends", "Specialize in specific operations areas (supply chain, inventory, production)", "Pursue Master's degree or advanced certifications (Lean, Six Sigma)", "Transition into leadership roles (Operations Manager, Supply Chain Manager)", "Explore entrepreneurial opportunities (consulting, independent contracting)", "Embrace lifelong learning and adapt to industry changes"],
+  "sourceUrl": "https://svastrino.com/operations-management/"
+}

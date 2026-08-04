@@ -1,0 +1,64 @@
+{
+  "slug": "environmental-studies",
+  "name": "Environmental Studies",
+  "overview": "Environmental science is a dynamic and evolving discipline that seeks to understand, protect, and preserve our planet's ecosystems and natural resources. The field integrates scientific, social, and interdisciplinary approaches to address environmental issues. It has expanded from pollution control to encompass sustainable resource management, climate change mitigation, biodiversity conservation, and renewable energy adoption. Environmental professionals guide society toward ecological balance and human well-being.",
+  "topQualities": [
+    "Passion for the Environment",
+    "Scientific Curiosity",
+    "Interdisciplinary Thinking",
+    "Data Analysis",
+    "Ethical and Moral Values",
+    "Fieldwork Skills",
+    "Policy and Advocacy"
+  ],
+  "topJobs": [
+    {
+      "role": "Environmental Scientists",
+      "description": "Specialists researching environmental solutions through pollution reduction, conservation, and sustainable resource management.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15+ lakhs (senior)",
+      "globalSalary": "$45,000-$70,000 (entry-level); $100,000+ (experienced)"
+    },
+    {
+      "role": "Environmental Engineer",
+      "description": "Innovators developing solutions for water/air pollution, waste management, and sustainable infrastructure.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15+ lakhs (experienced)",
+      "globalSalary": "$50,000-$75,000 (entry-level); $100,000+ (senior)"
+    },
+    {
+      "role": "Sustainability Consultant",
+      "description": "Change agents assisting organizations in formulating environmentally responsible practices and strategies.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15+ lakhs (experienced)",
+      "globalSalary": "$50,000-$70,000 (entry-level); $100,000+ (senior)"
+    },
+    {
+      "role": "Environmental Planner",
+      "description": "Guardians evaluating environmental consequences of projects and ensuring regulatory compliance.",
+      "indiaSalary": "INR 3-6 lakhs (entry-level); INR 8-15+ lakhs (experienced)",
+      "globalSalary": "$50,000-$70,000 (entry-level); $100,000+ (senior)"
+    }
+  ],
+  "institutesIndia": [
+    "Indian Institute of Technology (IIT) Delhi",
+    "Tata Institute of Social Sciences (TISS), Mumbai",
+    "Jawaharlal Nehru University (JNU), New Delhi",
+    "Wildlife Institute of India (WII), Dehradun"
+  ],
+  "institutesInternational": [
+    "University of California, Berkeley (USA)",
+    "University of Oxford (UK)",
+    "Swiss Federal Institute of Technology Zurich (ETH Zurich)",
+    "University of British Columbia (Canada)",
+    "Stockholm University (Sweden)"
+  ],
+  "careerLadder": [
+    "Excel in high school biology, chemistry, environmental science, and mathematics",
+    "Pursue undergraduate degrees in Environmental Science, Environmental Studies, Ecology, or Sustainability",
+    "Seek internships, volunteer opportunities, and field experience during undergraduate studies",
+    "Pursue advanced degrees like Master's in Environmental Management, Environmental Policy, or Sustainability",
+    "Take standardized tests (GRE/GMAT) for graduate program admission",
+    "Engage in continuing education and stay updated on latest research and technologies",
+    "Specialize in areas like conservation biology, climate change mitigation, or renewable energy",
+    "Advance to leadership roles managing teams and shaping environmental policies"
+  ],
+  "sourceUrl": "https://svastrino.com/environmental-studies/"
+}

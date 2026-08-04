@@ -1,0 +1,16 @@
+{
+  "slug": "corporate-training",
+  "name": "Corporate Training",
+  "overview": "Corporate training is a profession focused on improving employees' abilities and knowledge inside firms. Corporate trainers identify training needs, create learning interventions, and deliver effective sessions across areas like team building, sales strategies, and leadership development. This field fosters employee engagement, productivity, and retention while promoting organizational excellence and professional growth.",
+  "topQualities": ["Subject Matter Expertise", "Flexibility", "Interpersonal Skills", "Presentation Skills", "Organizational Skills", "Analytical Skills", "Problem-solving Abilities", "Continuous Learning", "Empathy and Patience"],
+  "topJobs": [
+    {"role": "Personality Development Trainer", "description": "Helps individuals improve personal and professional skills through workshops and coaching in communication, confidence building, and leadership.", "indiaSalary": "INR 3-8 lakh annually", "globalSalary": "$30,000-$70,000+"},
+    {"role": "Soft Skill Trainer", "description": "Develops non-technical skills like communication, teamwork, problem-solving, adaptability, and emotional intelligence through training programs.", "indiaSalary": "INR 3-10 lakh annually", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Technical Trainer", "description": "Imparts knowledge about software applications and tools through instruction on features, functions, and workflows.", "indiaSalary": "INR 3-10 lakh annually", "globalSalary": "$40,000-$80,000+"},
+    {"role": "Knowledge Building Specialist", "description": "Designs training programs and educational materials while facilitating workshops to foster continuous learning and skill development.", "indiaSalary": "INR 4-12 lakh annually", "globalSalary": "$50,000-$100,000+"}
+  ],
+  "institutesIndia": [],
+  "institutesInternational": [],
+  "careerLadder": ["High school completion with focus on communication, psychology, and business studies", "Undergraduate degree in HR Management, Psychology, Business Administration, or Education", "Practical experience through internships, volunteer work, or part-time positions in training/HR", "Corporate Trainer Certificate or Diploma program", "Continuing education through certifications and professional development", "Professional networking within the industry through conferences and associations"],
+  "sourceUrl": "https://svastrino.com/corporate-training/"
+}

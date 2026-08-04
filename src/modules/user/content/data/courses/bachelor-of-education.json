@@ -1,0 +1,18 @@
+{
+  "slug": "bachelor-of-education",
+  "name": "Bachelor of Education",
+  "overview": "B.Ed (Bachelor of Education) is a specialized undergraduate degree that prepares individuals for a career in teaching and education. The program equips aspiring educators with knowledge of pedagogy, curriculum development, and educational psychology. This field shapes society by developing teachers who act as role models, mentors, and facilitators for student development. Education systems understanding and policy familiarity are essential for modern educators.",
+  "topQualities": ["Passion for Teaching and Learning", "Effective Communication Skills", "Adaptability and Flexibility", "Patience and Empathy", "Strong Organizational and Leadership Skills"],
+  "topJobs": [
+    {"role": "Classroom Teacher", "description": "Shape the future through instruction and guidance to students across different subjects and grade levels", "indiaSalary": "Varies by qualifications, experience, location", "globalSalary": ""},
+    {"role": "School Administrator", "description": "Manage institutional operations including budgeting, curriculum, and staff supervision", "indiaSalary": "Varies by responsibility level, institution type, location", "globalSalary": ""},
+    {"role": "Education Consultant", "description": "Assist organizations in enhancing instructional practices and educational policies", "indiaSalary": "", "globalSalary": ""},
+    {"role": "Curriculum Developer", "description": "Design educational materials and comprehensive curricula aligned with standards", "indiaSalary": "", "globalSalary": ""},
+    {"role": "Education Researcher", "description": "Conduct studies to generate insights for evidence-based decision-making in education", "indiaSalary": "", "globalSalary": ""},
+    {"role": "Education Policy Analyst", "description": "Evaluate policies to assess impact and provide recommendations to policymakers", "indiaSalary": "", "globalSalary": ""}
+  ],
+  "institutesIndia": ["Banaras Hindu University (BHU)", "Delhi University (DU)", "Jamia Millia Islamia University", "Ambedkar University Delhi"],
+  "institutesInternational": [],
+  "careerLadder": ["High school education with focus on English, social sciences, and relevant subjects", "Undergraduate B.Ed program enrollment at reputable colleges", "Active participation in teaching practicals and internships", "Master's degree in Education (M.Ed) or specialized postgraduate programs", "Standardized exams (GRE or country-specific entrance exams) for international opportunities"],
+  "sourceUrl": "https://svastrino.com/bachelor-of-education/"
+}

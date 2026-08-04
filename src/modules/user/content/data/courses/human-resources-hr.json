@@ -1,0 +1,16 @@
+{
+  "slug": "human-resources-hr",
+  "name": "Human Resources (HR)",
+  "overview": "The field of Human Resources (HR) is a dynamic and multifaceted domain that plays a vital role in shaping organizational culture, fostering employee engagement, and driving strategic initiatives. HR professionals manage hiring, talent development, employee relations, compensation, benefits, and training while fostering a supportive work atmosphere and guarantee employee welfare and triumph.",
+  "topQualities": ["Communication Skills", "Empathy and Emotional Intelligence", "Problem-Solving Skills", "Adaptability", "Confidentiality and Integrity", "Organizational Skills", "Strategic Thinking", "Collaboration", "Continuous Learning"],
+  "topJobs": [
+    {"role": "HR Generalist", "description": "Manages recruitment, employee relations, payroll, benefits, and regulatory compliance", "indiaSalary": "INR 3.5–7 lakhs annually", "globalSalary": "$45,000–$75,000 annually"},
+    {"role": "HR Recruiter", "description": "Identifies, screens, and hires candidates for open positions", "indiaSalary": "INR 2.5–5 lakhs annually", "globalSalary": "$35,000–$55,000 annually"},
+    {"role": "Compensation and Benefits Manager", "description": "Designs and manages compensation and benefits programs", "indiaSalary": "INR 8–20 lakhs annually", "globalSalary": "$60,000–$120,000 annually"},
+    {"role": "Employee Relations Manager", "description": "Fosters positive employee-organization relationships and handles disputes", "indiaSalary": "INR 6–15 lakhs annually", "globalSalary": "$50,000–$100,000 annually"}
+  ],
+  "institutesIndia": ["Indian Institute of Management Ahmedabad (PGP with HRM specialization)", "Tata Institute of Social Sciences, Mumbai (MA in Human Resource Management and Labour Relations)", "Symbiosis Institute of Business Management, Pune (MBA with HRM specialization)", "Management Development Institute, Gurgaon (PGP-HRM)"],
+  "institutesInternational": ["London School of Economics and Political Science, UK (MSc in Human Resources and Organisations)", "University of Michigan, USA (Master of Management with HR specialization)", "University of Pennsylvania Wharton, USA (MBA with HR major)"],
+  "careerLadder": ["Obtain Bachelor's degree in HR, Psychology, Business Administration, or related field", "Seek internships or entry-level HR roles", "Pursue professional certifications (SHRM-CP, PHR)", "Specialize in recruitment, employee relations, talent management, or compensation", "Pursue Master's degree or specialized certifications", "Advance to leadership positions (HR Manager, HR Business Partner, HR Director)", "Explore HR consulting or entrepreneurship opportunities"],
+  "sourceUrl": "https://svastrino.com/human-resources-hr/"
+}

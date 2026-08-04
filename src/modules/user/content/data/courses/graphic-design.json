@@ -1,0 +1,64 @@
+{
+  "slug": "graphic-design",
+  "name": "Graphic Design",
+  "overview": "Graphic Design is a dynamic and influential field that bridges artistic creativity and effective communication. It involves visual representation of ideas through various mediums, combining artistic skills with technological prowess. Designers work across branding, advertising, user interfaces, and publications, utilizing typography, color theory, and layout to create meaningful visual content that resonates with audiences.",
+  "topQualities": [
+    "Creativity",
+    "Visual Communication",
+    "Attention to Detail",
+    "Technical Proficiency",
+    "Typography Skills",
+    "Open to Critique",
+    "Understanding of Branding",
+    "Aesthetic Sensibility",
+    "Cultural Awareness",
+    "Business Acumen"
+  ],
+  "topJobs": [
+    {
+      "role": "Graphic Designer",
+      "description": "Creates compelling visual content across print, digital platforms, and social media.",
+      "indiaSalary": "₹2-4 lakh (entry-level); ₹4-8 lakh (mid-level)",
+      "globalSalary": "$50,000-$120,000+"
+    },
+    {
+      "role": "Web Designer",
+      "description": "Designs user-friendly, visually captivating websites blending aesthetics with functionality.",
+      "indiaSalary": "₹2-4 lakh (entry-level); ₹4-8 lakh (mid-level)",
+      "globalSalary": "$40,000-$100,000+"
+    },
+    {
+      "role": "UI/UX Designer",
+      "description": "Shapes digital interactions with intuitive interfaces and optimized user experiences.",
+      "indiaSalary": "₹3-5 lakh (entry-level); ₹5-10 lakh (mid-level)",
+      "globalSalary": "$50,000-$120,000+"
+    },
+    {
+      "role": "Brand Identity Designer",
+      "description": "Creates cohesive brand personas through logos, color palettes, and typography.",
+      "indiaSalary": "₹3-6 lakh (entry-level); ₹6-12 lakh (mid-level)",
+      "globalSalary": "$50,000-$100,000+"
+    }
+  ],
+  "institutesIndia": [
+    "National Institute of Design (NID), Ahmedabad",
+    "Indian Institute of Technology (IIT) Bombay",
+    "Srishti Institute of Art, Design, and Technology, Bangalore",
+    "Pearl Academy, Delhi and Mumbai",
+    "MIT Institute of Design, Pune"
+  ],
+  "institutesInternational": [
+    "Royal College of Art, London, UK",
+    "Rhode Island School of Design (RISD), USA",
+    "Parsons School of Design, The New School, USA",
+    "Academy of Art University, USA"
+  ],
+  "careerLadder": [
+    "High school foundation in art, design, and computer technology",
+    "Bachelor's degree in Graphic Design or related field",
+    "Internships, workshops, and personal projects",
+    "Master's degree for specialization (UX design, motion graphics, branding)",
+    "Portfolio development and professional advancement"
+  ],
+  "sourceUrl": "https://svastrino.com/graphic-design/"
+}
