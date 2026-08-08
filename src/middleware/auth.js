@@ -70,6 +70,69 @@ export function requireUserRole(...roles) {
 }
 
 /**
+ * Guards the organisation portal (/api/org/*). Same unified session token as
+ * everything else — what makes it an organisation request is the ACCOUNT, not
+ * a separate login: the user must own an Organisation that is approved and
+ * active. Resolved from the DB on every request so an admin revoking approval,
+ * suspending the organisation or trimming its modules takes effect immediately.
+ *
+ * Attaches req.org = { id, name, modules, doc } and req.orgUser = { id }.
+ */
+export async function requireOrgAuth(req, res, next) {
+  const token = extractToken(req)
+  if (!token) return res.status(401).json({ error: 'Authentication required' })
+  let decoded
+  try {
+    decoded = verifyToken(token)
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token' })
+  }
+  try {
+    // Lazy imports avoid a circular dependency at module load time.
+    const { User } = await import('../modules/user/credentials/credentials.model.js')
+    const { Organisation } = await import('../modules/user/organisation/organisation.model.js')
+
+    const user = await User.findById(decoded.id)
+    if (!user || user.active === false) {
+      return res.status(401).json({ error: 'Account disabled', code: 'ACCOUNT_DISABLED' })
+    }
+    if (!user.organisation || user.organisationRole !== 'owner') {
+      return res.status(403).json({ error: 'This account does not manage an organisation', code: 'NOT_ORG_OWNER' })
+    }
+
+    const org = await Organisation.findById(user.organisation)
+    if (!org) return res.status(403).json({ error: 'Organisation not found', code: 'ORG_NOT_FOUND' })
+    if (org.status !== 'approved') {
+      return res.status(403).json({ error: 'Your organisation is not approved yet', code: 'ORG_NOT_APPROVED' })
+    }
+    if (org.active === false) {
+      return res.status(403).json({ error: 'Your organisation has been suspended', code: 'ORG_SUSPENDED' })
+    }
+
+    req.orgUser = { id: String(user._id), name: user.name, email: user.email }
+    req.org = { id: String(org._id), name: org.name, modules: org.modules || [], doc: org }
+    next()
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Section-level gate inside the organisation portal. Use AFTER requireOrgAuth:
+ *   router.get('/students', requireOrgModule('students'), handler)
+ * Passing several = ANY-of. Admin controls the set per organisation.
+ */
+export function requireOrgModule(...modules) {
+  return (req, res, next) => {
+    if (!req.org) return res.status(401).json({ error: 'Authentication required' })
+    if (modules.some((m) => (req.org.modules || []).includes(m))) return next()
+    return res
+      .status(403)
+      .json({ error: 'Your organisation does not have access to this section', code: 'ORG_MODULE_FORBIDDEN' })
+  }
+}
+
+/**
  * Restrict an admin route to specific admin roles (e.g. superadmin-only).
  * Use AFTER requireAdminAuth.
  */

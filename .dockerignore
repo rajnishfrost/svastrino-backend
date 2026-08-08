@@ -1,0 +1,18 @@
+node_modules
+npm-debug.log
+
+# Secrets - these must NEVER reach the image. On ECS every value comes from
+# Secrets Manager via the task definition, so a baked-in .env would only serve
+# to leak credentials to anyone who can pull the image.
+.env
+.env.*
+!.env.example
+
+# Local upload staging - large, disposable, and rebuilt on boot
+uploads
+
+.git
+.gitignore
+.DS_Store
+document
+*.md

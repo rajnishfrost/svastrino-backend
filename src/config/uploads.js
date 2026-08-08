@@ -1,13 +1,15 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, join, extname } from 'node:path'
-import { mkdirSync, renameSync, unlinkSync } from 'node:fs'
+import { mkdirSync, renameSync, unlinkSync, readdirSync, rmSync } from 'node:fs'
 import crypto from 'node:crypto'
+import { putFile, deleteObject, contentTypeFor, publicUrl } from './s3.js'
 
 /**
- * Storage abstraction for uploaded media. Today it's LOCAL disk; switching to
- * AWS S3 + CloudFront later means implementing the `s3` branch of the save/
- * delete helpers and setting env — NOTHING else changes (controller, DB, frontend
- * all keep using the returned URL). Same pattern as the payment gateway.
+ * Storage abstraction for uploaded media. Works in two modes, chosen by the
+ * STORAGE env var — NOTHING else changes (controllers, DB, frontend all keep
+ * using the returned URL):
+ *   - local (default): files live under server/uploads, served at /uploads/*
+ *   - s3:              files go to AWS S3, served via CloudFront (CDN_URL)
  *
  * Env to switch:  STORAGE=s3  S3_BUCKET=…  AWS_REGION=…  CDN_URL=https://…
  */
@@ -17,12 +19,14 @@ export const VIDEOS_DIR = join(UPLOADS_ROOT, 'videos')
 export const HLS_DIR = join(UPLOADS_ROOT, 'hls') // one folder per video: master.m3u8 + variants
 export const AVATARS_DIR = join(UPLOADS_ROOT, 'avatars') // square profile photos
 export const REPORTS_DIR = join(UPLOADS_ROOT, 'reports') // re-hosted career report PDFs
+export const IMAGES_DIR = join(UPLOADS_ROOT, 'images') // editorial images (blog covers)
 export const TMP_DIR = join(UPLOADS_ROOT, 'tmp') // multer staging before finalising
 
 mkdirSync(VIDEOS_DIR, { recursive: true })
 mkdirSync(HLS_DIR, { recursive: true })
 mkdirSync(AVATARS_DIR, { recursive: true })
 mkdirSync(REPORTS_DIR, { recursive: true })
+mkdirSync(IMAGES_DIR, { recursive: true })
 mkdirSync(TMP_DIR, { recursive: true })
 
 export const STORAGE = process.env.STORAGE || 'local'
@@ -36,15 +40,9 @@ export async function saveVideo(tmpPath, originalName) {
   const key = `videos/${name}`
 
   if (STORAGE === 's3') {
-    // TODO(S3): stream tmpPath → s3://S3_BUCKET/${key}, then unlink tmp, e.g.
-    //   const client = new S3Client({ region: process.env.AWS_REGION })
-    //   await client.send(new PutObjectCommand({
-    //     Bucket: process.env.S3_BUCKET, Key: key,
-    //     Body: createReadStream(tmpPath), ContentType: 'video/mp4',
-    //   }))
-    //   unlinkSync(tmpPath)
-    //   return { url: `${process.env.CDN_URL}/${key}`, key }   // CloudFront URL
-    throw new Error('S3 storage is not configured (set STORAGE=s3 + S3_BUCKET/AWS_REGION/CDN_URL)')
+    const res = await putFile(tmpPath, key, contentTypeFor(name))
+    try { unlinkSync(tmpPath) } catch { /* already gone */ }
+    return res // { url: CDN/S3 url, key }
   }
 
   // local: move the staged file into the served videos dir
@@ -61,11 +59,15 @@ export async function saveHlsDir(localDir, id) {
   const key = `hls/${id}`
 
   if (STORAGE === 's3') {
-    // TODO(S3): walk localDir and upload every file → s3://S3_BUCKET/${key}/…
-    //   (Content-Type: .m3u8 → application/vnd.apple.mpegurl, .ts → video/mp2t),
-    //   then rm -rf localDir.
-    //   return { masterUrl: `${process.env.CDN_URL}/${key}/master.m3u8`, key }
-    throw new Error('S3 storage is not configured for HLS output')
+    // Upload every file in the (flat) HLS output folder: master.m3u8 + variant
+    // playlists + .ts segments. The master references the others by relative
+    // name, so keeping them under the same `hls/${id}/` prefix just works.
+    const files = readdirSync(localDir, { withFileTypes: true }).filter((d) => d.isFile())
+    for (const f of files) {
+      await putFile(join(localDir, f.name), `${key}/${f.name}`, contentTypeFor(f.name))
+    }
+    try { rmSync(localDir, { recursive: true, force: true }) } catch { /* best effort */ }
+    return { masterUrl: publicUrl(`${key}/master.m3u8`), key }
   }
 
   // local: move the whole folder into the served hls dir (same fs → atomic)
@@ -82,9 +84,9 @@ export async function saveAvatar(tmpPath, ext = '.jpg') {
   const key = `avatars/${name}`
 
   if (STORAGE === 's3') {
-    // TODO(S3): putObject tmpPath → s3://S3_BUCKET/${key} (ContentType image/*),
-    //   unlink tmp, return { url: `${process.env.CDN_URL}/${key}`, key }
-    throw new Error('S3 storage is not configured for avatars')
+    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    try { unlinkSync(tmpPath) } catch { /* already gone */ }
+    return res
   }
 
   renameSync(tmpPath, join(AVATARS_DIR, name))
@@ -101,13 +103,31 @@ export async function saveReport(tmpPath, ext = '.pdf') {
   const key = `reports/${name}`
 
   if (STORAGE === 's3') {
-    // TODO(S3): putObject tmpPath → s3://S3_BUCKET/${key} (ContentType application/pdf),
-    //   unlink tmp, return { url: `${process.env.CDN_URL}/${key}`, key }
-    throw new Error('S3 storage is not configured for report PDFs')
+    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    try { unlinkSync(tmpPath) } catch { /* already gone */ }
+    return res
   }
 
   renameSync(tmpPath, join(REPORTS_DIR, name))
   return { url: `/uploads/reports/${name}`, key }
+}
+
+/**
+ * Persist an editorial image (blog cover art uploaded from the admin panel) and
+ * return its public URL + storage key. `ext` includes the dot, e.g. '.jpg'.
+ */
+export async function saveImage(tmpPath, ext = '.jpg') {
+  const name = crypto.randomBytes(12).toString('hex') + ext
+  const key = `images/${name}`
+
+  if (STORAGE === 's3') {
+    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    try { unlinkSync(tmpPath) } catch { /* already gone */ }
+    return res
+  }
+
+  renameSync(tmpPath, join(IMAGES_DIR, name))
+  return { url: `/uploads/images/${name}`, key }
 }
 
 /**
@@ -117,7 +137,7 @@ export async function saveReport(tmpPath, ext = '.pdf') {
 export async function deleteByKey(key) {
   if (!key) return
   if (STORAGE === 's3') {
-    // TODO(S3): DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key })
+    await deleteObject(key)
     return
   }
   try {
@@ -127,7 +147,21 @@ export async function deleteByKey(key) {
   }
 }
 
-/** Derive a storage key from a locally-served URL, or null for remote URLs. */
+/**
+ * Derive a storage key from a stored URL, so an old asset can be deleted when
+ * it's replaced. Handles both modes:
+ *   - local:  "/uploads/avatars/ab.jpg"            → "avatars/ab.jpg"
+ *   - s3/CDN: "https://cdn…/avatars/ab.jpg"        → "avatars/ab.jpg"
+ * Returns null for anything else (e.g. a remote Google avatar).
+ */
 export function keyFromUrl(url) {
-  return typeof url === 'string' && url.startsWith('/uploads/') ? url.slice('/uploads/'.length) : null
+  if (typeof url !== 'string' || !url) return null
+  if (url.startsWith('/uploads/')) return url.slice('/uploads/'.length)
+
+  const cdn = (process.env.CDN_URL || '').replace(/\/$/, '')
+  if (cdn && url.startsWith(cdn + '/')) return url.slice(cdn.length + 1)
+
+  // Fallback: an S3 REST URL — take the path after the first known prefix.
+  const m = url.match(/\/(videos|hls|avatars|reports|images)\/.+/)
+  return m ? m[0].slice(1) : null
 }

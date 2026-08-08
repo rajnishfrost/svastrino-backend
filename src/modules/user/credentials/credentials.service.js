@@ -143,6 +143,95 @@ export async function guestAccount({ name, email, phone }) {
   return { token: issueSession(user), user }
 }
 
+// --- Provisioned accounts (organisation owners & imported students) ---------
+// An organisation is approved, or bulk-imports its student roster: we create the
+// accounts on their behalf. Same mechanics as guest checkout above — verified
+// straight away (the organisation vouches for the address), no password, and a
+// 7-day set-password link the caller emails with the right wording.
+
+const INVITE_SETPW_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+/** Arm a fresh set-password token on a user and return the /reset-password link. */
+export async function issueSetPasswordLink(user, ttlMs = INVITE_SETPW_TTL_MS) {
+  const { raw, hash } = makeToken()
+  user.passwordResetTokenHash = hash
+  user.passwordResetExpires = new Date(Date.now() + ttlMs)
+  await user.save()
+  return `${clientUrl()}/reset-password?token=${raw}`
+}
+
+/**
+ * Create the account, or adopt the one that already exists for this email.
+ *
+ * @param {object}  spec
+ * @param {string}  spec.email
+ * @param {string}  [spec.name] [spec.phone]
+ * @param {string}  [spec.role]              role key to set on a NEW account
+ * @param {ObjectId}[spec.organisation]      organisation to attach the account to
+ * @param {string}  [spec.organisationRole]  'member' (student) | 'owner' (the org)
+ * @param {boolean} [spec.upgradeExisting]   also apply role/organisation to an
+ *                                           account that already exists — used
+ *                                           for organisation owners, never for
+ *                                           bulk-imported students (whose role
+ *                                           and existing organisation must not
+ *                                           be silently rewritten).
+ * @returns {{ user, created: boolean, link: string|null, attached: boolean }}
+ *          `link` is non-null only when the account has no password yet, i.e.
+ *          when an invite email is actually useful.
+ */
+export async function provisionAccount({
+  email,
+  name = '',
+  phone,
+  role,
+  organisation = null,
+  organisationRole = null,
+  upgradeExisting = false,
+}) {
+  const existing = await User.findOne({ email }).select('+passwordHash')
+
+  if (existing) {
+    let touched = false
+    let attached = false
+
+    if (!existing.name && name) { existing.name = name; touched = true }
+    if (!existing.phone && phone) { existing.phone = phone; touched = true }
+
+    // Only fill an EMPTY organisation slot, unless we're explicitly upgrading —
+    // an import must never yank a student out of another organisation.
+    if (organisation && (upgradeExisting || !existing.organisation)) {
+      const already = String(existing.organisation || '') === String(organisation)
+      existing.organisation = organisation
+      existing.organisationRole = organisationRole
+      attached = !already
+      touched = touched || !already
+    }
+    if (role && upgradeExisting && existing.role !== role) { existing.role = role; touched = true }
+
+    // The organisation vouched for this address; a provisioned account should
+    // not be sitting in the unverified auto-purge queue.
+    if (!existing.emailVerified) { existing.emailVerified = true; existing.purgeAt = undefined; touched = true }
+
+    if (touched) await existing.save()
+
+    // They can already sign in — an invite link would only confuse them.
+    const link = existing.passwordHash ? null : await issueSetPasswordLink(existing)
+    return { user: existing, created: false, link, attached }
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    phone,
+    role: role || 'student',
+    organisation,
+    organisationRole,
+    emailVerified: true, // provisioned by a vouching organisation
+  })
+  const link = await issueSetPasswordLink(user)
+  return { user, created: true, link, attached: !!organisation }
+}
+
 // --- Google sign-in ---------------------------------------------------------
 // The client performs the GIS implicit flow and sends us Google's access token.
 // We verify it server-side: `tokeninfo` confirms the token's audience is OUR

@@ -118,3 +118,21 @@ export async function updateManagedAdmin(actorId, id, body) {
   await user.save()
   return user
 }
+
+/**
+ * Permanently delete an account. Guard-rails mirror the edit rules: you can't
+ * delete yourself, and the last active superadmin can't be deleted (so the panel
+ * can never lock everyone out). Financial/history records (orders) are left
+ * intact — their DTOs already tolerate a missing user.
+ */
+export async function deleteManagedAccount(actorId, id) {
+  if (String(actorId) === String(id)) throw httpError('You cannot delete your own account', 400)
+  const user = await User.findById(id)
+  if (!user) throw httpError('Account not found', 404)
+  if (user.role === 'superadmin') {
+    const others = await User.countDocuments({ _id: { $ne: user._id }, role: 'superadmin', active: true })
+    if (others === 0) throw httpError('At least one active superadmin must remain', 400)
+  }
+  await user.deleteOne()
+  return { id: String(user._id) }
+}

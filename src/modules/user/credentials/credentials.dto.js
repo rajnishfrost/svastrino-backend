@@ -155,6 +155,12 @@ export function toUserDTO(user, extra = {}) {
     // Only accurate when passwordHash was selected (see findUserById).
     hasPassword: !!user.passwordHash,
     isProfileComplete: user.isProfileComplete,
+    // Which organisation added this account, and in what capacity:
+    //   null       → a plain public signup
+    //   'member'   → a student their organisation registered
+    //   'owner'    → this account IS the organisation (see modules/org)
+    // `organisation` itself is filled in by the controller (name + id).
+    organisationRole: user.organisationRole || null,
     // `panel`: does this account's role grant admin-panel access? Set by the
     // login / profile controllers so the client can route + show the panel link.
     ...extra,

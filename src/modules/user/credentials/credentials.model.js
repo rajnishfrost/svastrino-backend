@@ -40,6 +40,16 @@ const userSchema = new mongoose.Schema(
     // keyed by this `role` string — see modules/admin/roles.
     active: { type: Boolean, default: true },
 
+    // Which organisation this account came from (see modules/user/organisation).
+    //   null      → a plain public signup, nobody added them
+    //   ObjectId  → the organisation that bulk-added / registered them
+    // Read `organisationRole` alongside it to tell a student apart from the
+    // organisation's own login:
+    //   'member' → a student the organisation added
+    //   'owner'  → this account IS the organisation ("self")
+    organisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
+    organisationRole: { type: String, enum: ['member', 'owner', null], default: null },
+
     // Absent for Google-only accounts that never set a password.
     passwordHash: { type: String, select: false },
 

@@ -5,8 +5,9 @@ catalog in `skillbuilds` / `packages` / `sessions`; commerce in `orders` /
 `enrollments` / `coupons`; and the content migrated from the legacy site in
 `blogs`, `mentoringprograms`, `faqs`, `testimonials` and `careerfields`
 (documented at the bottom of this file).
-(The SRS also plans `scholarship_contests`, `scholarship_participants`,
-bookings, etc. — see `svastrino_resources/SRS_Addendum_Scholarship.md` and the SRS.)
+The Nirmaan scholarship lives in `organisations`, `scholarshipcycles`,
+`scholarshipquestions`, `scholarshipenrollments` and `scholarshipattempts`
+(documented below).
 
 ## User — `modules/user/credentials/credentials.model.js`
 One unified account powers both Mentoring and Skill-Build.
@@ -27,8 +28,14 @@ One unified account powers both Mentoring and Skill-Build.
 | `passwordResetExpires` | Date | `select:false` — 1 h |
 | `purgeAt` | Date | `select:false` — **TTL**: unverified accounts auto-delete |
 | `isProfileComplete` | Boolean | default `false` |
+| `organisation` | ObjectId → Organisation | `null` when nobody added them (a plain public signup) |
+| `organisationRole` | String | `'member'` (a student their organisation added) · `'owner'` (this account **is** the organisation) · `null` |
 | `lastLoginAt` | Date | |
 | `createdAt` / `updatedAt` | Date | `timestamps: true` |
+
+`organisation` + `organisationRole` answer "where did this account come from?".
+An owner is what `requireOrgAuth` looks for — it is the only way into
+`/api/org/*`. See **Organisation** below.
 
 **Indexes**
 - `email` unique, `phone` unique+sparse, `googleId` unique+sparse.
@@ -66,6 +73,93 @@ Separate from end-users.
 
 Seed the first admin: `npm run seed:admin` (reads `SEED_ADMIN_EMAIL` /
 `SEED_ADMIN_PASSWORD`; script at `modules/admin/credentials/seedAdmin.js`).
+
+## Nirmaan Scholarship
+
+The scholarship is **organisation-scoped and yearly**. A partner organisation
+runs its own cycle each year — its own questions, its own window, its own
+leaderboard, its own winner. Nothing is global.
+
+```
+Organisation ──< ScholarshipCycle  (one per {organisation, year})
+                      ├──< ScholarshipQuestion
+                      ├──< ScholarshipEnrollment  ──> User
+                      └──< ScholarshipAttempt     ──> User
+```
+
+### Organisation — `modules/user/organisation/organisation.model.js`
+Any body we tie up with: a school, college, village panchayat, NGO, coaching
+centre or company. Supersedes the old `Institution` (school/college only, no
+login).
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | String | required |
+| `type` | String | enum `school · college · village · ngo · coaching · corporate · other` |
+| `description` | String | public blurb shown in the directory (≤1200 chars) |
+| `branch` `address` `city` `state` `pincode` `website` | String | optional profile |
+| `contactPerson` `phone` `email` | String | `email` is required and becomes the owner's login |
+| `code` | String | unique+sparse — short handle (e.g. `DPS-4F2A`) assigned on approval |
+| `status` | String | enum `pending · approved · rejected` |
+| `rejectionReason` | String | emailed to the applicant |
+| `owner` | ObjectId → User | the organisation's login account; created **on approval** |
+| `modules` | [String] | which portal sections admin granted: `students`, `scholarship`, `profile` |
+| `publicListed` | Boolean | opt out to disappear from `/organisations` (still enrollable) |
+| `active` | Boolean | suspend without deleting — blocks the portal and hides it from enrolment |
+| `submittedIp` | String | one public application per IP |
+| `reviewedBy` / `reviewedAt` | | audit of the approve/reject |
+
+**Lifecycle:** public form → `pending` → admin approves → a `code` is assigned,
+an owner `User` is created (role `organisation`, `organisationRole: 'owner'`) and
+emailed a 7-day set-password link to the portal. If the contact email already has
+an account, it is *promoted* rather than duplicated.
+
+### ScholarshipCycle — `modules/user/scholarship/scholarship.model.js`
+| Field | Type | Notes |
+|---|---|---|
+| `organisation` | ObjectId → Organisation | required |
+| `year` | Number | required — **unique together with `organisation`** |
+| `title` `instructions` | String | shown to students on the test paper |
+| `startAt` / `endAt` | Date | the test window |
+| `durationMins` | Number | per-student limit once they start (default 30) |
+| `status` | String | `draft` (invisible to students) · `published` (live) · `archived` (read-only history) |
+| `active` | Boolean | pause inside `published` without unpublishing |
+| `declaredWinner` | ObjectId → User | must have submitted **this** cycle |
+| `winnerDeclaredAt` | Date | |
+
+Publishing is refused unless the cycle has ≥1 question and both window dates.
+Once any student submits, the questions lock — a score can never shift under a
+student who already answered.
+
+### ScholarshipQuestion / Enrollment / Attempt
+All three carry `cycle`; enrolments and attempts also denormalise
+`organisation` so "everything this partner has ever run" is one indexed query.
+
+- **Question** — `order`, `prompt`, `guidance` (internal AI grading hint, *never*
+  sent to students), `maxWords` (20–1000).
+- **Enrollment** — `studentClass`, `section`, `rollNo`, `source`
+  (`self` | `bulk` | `org`). Unique on `{user, cycle}` — one entry per year, so a
+  student can return next year.
+- **Attempt** — `answers[]` (`question`, `text`, `awarded` 0/1, AI `feedback`),
+  `score`, `total`, `gradedModel`, `status`. Unique on `{user, cycle}`.
+
+**Indexes**
+- `{organisation, year}` unique on cycles. The create path *also* checks
+  explicitly first: Mongoose builds indexes in the background, so on a fresh
+  database the index alone would let a duplicate through.
+- `{user, cycle}` unique on enrolments and attempts.
+- `{cycle, status, score:-1, submittedAt:1}` — the leaderboard sort.
+- `{status, active, publicListed}` on organisations — the directory + enrolment
+  dropdown both ask for exactly this.
+
+### Migrating from the old shape
+`npm run migrate:organisations` copies `institutions` → `organisations`
+(**keeping `_id`**, so every existing reference stays valid) and turns the
+singleton `scholarshiptests` doc into one cycle per organisation for the current
+year, cloning the global questions into each. Idempotent — `cycle` is the
+discriminator that tells migrated docs from legacy ones, so re-running is a
+no-op. The legacy collections are left in place; drop them by hand once the new
+data checks out.
 
 ## Migrated site content
 

@@ -1,0 +1,131 @@
+# =============================================================================
+# Deploy the Svastrino API to ECS Fargate
+# =============================================================================
+# Triggered by a push to `production`. Builds the image, pushes it to ECR,
+# registers a new task definition revision pointing at it, and rolls the ECS
+# service.
+#
+# Authentication is OIDC - no AWS keys are stored in this repo. AWS trusts a
+# short-lived token from GitHub, and the role's trust policy pins this repo AND
+# this branch, so a push to any other branch cannot deploy.
+#
+# Repository variable required (Settings -> Secrets and variables -> Actions):
+#   AWS_DEPLOY_ROLE = arn:aws:iam::559258887400:role/svastrino-prod-gha-server-deploy
+#                     (terraform output github_server_deploy_role_arn)
+# =============================================================================
+name: Deploy API
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch: # lets you re-deploy the current branch by hand
+
+concurrency:
+  # Never let two deploys race to update the same ECS service.
+  group: deploy-api
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: svastrino-prod
+  ECS_CLUSTER: svastrino-prod-cluster
+  ECS_SERVICE: svastrino-prod
+  TASK_FAMILY: svastrino-prod
+  CONTAINER_NAME: app
+
+permissions:
+  id-token: write # required to request the OIDC token
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, push, roll service
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          # Tag with the commit SHA, not just :latest. ECS needs the image
+          # reference to actually change for a rolling deploy to pull anything
+          # new - pushing a fresh :latest and re-registering the same task
+          # definition can silently keep the old image.
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE="$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t "$IMAGE" -t "$REGISTRY/$ECR_REPOSITORY:latest" .
+          docker push "$IMAGE"
+          docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Render new task definition
+        id: taskdef
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          # Start from the CURRENTLY DEPLOYED definition so that everything
+          # Terraform owns - env vars, secrets, cpu/memory, roles - is carried
+          # forward untouched. Only the image changes here. This is what keeps
+          # CI and Terraform from fighting over the task definition.
+          aws ecs describe-task-definition \
+            --task-definition "$TASK_FAMILY" \
+            --query 'taskDefinition' --output json > current.json
+
+          jq --arg IMAGE "$IMAGE" --arg NAME "$CONTAINER_NAME" '
+            .containerDefinitions = (
+              .containerDefinitions
+              | map(if .name == $NAME then .image = $IMAGE else . end)
+            )
+            # Strip the read-only fields the register call rejects
+            | del(
+                .taskDefinitionArn, .revision, .status, .requiresAttributes,
+                .compatibilities, .registeredAt, .registeredBy, .deregisteredAt
+              )
+          ' current.json > new.json
+
+          REVISION=$(aws ecs register-task-definition \
+            --cli-input-json file://new.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "Registered $REVISION"
+
+      - name: Roll the service
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "${{ steps.taskdef.outputs.revision }}" \
+            --output text --query 'service.serviceName'
+
+      - name: Wait for the service to stabilise
+        run: |
+          # Fails the workflow if the new tasks never go healthy, so a broken
+          # deploy shows up red here instead of as a silently crash-looping
+          # service nobody is watching.
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE"
+
+      - name: Smoke-test the API
+        run: |
+          # Through CloudFront, i.e. exactly the path a real user takes.
+          for i in $(seq 1 10); do
+            if curl -fsS "https://${{ vars.APP_DOMAIN }}/api/health"; then
+              echo "OK"; exit 0
+            fi
+            echo "attempt $i failed, retrying..."; sleep 10
+          done
+          echo "Health check never passed"; exit 1

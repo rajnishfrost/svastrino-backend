@@ -353,3 +353,55 @@ export function buildScholarshipResultEmail({ name, won, winnerName, institution
 export async function sendScholarshipResultEmail(to, details) {
   await sendMail({ to, ...buildScholarshipResultEmail(details) })
 }
+
+// --- Organisation approved: portal login is ready ---------------------------
+/**
+ * Sent the moment an admin approves a partner organisation. The organisation's
+ * owner account is created at the same time with no password, so the link is a
+ * set-password link (the existing /reset-password page finishes the job) —
+ * exactly the guest-checkout mechanic, reused.
+ */
+export function buildOrgApprovedEmail({ name, organisation, link, code }) {
+  const who = name ? `, ${name}` : ''
+  return {
+    subject: `${organisation} is approved — set up your ${BRAND} organisation account`,
+    text: `Good news${who}! ${organisation} has been approved as a Nirmaan Scholarship partner. Set your password to open your organisation portal, where you can add students and run your scholarship: ${link}${code ? ` (Organisation code: ${code})` : ''}`,
+    html: template({
+      heading: 'Your organisation is approved 🎉',
+      preheader: `Set your password to open the ${organisation} portal.`,
+      intro: `Good news${who}! ${organisation} has been approved as a Nirmaan Scholarship partner. Set a password below to open your organisation portal — from there you can bulk-add your students, set up your scholarship test and see your results.`,
+      cta: 'Set my password',
+      link,
+      note: `${code ? `Your organisation code is ${code}. ` : ''}This link is valid for 7 days — after that use “Forgot password” on the login page.`,
+    }),
+  }
+}
+export async function sendOrgApprovedEmail(to, details) {
+  await sendMail({ to, ...buildOrgApprovedEmail(details) })
+}
+
+// --- Student added by their organisation ------------------------------------
+/**
+ * Sent to each student an organisation imports. The account already exists (the
+ * organisation vouched for the address), so this is a set-password invite plus
+ * a note about the scholarship they've been entered into.
+ */
+export function buildStudentInviteEmail({ name, organisation, link, cycleTitle }) {
+  const first = String(name || '').trim().split(/\s+/)[0] || 'there'
+  const what = cycleTitle ? ` and entered you into the ${cycleTitle}` : ''
+  return {
+    subject: `${organisation} created your ${BRAND} account`,
+    text: `Hi ${first}, ${organisation} created a ${BRAND} account for you${what}. Set your password to log in and take the scholarship test: ${link}`,
+    html: template({
+      heading: 'Your account is ready',
+      preheader: `${organisation} created a ${BRAND} account for you.`,
+      intro: `Hi ${first}! ${organisation} created a ${BRAND} account for you${what}. Set a password below — then log in to see your scholarship details and take the test when it opens.`,
+      cta: 'Set my password',
+      link,
+      note: 'This link is valid for 7 days. You can also use “Forgot password” on the login page later.',
+    }),
+  }
+}
+export async function sendStudentInviteEmail(to, details) {
+  await sendMail({ to, ...buildStudentInviteEmail(details) })
+}

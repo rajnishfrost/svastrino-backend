@@ -35,3 +35,8 @@ export const patchAdmin = asyncHandler(async (req, res) => {
   const admin = await service.updateManagedAdmin(req.admin.id, req.params.id, req.body || {})
   res.json({ admin: toAdminDTO(admin, await rolePermissions(admin.role)) })
 })
+
+export const deleteAdmin = asyncHandler(async (req, res) => {
+  const result = await service.deleteManagedAccount(req.admin.id, req.params.id)
+  res.json({ ok: true, ...result })
+})

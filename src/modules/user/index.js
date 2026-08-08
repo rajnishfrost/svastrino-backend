@@ -6,6 +6,7 @@ import paymentsRoutes from './payments/payments.routes.js'
 import mentoringRoutes from './mentoring/mentoring.routes.js'
 import assessmentRoutes from './assessment/assessment.routes.js'
 import scholarshipRoutes from './scholarship/scholarship.routes.js'
+import organisationRoutes from './organisation/organisation.routes.js'
 import blogsRoutes from './blogs/blogs.routes.js'
 import contentRoutes from './content/content.routes.js'
 import { getMe, updateProfile, changePassword } from './credentials/credentials.controller.js'
@@ -41,7 +42,10 @@ router.use('/mentoring', mentoringRoutes)
 // Psychometric assessment (Mindler) — ships with every package
 router.use('/assessment', assessmentRoutes)
 
-// Nirmaan Scholarship — institution partner form + student enrolment & test
+// Partner organisations — public directory + the "partner with us" application
+router.use('/organisations', organisationRoutes)
+
+// Nirmaan Scholarship — student enrolment, timed test and public winners
 router.use('/scholarship', scholarshipRoutes)
 
 // Blog archive (public — migrated from the legacy svastrino.com site)

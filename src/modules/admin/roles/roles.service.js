@@ -16,9 +16,10 @@ const slugify = (s) =>
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /**
- * Ensure the two seeded system roles exist (idempotent, on startup). Never
- * overwrites the editable student modules; always forces superadmin to the
- * full, locked module set.
+ * Ensure the seeded system roles exist (idempotent, on startup). Never
+ * overwrites the editable student modules; forces every LOCKED role back to its
+ * declared module set — superadmin to everything, organisation to nothing (its
+ * access lives in the /organisation portal, not the admin panel).
  */
 export async function ensureBuiltinRoles() {
   for (const r of SEED_ROLES) {
@@ -26,7 +27,7 @@ export async function ensureBuiltinRoles() {
     if (!existing) {
       await Role.create(r)
     } else if (r.locked) {
-      existing.permissions = [...ADMIN_MODULES]
+      existing.permissions = [...r.permissions]
       existing.locked = true
       existing.system = true
       existing.label = r.label
@@ -54,11 +55,12 @@ export async function createRole({ name, permissions }) {
   return Role.create({ key, label, permissions: cleanPermissions(permissions), system: false, locked: false })
 }
 
-/** Edit a role's modules (and name for non-system roles). Superadmin is locked. */
+/** Edit a role's modules (and name for non-system roles). Locked roles
+ *  (superadmin, organisation) can't be edited — their module set is fixed. */
 export async function updateRole(id, { name, permissions }) {
   const role = await Role.findById(id)
   if (!role) throw httpError('Role not found', 404)
-  if (role.locked) throw httpError('The superadmin role cannot be edited', 400)
+  if (role.locked) throw httpError(`The ${role.label} role cannot be edited`, 400)
 
   if (name !== undefined && !role.system) {
     const label = String(name).trim()

@@ -26,8 +26,13 @@ const roleSchema = new mongoose.Schema(
 
 export const Role = mongoose.models.Role || mongoose.model('Role', roleSchema)
 
-// Only these two are seeded. Everything else is created via the Roles page.
+// Only these three are seeded. Everything else is created via the Roles page.
+//
+// `organisation` grants NO admin modules on purpose — an organisation owner
+// must never reach the admin panel. Its access is the /organisation portal,
+// gated by requireOrgAuth + the per-organisation `modules` list.
 export const SEED_ROLES = [
   { key: 'student', label: 'Student', permissions: [], system: true, locked: false },
+  { key: 'organisation', label: 'Organisation', permissions: [], system: true, locked: true },
   { key: 'superadmin', label: 'Superadmin', permissions: [...ADMIN_MODULES], system: true, locked: true },
 ]

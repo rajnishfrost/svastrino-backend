@@ -8,6 +8,7 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed:scholarship": "node src/modules/user/scholarship/seedScholarship.js",
+    "migrate:organisations": "node src/modules/user/organisation/migrateInstitutions.js",
     "seed:admin": "node src/modules/admin/credentials/seedAdmin.js",
     "migrate:admins": "node src/modules/admin/credentials/migrateAdminsToUsers.js",
     "seed:skillbuild": "node src/modules/user/skillbuild/seedSkillBuild.js",
@@ -22,6 +23,8 @@
     "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1106.0",
+    "@aws-sdk/lib-storage": "^3.1106.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

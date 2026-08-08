@@ -6,6 +6,8 @@ import mongoose from 'mongoose'
  */
 export const ADMIN_MODULES = [
   'assessments',
+  'blogs',
+  'career-library',
   'content',
   'coupons',
   'mentoring',

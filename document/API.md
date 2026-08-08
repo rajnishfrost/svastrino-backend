@@ -2,7 +2,10 @@
 
 Base URL: `http://localhost:5060/api` (dev). All bodies are JSON.
 Auth column: **—** public · **User** = `Authorization: Bearer <user-jwt>` ·
-**Admin** = `Authorization: Bearer <admin-jwt>`.
+**Admin** = `Authorization: Bearer <admin-jwt>` · **Org** = the same user JWT,
+but the account must own an approved, active Organisation.
+
+There are three areas: `/api/user/*`, `/api/org/*` and `/api/admin/*`.
 
 ## Health
 | Method | Path | Auth | Notes |
@@ -135,6 +138,94 @@ with no checkout SKU.
 
 ---
 
+## Partner organisations — `/api/user/organisations` (public)
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/` | — | Public directory. Query: `q`, `type`, `state`. Only approved + active + `publicListed` |
+| GET | `/filters` | — | `{ types: [{key,label}], states: [] }` for the directory filters |
+| GET | `/enrollable` | — | Approved + active — the student enrolment dropdown |
+| POST | `/` | — | Partner application. One per IP (`IP_ALREADY_SUBMITTED`), 8/day rate limit |
+
+## Nirmaan Scholarship — `/api/user/scholarship`
+
+Each partner organisation runs its own yearly cycle, so the student's cycle is
+always resolved server-side from the organisation they enrolled with — the
+client never sends a cycle id.
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/winners` | — | Declared winners across every partner, newest first |
+| GET | `/me` | User | `{ enrolled, canEnroll, canStart, organisation, student, cycle, attempt, winner, isWinner, history[] }` |
+| POST | `/enroll` | User | `{ organisationId, studentClass, section?, rollNo }` → 400 `NO_OPEN_CYCLE`, 409 `ALREADY_ENROLLED` |
+| POST | `/attempt/start` | User | `{ attemptId, cycleId, title, instructions, deadline, questions[] }`. Resumes an in-progress attempt; `guidance` is never included |
+| POST | `/attempt/submit` | User | `{ answers: [{ question, text }] }` → `{ score, total }` |
+
+---
+
+## Organisation portal — `/api/org` (Org auth)
+
+Every handler is scoped to `req.org`, resolved from the DB on **each** request —
+no route accepts an organisation id, so a partner structurally cannot address
+another's data. A cycle belonging to someone else returns `404`, never `403`.
+Section access is per-organisation (`ORG_MODULES`), so a trimmed module 403s with
+`ORG_MODULE_FORBIDDEN`.
+
+| Method | Path | Module | Notes |
+|---|---|---|---|
+| GET | `/me` | — | `{ organisation, modules, allModules, stats, currentCycle }` |
+| PATCH | `/profile` | profile | Public profile fields + `publicListed`. Status/modules/email are ignored |
+| GET | `/students` | students | Query `q`, `cycleId`. Includes `activated` (has the student claimed their invite?) |
+| POST | `/students` | students | `{ name, email, phone?, class?, section?, rollNo? }` — provisions + enrols + invites |
+| POST | `/students/bulk` | students | `multipart/form-data` field `file` (≤2 MB). `?dryRun=1` previews without writing |
+| GET | `/students/sample.csv` | students | The import template, `text/csv` |
+| DELETE | `/students/:id` | students | Detaches from the organisation; the account itself survives |
+| GET · POST | `/scholarship/cycles` | scholarship | List / create (`{ year, title? }`; 409 `CYCLE_EXISTS`) |
+| GET · PATCH · DELETE | `/scholarship/cycles/:id` | scholarship | Settings + `status` transitions. Delete only while no attempts exist |
+| GET · PUT | `/scholarship/cycles/:id/questions` | scholarship | Replace the whole set; locked once anyone has submitted |
+| GET | `/scholarship/cycles/:id/enrollments` | scholarship | |
+| DELETE | `/scholarship/enrollments/:id` | scholarship | Clears the enrolment **and** its attempt |
+| GET | `/scholarship/cycles/:id/leaderboard` | scholarship | `{ leaderboard[], declaredWinner }` |
+| GET | `/scholarship/cycles/:id/attempts/:userId` | scholarship | One answer sheet with per-question marks + AI notes |
+| POST | `/scholarship/cycles/:id/winner` | scholarship | `{ userId }` (null clears). Emails every participant, once per change |
+
+**Bulk import** returns the same per-row report whether or not `dryRun` is set,
+so the preview never lies:
+```json
+{ "dryRun": true, "total": 4, "created": 2, "linked": 0, "existing": 0,
+  "conflicts": 1, "skipped": 1, "errors": 0, "invitesQueued": 0,
+  "results": [{ "line": 2, "name": "…", "email": "…", "status": "created", "message": "…" }] }
+```
+Row statuses: `created` · `linked` (existing account joined this organisation) ·
+`existing` · `conflict` (belongs to another organisation — never stolen) ·
+`skipped` (duplicate inside the file) · `error`. CSV columns:
+`name, email, phone, class, section, rollNo` — headers are matched loosely
+(`Roll No.` = `roll_no` = `rollNo`) and only `email` is mandatory.
+
+---
+
+## Nirmaan Scholarship admin — `/api/admin/scholarship` (module `scholarship`)
+
+Same operations as the portal, but across every partner — the service is simply
+called without an organisation scope.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/overview` | Programme-wide counts + the org type/module vocabularies |
+| GET | `/organisations` | Query `status`, `type`, `q` |
+| GET | `/organisations/:id` | `{ organisation, stats, cycles }` |
+| PATCH | `/organisations/:id` | Review: `{ status: 'approved' \| 'rejected', reason? }`. Approving provisions the owner account and emails the set-password link |
+| PUT | `/organisations/:id` | Configure: profile, `modules`, `publicListed`, `active` |
+| GET | `/organisations/:id/students` | |
+| GET | `/cycles` | Every cycle, with live question/enrolment/submission counts. Query `organisation`, `year`, `status` |
+| GET · PATCH | `/cycles/:id` | |
+| GET · PUT | `/cycles/:id/questions` | |
+| GET | `/cycles/:id/enrollments` · `/cycles/:id/leaderboard` · `/cycles/:id/attempts/:userId` | |
+| DELETE | `/enrollments/:id` | |
+| POST | `/cycles/:id/winner` | |
+
+---
+
 ## Admin authentication — `/api/admin/auth`
 
 | Method | Path | Auth | Body | Returns |
@@ -160,15 +251,29 @@ fields (`passwordHash`, token hashes, `purgeAt`) are never exposed:
   "emailVerified": true,
   "phoneVerified": false,
   "hasPassword": true,
-  "isProfileComplete": false
+  "isProfileComplete": false,
+  "organisationRole": "owner",
+  "panel": false,
+  "organisation": {
+    "id": "…", "name": "Rampur Gram Panchayat", "type": "village",
+    "city": "Rampur", "state": "Uttar Pradesh", "code": "RGP-4D04",
+    "status": "approved", "portal": true
+  }
 }
 ```
+`panel` and `organisation` are added by the login / profile controllers (see
+`accountFlags`) so the client knows where this account can go. `organisation` is
+`null` for a plain signup; `organisation.portal` is true only when the account
+**owns** an approved, active organisation — the Navbar uses it so the portal link
+never lands on a 403.
 
 ## Error shape
 ```json
 { "error": "Human-readable message", "code": "OPTIONAL_MACHINE_CODE" }
 ```
-`code` is present only where the client branches on it (currently
-`EMAIL_NOT_VERIFIED`). Status codes: `400` validation, `401` auth,
-`403` forbidden/unverified, `404` not found, `409` conflict, `429` rate-limited,
-`500` server.
+`code` is present only where the client branches on it — `EMAIL_NOT_VERIFIED`,
+`IP_ALREADY_SUBMITTED`, `NOT_ORG_OWNER`, `ORG_NOT_APPROVED`, `ORG_SUSPENDED`,
+`ORG_MODULE_FORBIDDEN`, `NO_OPEN_CYCLE`, `CYCLE_EXISTS`, `ALREADY_ENROLLED`,
+`ALREADY_SUBMITTED`, `TEST_CLOSED`, `NOT_ENROLLED`, `OTHER_ORGANISATION`.
+Status codes: `400` validation, `401` auth, `403` forbidden/unverified,
+`404` not found, `409` conflict, `429` rate-limited, `500` server.

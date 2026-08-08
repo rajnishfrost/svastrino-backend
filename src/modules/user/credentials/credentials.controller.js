@@ -14,9 +14,35 @@ import {
 import * as service from './credentials.service.js'
 import { rolePermissions, hasPanelAccess } from '../../admin/roles/roles.service.js'
 
-// Does this account's role grant admin-panel access? Lets the client route to
-// the panel after login and show the "Admin Panel" link.
-const panelFlag = async (user) => ({ panel: hasPanelAccess(user.role, await rolePermissions(user.role)) })
+// Extra flags the client needs right after sign-in, resolved from the DB:
+//  - `panel`        : does this role grant admin-panel access? (routes to /admin)
+//  - `organisation` : which partner organisation this account belongs to, and
+//    whether it OWNS it — an owner is routed to the /organisation portal.
+//    Suspended or not-yet-approved organisations report `portal: false` so the
+//    client doesn't dangle a link into a 403.
+async function accountFlags(user) {
+  const flags = { panel: hasPanelAccess(user.role, await rolePermissions(user.role)) }
+  if (!user.organisation) return { ...flags, organisation: null }
+
+  const { Organisation } = await import('../organisation/organisation.model.js')
+  const org = await Organisation.findById(user.organisation).select('name type city state status active code')
+  if (!org) return { ...flags, organisation: null }
+
+  return {
+    ...flags,
+    organisation: {
+      id: org._id,
+      name: org.name,
+      type: org.type,
+      city: org.city || '',
+      state: org.state || '',
+      code: org.code || '',
+      status: org.status,
+      // Can this account actually open the organisation portal right now?
+      portal: user.organisationRole === 'owner' && org.status === 'approved' && org.active !== false,
+    },
+  }
+}
 
 // POST /api/user/auth/signup
 // Creates an UNVERIFIED account and emails a verification link. No session is
@@ -36,7 +62,7 @@ export const signup = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const dto = validateLogin(req.body)
   const { token, user } = await service.login(dto)
-  res.json({ token, user: toUserDTO(user, await panelFlag(user)) })
+  res.json({ token, user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // POST /api/user/auth/guest  { name, email, phone? }
@@ -54,7 +80,7 @@ export const guest = asyncHandler(async (req, res) => {
 export const google = asyncHandler(async (req, res) => {
   const dto = validateGoogle(req.body)
   const { token, user } = await service.googleAuth(dto)
-  res.json({ token, user: toUserDTO(user, await panelFlag(user)) })
+  res.json({ token, user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // POST /api/user/auth/verify-email  { token }
@@ -90,21 +116,23 @@ export const resetInfo = asyncHandler(async (req, res) => {
 export const resetPassword = asyncHandler(async (req, res) => {
   const dto = validateReset(req.body)
   const { token, user } = await service.resetPassword(dto)
-  res.json({ token, user: toUserDTO(user) })
+  // Flags matter here: an organisation owner claiming their invited account
+  // lands straight in the portal instead of a generic dashboard.
+  res.json({ token, user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // GET /api/user/profile  (requireUserAuth)
 export const getMe = asyncHandler(async (req, res) => {
   const user = await service.findUserById(req.user.id)
   if (!user) return res.status(404).json({ error: 'User not found' })
-  res.json({ user: toUserDTO(user, await panelFlag(user)) })
+  res.json({ user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // PATCH /api/user/profile  (requireUserAuth) — update name and/or phone
 export const updateProfile = asyncHandler(async (req, res) => {
   const dto = validateUpdateProfile(req.body)
   const user = await service.updateProfile(req.user.id, dto)
-  res.json({ user: toUserDTO(user) })
+  res.json({ user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // POST /api/user/change-password  (requireUserAuth)

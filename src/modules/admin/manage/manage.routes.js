@@ -9,6 +9,7 @@ import {
   getQuestions, putQuestions, getSessionAnswers,
 } from './manage.controller.js'
 import { uploadVideoMw, uploadVideo, uploadProgress } from './upload.controller.js'
+import { uploadImageMw, uploadImage } from './imageUpload.controller.js'
 
 // Mounted under /api/admin — all admin-only.
 const router = Router()
@@ -19,6 +20,8 @@ router.get('/stats', getStats) // dashboard — open to every signed-in admin
 // Media upload (video → local storage; returns a streamable URL)
 router.post('/upload/video', requirePermission('content'), uploadVideoMw, uploadVideo)
 router.get('/upload/progress/:id', requirePermission('content'), uploadProgress)
+// Editorial images (blog covers) — shared by every module that stores artwork.
+router.post('/upload/image', requirePermission('content', 'blogs', 'career-library'), uploadImageMw, uploadImage)
 
 router.get('/users', requirePermission('users'), getUsers)
 router.patch('/users/:id/role', requirePermission('users'), patchUserRole)

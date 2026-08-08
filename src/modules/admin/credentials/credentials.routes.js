@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { login, getMe, getAdmins, postAdmin, patchAdmin } from './credentials.controller.js'
+import { login, getMe, getAdmins, postAdmin, patchAdmin, deleteAdmin } from './credentials.controller.js'
 import { requireAdminAuth, requireAdminRole } from '../../../middleware/auth.js'
 
 // Mounted at /api/admin/auth
@@ -16,3 +16,4 @@ adminsRouter.use(requireAdminAuth, requireAdminRole('superadmin'))
 adminsRouter.get('/', getAdmins)
 adminsRouter.post('/', postAdmin)
 adminsRouter.patch('/:id', patchAdmin)
+adminsRouter.delete('/:id', deleteAdmin)

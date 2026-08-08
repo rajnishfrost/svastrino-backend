@@ -1,16 +1,21 @@
-// Seeds mock Nirmaan Scholarship data: a test config with an open window, 10
-// open-ended (AI-graded) reflective questions, and approved partner institutions.
+// Seeds mock Nirmaan Scholarship data: partner organisations of several kinds,
+// an open cycle for each approved one, and 10 open-ended (AI-graded) questions.
 //   npm run seed:scholarship
 import '../../../config/env.js'
 import mongoose from 'mongoose'
 import { connectDB } from '../../../config/db.js'
-import { Institution, ScholarshipTest, ScholarshipQuestion } from './scholarship.model.js'
+import { ScholarshipCycle, ScholarshipQuestion } from './scholarship.model.js'
+import { Organisation, DEFAULT_ORG_MODULES } from '../organisation/organisation.model.js'
 
-const INSTITUTIONS = [
-  { name: 'Delhi Public School', type: 'school', branch: 'R.K. Puram', city: 'New Delhi', state: 'Delhi', contactPerson: 'Anita Sharma', phone: '+911123456789', email: 'partner1@example.com', status: 'approved' },
-  { name: 'Kendriya Vidyalaya', type: 'school', branch: 'Sector 8', city: 'Gandhinagar', state: 'Gujarat', contactPerson: 'Ravi Patel', phone: '+919812345678', email: 'partner2@example.com', status: 'approved' },
-  { name: 'St. Xavier’s College', type: 'college', branch: 'Main Campus', city: 'Mumbai', state: 'Maharashtra', contactPerson: 'Neha Verma', phone: '+919900112233', email: 'partner3@example.com', status: 'approved' },
-  { name: 'City Montessori School', type: 'school', branch: 'Gomti Nagar', city: 'Lucknow', state: 'Uttar Pradesh', contactPerson: 'S. Khan', phone: '+915223344556', email: 'partner4@example.com', status: 'pending' },
+// A deliberate spread of types so the public directory's filters have something
+// to show — it's no longer a schools-and-colleges-only programme.
+const ORGANISATIONS = [
+  { name: 'Delhi Public School', type: 'school', branch: 'R.K. Puram', city: 'New Delhi', state: 'Delhi', contactPerson: 'Anita Sharma', phone: '+911123456789', email: 'partner1@example.com', status: 'approved', code: 'DPS-1A01', description: 'A CBSE senior secondary school running the Nirmaan scholarship for classes 9–12.' },
+  { name: 'Kendriya Vidyalaya', type: 'school', branch: 'Sector 8', city: 'Gandhinagar', state: 'Gujarat', contactPerson: 'Ravi Patel', phone: '+919812345678', email: 'partner2@example.com', status: 'approved', code: 'KV-2B02', description: 'Central government school partnering to give one student a full Nirmaan package.' },
+  { name: 'St. Xavier’s College', type: 'college', branch: 'Main Campus', city: 'Mumbai', state: 'Maharashtra', contactPerson: 'Neha Verma', phone: '+919900112233', email: 'partner3@example.com', status: 'approved', code: 'SXC-3C03', description: 'Undergraduate college offering the scholarship to first and second year students.' },
+  { name: 'Rampur Gram Panchayat', type: 'village', city: 'Rampur', state: 'Uttar Pradesh', contactPerson: 'Sunil Yadav', phone: '+915223344556', email: 'partner4@example.com', status: 'approved', code: 'RGP-4D04', description: 'Village panchayat sponsoring career guidance for students across the block.' },
+  { name: 'Aasha Foundation', type: 'ngo', city: 'Jaipur', state: 'Rajasthan', contactPerson: 'Meera Joshi', phone: '+919000011122', email: 'partner5@example.com', status: 'approved', code: 'AF-5E05', description: 'NGO working with first-generation learners in and around Jaipur.' },
+  { name: 'City Montessori School', type: 'school', branch: 'Gomti Nagar', city: 'Lucknow', state: 'Uttar Pradesh', contactPerson: 'S. Khan', phone: '+915223344557', email: 'partner6@example.com', status: 'pending' },
 ]
 
 // Open-ended, reflective questions (AI-graded, 1 mark each). `guidance` is an
@@ -58,41 +63,58 @@ const QUESTIONS = [
   },
 ]
 
+const INSTRUCTIONS =
+  'Answer every question in your own words before the timer runs out. Each question carries 1 mark and is graded on the honesty and depth of your reflection.'
+
 async function run() {
   await connectDB()
 
-  // Test config — open window (started yesterday, ends in 2 weeks).
+  const year = new Date().getFullYear()
+  // Open window: started yesterday, ends in 2 weeks.
   const now = new Date()
   const startAt = new Date(now.getTime() - 24 * 3600 * 1000)
   const endAt = new Date(now.getTime() + 14 * 24 * 3600 * 1000)
-  await ScholarshipTest.findOneAndUpdate(
-    { key: 'nirmaan' },
-    {
-      $set: {
-        title: 'Nirmaan Scholarship Test',
-        instructions: 'Answer every question in your own words before the timer runs out. Each question carries 1 mark and is graded on the honesty and depth of your reflection.',
-        startAt,
-        endAt,
-        durationMins: 30,
-        active: true,
-      },
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  )
-  console.log('✓ Test config upserted (window open now)')
 
-  // Questions — replace the whole set with the 10 reflective questions.
-  const removed = await ScholarshipQuestion.deleteMany({})
-  await ScholarshipQuestion.insertMany(
-    QUESTIONS.map((q, i) => ({ ...q, order: i + 1, maxWords: 1000, active: true }))
-  )
-  console.log(`✓ Replaced questions (removed ${removed.deletedCount}, seeded ${QUESTIONS.length} open-ended)`)
-
-  // Institutions — upsert by email.
-  for (const inst of INSTITUTIONS) {
-    await Institution.findOneAndUpdate({ email: inst.email }, { $set: inst }, { upsert: true, setDefaultsOnInsert: true })
+  // Organisations — upsert by email. No owner accounts here: approving from the
+  // admin panel is what provisions the login, and seeding fake ones would send
+  // real set-password emails.
+  for (const org of ORGANISATIONS) {
+    await Organisation.findOneAndUpdate(
+      { email: org.email },
+      { $set: { ...org, modules: [...DEFAULT_ORG_MODULES], publicListed: true, active: true } },
+      { upsert: true, setDefaultsOnInsert: true }
+    )
   }
-  console.log(`✓ Upserted ${INSTITUTIONS.length} institutions (${INSTITUTIONS.filter((i) => i.status === 'approved').length} approved)`)
+  const approved = ORGANISATIONS.filter((o) => o.status === 'approved')
+  console.log(`✓ Upserted ${ORGANISATIONS.length} organisations (${approved.length} approved)`)
+
+  // One published cycle per approved organisation, each with its own copy of the
+  // question set — that's the whole point of per-organisation cycles.
+  let cycles = 0
+  for (const spec of approved) {
+    const org = await Organisation.findOne({ email: spec.email })
+    const cycle = await ScholarshipCycle.findOneAndUpdate(
+      { organisation: org._id, year },
+      {
+        $set: {
+          title: `Nirmaan Scholarship ${year} — ${org.name}`,
+          instructions: INSTRUCTIONS,
+          startAt,
+          endAt,
+          durationMins: 30,
+          status: 'published',
+          active: true,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    )
+    await ScholarshipQuestion.deleteMany({ cycle: cycle._id })
+    await ScholarshipQuestion.insertMany(
+      QUESTIONS.map((q, i) => ({ ...q, cycle: cycle._id, order: i + 1, maxWords: 1000, active: true }))
+    )
+    cycles++
+  }
+  console.log(`✓ Seeded ${cycles} open ${year} cycles, ${QUESTIONS.length} questions each`)
 
   await mongoose.disconnect()
   process.exit(0)
