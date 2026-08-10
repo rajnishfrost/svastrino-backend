@@ -39,7 +39,15 @@ EXPOSE 5060
 # Container-level liveness, independent of the ALB. ECS replaces a task that
 # fails this, which catches a hung event loop - something "process is still
 # alive" alone would never notice.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||5060)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+#
+# node:http, NOT fetch: Node's fetch (undici) enforces the WHATWG "bad ports"
+# blocklist and the default port 5060 is on it (SIP), so fetch fails with
+# "bad port" before opening a socket and the check can never pass.
+#
+# Note that on Fargate this instruction is informational only - the ECS agent
+# only honours a healthCheck declared in the task definition, which Terraform
+# sets (modules/ecs/main.tf). It still applies to plain `docker run`.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||5060)+'/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 CMD ["node", "src/index.js"]
