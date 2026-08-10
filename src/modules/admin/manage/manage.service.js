@@ -75,6 +75,18 @@ export async function setUserRole(actor, userId, role) {
   const user = await User.findById(userId)
   if (!user) throw httpError('User not found', 404)
 
+  // The `organisation` role needs an Organisation record alongside it, and this
+  // inline dropdown has nowhere to collect one — so both directions are pushed
+  // to the full Edit form (or the Scholarship page), which can.
+  if (role !== user.role && (role === 'organisation' || user.role === 'organisation')) {
+    throw httpError(
+      role === 'organisation'
+        ? 'Use “Edit” to switch an account to Organisation — it needs the organisation’s name and address.'
+        : 'This is an organisation account. Use “Edit” to change its role.',
+      400
+    )
+  }
+
   const demotingSuper = user.role === 'superadmin' && role !== 'superadmin'
   const isSelf = actor && String(actor.id) === String(userId)
 

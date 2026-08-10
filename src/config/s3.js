@@ -26,6 +26,7 @@ const CONTENT_TYPES = {
   '.webp': 'image/webp',
   '.gif': 'image/gif',
   '.pdf': 'application/pdf',
+  '.vtt': 'text/vtt',
 }
 export const contentTypeFor = (nameOrExt) =>
   CONTENT_TYPES[extname(nameOrExt).toLowerCase()] || 'application/octet-stream'
@@ -62,6 +63,16 @@ export async function putFile(localPath, key, contentType) {
       Body: createReadStream(localPath),
       ContentType: contentType || contentTypeFor(localPath),
     },
+  })
+  await up.done()
+  return { url: publicUrl(key), key }
+}
+
+/** Upload an in-memory Buffer/string to `key` (e.g. a generated .vtt file). */
+export async function putBuffer(body, key, contentType) {
+  const up = new Upload({
+    client: s3(),
+    params: { Bucket: bucket(), Key: key, Body: body, ContentType: contentType || contentTypeFor(key) },
   })
   await up.done()
   return { url: publicUrl(key), key }

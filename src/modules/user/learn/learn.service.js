@@ -149,6 +149,7 @@ export async function getCourse(userId, slug) {
       description: s.description,
       videoUrl: s.videoUrl,
       durationMins: s.durationMins,
+      captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
       worksheet: s.worksheet,
       notes: s.notes || [],
       videoLocked,

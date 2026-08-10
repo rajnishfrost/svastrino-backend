@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, join, extname } from 'node:path'
-import { mkdirSync, renameSync, unlinkSync, readdirSync, rmSync } from 'node:fs'
+import { mkdirSync, renameSync, unlinkSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import crypto from 'node:crypto'
-import { putFile, deleteObject, contentTypeFor, publicUrl } from './s3.js'
+import { putFile, putBuffer, deleteObject, contentTypeFor, publicUrl } from './s3.js'
 
 /**
  * Storage abstraction for uploaded media. Works in two modes, chosen by the
@@ -20,6 +20,7 @@ export const HLS_DIR = join(UPLOADS_ROOT, 'hls') // one folder per video: master
 export const AVATARS_DIR = join(UPLOADS_ROOT, 'avatars') // square profile photos
 export const REPORTS_DIR = join(UPLOADS_ROOT, 'reports') // re-hosted career report PDFs
 export const IMAGES_DIR = join(UPLOADS_ROOT, 'images') // editorial images (blog covers)
+export const SUBTITLES_DIR = join(UPLOADS_ROOT, 'subtitles') // caption VTT files
 export const TMP_DIR = join(UPLOADS_ROOT, 'tmp') // multer staging before finalising
 
 mkdirSync(VIDEOS_DIR, { recursive: true })
@@ -27,6 +28,7 @@ mkdirSync(HLS_DIR, { recursive: true })
 mkdirSync(AVATARS_DIR, { recursive: true })
 mkdirSync(REPORTS_DIR, { recursive: true })
 mkdirSync(IMAGES_DIR, { recursive: true })
+mkdirSync(SUBTITLES_DIR, { recursive: true })
 mkdirSync(TMP_DIR, { recursive: true })
 
 export const STORAGE = process.env.STORAGE || 'local'
@@ -131,6 +133,22 @@ export async function saveImage(tmpPath, ext = '.jpg') {
 }
 
 /**
+ * Persist a caption file as WebVTT (already converted from SRT by the caller)
+ * and return its URL + key. Content is in-memory text, not a staged file.
+ */
+export async function saveSubtitle(vttText) {
+  const name = crypto.randomBytes(12).toString('hex') + '.vtt'
+  const key = `subtitles/${name}`
+
+  if (STORAGE === 's3') {
+    return putBuffer(vttText, key, 'text/vtt')
+  }
+
+  writeFileSync(join(SUBTITLES_DIR, name), vttText, 'utf8')
+  return { url: `/uploads/subtitles/${name}`, key }
+}
+
+/**
  * Remove a stored asset by its key (e.g. 'avatars/ab.jpg'). Best-effort — a
  * missing file is fine. Remote (http) avatars have no key and are skipped.
  */
@@ -162,6 +180,6 @@ export function keyFromUrl(url) {
   if (cdn && url.startsWith(cdn + '/')) return url.slice(cdn.length + 1)
 
   // Fallback: an S3 REST URL — take the path after the first known prefix.
-  const m = url.match(/\/(videos|hls|avatars|reports|images)\/.+/)
+  const m = url.match(/\/(videos|hls|avatars|reports|images|subtitles)\/.+/)
   return m ? m[0].slice(1) : null
 }

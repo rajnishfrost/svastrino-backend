@@ -19,6 +19,19 @@ const sessionSchema = new mongoose.Schema(
     videoUrl: { type: String, default: '' },   // stream URL (mock sample now; S3/CloudFront later)
     durationMins: { type: Number, default: 0 },
 
+    // Caption tracks (WebVTT). One per language; `lang` is a BCP-47 code
+    // ('hi', 'en'), `label` is what the player shows in the subtitle menu.
+    captions: {
+      type: [{
+        _id: false,
+        lang: { type: String, required: true },
+        label: { type: String, required: true },
+        url: { type: String, required: true },
+        key: { type: String, default: '' }, // storage key, for deletion
+      }],
+      default: [],
+    },
+
     // In-app worksheet (SRS CRS-05/06)
     worksheet: {
       title: { type: String, default: '' },

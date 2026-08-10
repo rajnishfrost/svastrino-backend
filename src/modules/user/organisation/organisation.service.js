@@ -136,6 +136,65 @@ export async function getOrganisation(id) {
   return org
 }
 
+// ---- Admin-created organisations (Users page → role "Organisation") ---------
+// The public route is apply → approve. An admin onboarding a partner directly
+// skips both: they type the organisation's details alongside the login, and it
+// lands already approved. These two helpers are what the account-creation
+// service calls so validation happens BEFORE the User row is written.
+
+/**
+ * Validate the organisation half of a "new organisation account" form. Throws
+ * the same 400s the public form would, so the admin sees a real message rather
+ * than a Mongoose validation dump.
+ */
+export function assertOrganisationDraft(draft, ownerEmail) {
+  const d = draft || {}
+  if (!str(d.name, 120)) throw httpError('Organisation name is required', 400)
+  if (d.type && !ORG_TYPES.includes(d.type)) throw httpError('Pick a valid organisation type', 400)
+  const email = String(d.email || ownerEmail || '').trim().toLowerCase()
+  if (!isEmail(email)) throw httpError('The organisation needs a valid contact email', 400)
+}
+
+/**
+ * Create an approved, active organisation owned by `owner`. Assumes
+ * assertOrganisationDraft already passed. The owner link itself is set by the
+ * caller, which owns the rollback if anything here fails.
+ */
+export async function createOrganisationForOwner(owner, draft = {}) {
+  const email = String(draft.email || owner.email).trim().toLowerCase()
+  if (await Organisation.exists({ email })) {
+    throw httpError('An organisation with this email already exists', 409)
+  }
+  const name = str(draft.name, 120)
+  return Organisation.create({
+    name,
+    type: ORG_TYPES.includes(draft.type) ? draft.type : 'school',
+    description: str(draft.description, 1200),
+    branch: str(draft.branch, 120),
+    address: str(draft.address, 240),
+    city: str(draft.city, 80),
+    state: str(draft.state, 80),
+    pincode: str(draft.pincode, 12),
+    website: str(draft.website, 200),
+    contactPerson: str(draft.contactPerson, 80) || owner.name || '',
+    phone: str(draft.phone, 20),
+    email,
+    code: await generateCode(name),
+    // Admin typed these details in person — no review step to wait for.
+    status: 'approved',
+    reviewedAt: new Date(),
+    owner: owner._id,
+    modules: [...DEFAULT_ORG_MODULES],
+    publicListed: draft.publicListed !== false,
+    active: true,
+  })
+}
+
+/** Does this account own an organisation? Used by the account-edit guards. */
+export async function organisationOwnedBy(userId) {
+  return Organisation.findOne({ owner: userId })
+}
+
 /**
  * Approve or reject an application.
  *
