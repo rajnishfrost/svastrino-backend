@@ -87,7 +87,17 @@ jobs:
           jq --arg IMAGE "$IMAGE" --arg NAME "$CONTAINER_NAME" '
             .containerDefinitions = (
               .containerDefinitions
-              | map(if .name == $NAME then .image = $IMAGE else . end)
+              | map(
+                  if .name == $NAME then
+                    .image = $IMAGE
+                    # Drop any command override along with the image. Terraform
+                    # seeds a stub command so the very first apply has a healthy
+                    # target before this image exists; if it survived here, the
+                    # real image would be launched with the stub's argv and the
+                    # app would never start. A real image brings its own CMD.
+                    | del(.command)
+                  else . end
+                )
             )
             # Strip the read-only fields the register call rejects
             | del(
