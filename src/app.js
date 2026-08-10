@@ -15,7 +15,17 @@ export function createApp() {
 
   // Behind a proxy/load-balancer in production so express-rate-limit and
   // req.ip see the real client address (X-Forwarded-For), not the proxy's.
-  app.set('trust proxy', 1)
+  //
+  // TWO hops on AWS, not one:  client -> CloudFront -> ALB -> here.
+  // CloudFront writes the client IP into X-Forwarded-For, then the ALB appends
+  // CloudFront's IP, so the app receives "clientIP, cloudfrontIP". A value of 1
+  // stops one entry too early and hands back the CloudFront edge address --
+  // which would key every rate limiter on the edge instead of the user, so a
+  // handful of logins would lock out everyone sharing that edge.
+  //
+  // Override with TRUST_PROXY when the topology differs (1 for a bare ALB,
+  // 0 when running locally with no proxy at all).
+  app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 2))
 
   // Secure response headers (CSP off by default — this is a JSON API, not HTML).
   app.use(helmet())
