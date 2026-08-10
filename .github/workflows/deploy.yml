@@ -93,8 +93,12 @@ jobs:
                     # Drop any command override along with the image. Terraform
                     # seeds a stub command so the very first apply has a healthy
                     # target before this image exists; if it survived here, the
-                    # real image would be launched with the stub's argv and the
-                    # app would never start. A real image brings its own CMD.
+                    # real image would run with that bootstrap argv instead of
+                    # its own CMD, and the app would never start.
+                    #
+                    # Keep apostrophes out of this jq program: it is wrapped in
+                    # single quotes by the shell, so one would end the string
+                    # mid-comment and jq would receive a truncated script.
                     | del(.command)
                   else . end
                 )
