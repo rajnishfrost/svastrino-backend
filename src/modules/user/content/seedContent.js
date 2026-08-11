@@ -14,7 +14,6 @@ import { Testimonial } from './testimonial.model.js'
 import { CareerField } from './careerField.model.js'
 import { Course } from './course.model.js'
 import { SitePage } from './sitePage.model.js'
-import { NewsItem } from './newsItem.model.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -600,17 +599,6 @@ async function run() {
     }
   }
   console.log(`✓ Site pages (policies): ${pageCount}`)
-
-  // ---- Quick News (data/news.json) — replace wholesale (no natural key) ----
-  const newsFile = join(here, 'data', 'news.json')
-  if (fs.existsSync(newsFile)) {
-    const news = JSON.parse(fs.readFileSync(newsFile, 'utf8'))
-    await NewsItem.deleteMany({})
-    await NewsItem.insertMany(
-      news.map((n) => ({ date: new Date(n.date), text: n.text, order: n.order, active: true }))
-    )
-    console.log(`✓ Quick News: ${news.length} headlines`)
-  }
 
   await mongoose.disconnect()
   console.log('✓ Site content seeded.')

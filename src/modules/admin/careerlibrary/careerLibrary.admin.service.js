@@ -1,10 +1,9 @@
 import { CareerField } from '../../user/content/careerField.model.js'
 import { Course } from '../../user/content/course.model.js'
-import { NewsItem } from '../../user/content/newsItem.model.js'
 
 /**
- * Career Library management — streams (CareerField), the course detail pages
- * filed under them (Course), and the Quick News headlines that share the page.
+ * Career Library management — streams (CareerField) and the course detail pages
+ * filed under them (Course).
  *
  * Membership is stored on BOTH sides (CareerField.courses and Course.fields are
  * denormalised so neither page needs a join). To stop the two drifting, the
@@ -225,53 +224,3 @@ export async function deleteCourse(id) {
   return { ok: true }
 }
 
-// ---- Quick News -------------------------------------------------------------
-
-export async function listNews({ page = 1, limit = 50 } = {}) {
-  const safePage = Math.max(1, Number(page) || 1)
-  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || 50))
-
-  const [items, total] = await Promise.all([
-    NewsItem.find().sort({ date: -1, order: 1 }).skip((safePage - 1) * safeLimit).limit(safeLimit),
-    NewsItem.countDocuments(),
-  ])
-
-  return { items, page: safePage, limit: safeLimit, total, pages: Math.max(1, Math.ceil(total / safeLimit)) }
-}
-
-function buildNewsPatch(body = {}) {
-  const patch = {}
-  if (body.text !== undefined) patch.text = String(body.text).trim()
-  if (body.order !== undefined) patch.order = Number(body.order) || 0
-  if (body.active !== undefined) patch.active = !!body.active
-  if (body.date !== undefined) {
-    const d = new Date(body.date)
-    if (Number.isNaN(d.getTime())) throw httpError('Date is not valid', 400)
-    patch.date = d
-  }
-  return patch
-}
-
-export async function createNews(body = {}) {
-  const patch = buildNewsPatch(body)
-  if (!patch.text) throw httpError('Headline text is required', 400)
-  if (!patch.date) throw httpError('Date is required', 400)
-  return NewsItem.create(patch)
-}
-
-export async function updateNews(id, body = {}) {
-  const item = await NewsItem.findById(id)
-  if (!item) throw httpError('News item not found', 404)
-  const patch = buildNewsPatch(body)
-  if (patch.text !== undefined && !patch.text) throw httpError('Headline text is required', 400)
-  Object.assign(item, patch)
-  await item.save()
-  return item
-}
-
-export async function deleteNews(id) {
-  const item = await NewsItem.findById(id)
-  if (!item) throw httpError('News item not found', 404)
-  await item.deleteOne()
-  return { ok: true }
-}

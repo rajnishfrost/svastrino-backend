@@ -56,10 +56,6 @@ export function toSitePageDTO(p) {
   return { slug: p.slug, title: p.title, body: p.body, updatedAt: p.updatedAt }
 }
 
-export function toNewsItemDTO(n) {
-  return { id: String(n._id), date: n.date, text: n.text }
-}
-
 export function toCourseDTO(c) {
   return {
     slug: c.slug,

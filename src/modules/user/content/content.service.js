@@ -4,7 +4,6 @@ import { Testimonial } from './testimonial.model.js'
 import { CareerField } from './careerField.model.js'
 import { Course } from './course.model.js'
 import { SitePage } from './sitePage.model.js'
-import { NewsItem } from './newsItem.model.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -67,28 +66,3 @@ export async function getSitePageBySlug(slug) {
   return page
 }
 
-// ---- Quick News ------------------------------------------------------------
-
-const NEWS_MAX_LIMIT = 100
-
-/** Paginated news headlines, newest first. */
-export async function listNews({ page = 1, limit = 30 } = {}) {
-  const safePage = Math.max(1, Number(page) || 1)
-  const safeLimit = Math.min(NEWS_MAX_LIMIT, Math.max(1, Number(limit) || 30))
-
-  const [items, total] = await Promise.all([
-    NewsItem.find({ active: true })
-      .sort({ date: -1, order: 1 })
-      .skip((safePage - 1) * safeLimit)
-      .limit(safeLimit),
-    NewsItem.countDocuments({ active: true }),
-  ])
-
-  return {
-    items,
-    page: safePage,
-    limit: safeLimit,
-    total,
-    pages: Math.max(1, Math.ceil(total / safeLimit)),
-  }
-}

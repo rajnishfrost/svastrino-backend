@@ -42,7 +42,6 @@ const courseDTO = (c) => ({
   careerLadder: c.careerLadder,
 })
 
-const newsDTO = (n) => ({ id: String(n._id), date: n.date, text: n.text, order: n.order, active: n.active })
 
 // --- Streams ---
 router.get('/fields', asyncHandler(async (req, res) => {
@@ -78,24 +77,6 @@ router.patch('/courses/:id', asyncHandler(async (req, res) => {
 }))
 router.delete('/courses/:id', asyncHandler(async (req, res) => {
   res.json(await service.deleteCourse(req.params.id))
-}))
-
-// --- Quick News ---
-router.get('/news', asyncHandler(async (req, res) => {
-  const result = await service.listNews(req.query)
-  res.json({
-    news: result.items.map(newsDTO),
-    pagination: { page: result.page, limit: result.limit, total: result.total, pages: result.pages },
-  })
-}))
-router.post('/news', asyncHandler(async (req, res) => {
-  res.status(201).json({ item: newsDTO(await service.createNews(req.body || {})) })
-}))
-router.patch('/news/:id', asyncHandler(async (req, res) => {
-  res.json({ item: newsDTO(await service.updateNews(req.params.id, req.body || {})) })
-}))
-router.delete('/news/:id', asyncHandler(async (req, res) => {
-  res.json(await service.deleteNews(req.params.id))
 }))
 
 export default router

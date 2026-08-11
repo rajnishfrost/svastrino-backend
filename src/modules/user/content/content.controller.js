@@ -8,7 +8,6 @@ import {
   toCareerFieldDTO,
   toCourseDTO,
   toSitePageDTO,
-  toNewsItemDTO,
 } from './content.dto.js'
 
 // GET /api/user/content/programs
@@ -54,18 +53,4 @@ export const getCourse = asyncHandler(async (req, res) => {
 export const getSitePage = asyncHandler(async (req, res) => {
   const page = await service.getSitePageBySlug(req.params.slug)
   res.json({ page: toSitePageDTO(page) })
-})
-
-// GET /api/user/content/news?page=&limit=  → Quick News headlines, newest first
-export const listNews = asyncHandler(async (req, res) => {
-  const result = await service.listNews(req.query)
-  res.json({
-    news: result.items.map(toNewsItemDTO),
-    pagination: {
-      page: result.page,
-      limit: result.limit,
-      total: result.total,
-      pages: result.pages,
-    },
-  })
 })
