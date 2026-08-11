@@ -11,6 +11,11 @@ router.get('/programs', asyncHandler(async (req, res) => {
   res.json({ programs: await service.listPrograms() })
 }))
 
+// Public — the same catalog grouped by "Services" sub-category.
+router.get('/categories', asyncHandler(async (req, res) => {
+  res.json({ categories: await service.listCategories() })
+}))
+
 // GET /slots?date=YYYY-MM-DD → available 2-hour starts for that IST date
 router.get('/slots', asyncHandler(async (req, res) => {
   res.json(await service.slotsFor(String(req.query.date || '')))

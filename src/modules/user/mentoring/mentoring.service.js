@@ -42,31 +42,58 @@ async function dispatchBookingEmail(userId, pkg, booking, rescheduled = false) {
  * session is then booked here against that enrollment.
  */
 
-/** Every program package under the mentoring category, sorted for display. */
+/** Every program package under a "Services" sub-category, with its parent. */
 async function mentoringPackages({ activeOnly = true } = {}) {
-  const parents = await SkillBuild.find({ kind: 'mentoring' })
+  const parents = await SkillBuild.find({ kind: 'mentoring' }).sort({ order: 1 })
   if (!parents.length) return []
+  const byId = new Map(parents.map((p) => [String(p._id), p]))
   const q = { skillBuild: { $in: parents.map((p) => p._id) } }
   if (activeOnly) q.active = true
-  return Package.find(q).sort({ order: 1 })
+  const pkgs = await Package.find(q).sort({ order: 1 })
+  // Attach the parent sub-category and sort by (sub-category order, program order).
+  return pkgs
+    .map((pkg) => ({ pkg, parent: byId.get(String(pkg.skillBuild)) }))
+    .filter((x) => x.parent)
+    .sort((a, b) => (a.parent.order - b.parent.order) || ((a.pkg.order || 0) - (b.pkg.order || 0)))
 }
 
-/** Public catalog: Bulls-eye / Bloom / Breakthrough with pricing + session counts. */
+const programDTO = ({ pkg, parent }) => ({
+  slug: pkg.slug,
+  name: pkg.name,
+  tagline: pkg.tagline,
+  sku: pkg.sku,
+  price: pkg.price,
+  earlyBird: pkg.earlyBird,
+  sessions: pkg.sessionsCount || 1,
+  sessionMins: pkg.sessionMins || SLOT_MINS,
+  features: pkg.features,
+  featured: pkg.featured,
+  badge: pkg.badge,
+  cta: pkg.cta,
+  // The "Services" sub-category this program belongs to.
+  category: { slug: parent.slug, name: parent.name, tagline: parent.tagline },
+})
+
+/** Flat catalog with each program's sub-category attached. */
 export async function listPrograms() {
-  const pkgs = await mentoringPackages()
-  return pkgs.map((pkg) => ({
-    slug: pkg.slug,
-    name: pkg.name,
-    tagline: pkg.tagline,
-    sku: pkg.sku,
-    price: pkg.price,
-    earlyBird: pkg.earlyBird,
-    sessions: pkg.sessionsCount || 1,
-    sessionMins: pkg.sessionMins || SLOT_MINS,
-    features: pkg.features,
-    featured: pkg.featured,
-    badge: pkg.badge,
-  }))
+  const rows = await mentoringPackages()
+  return rows.map(programDTO)
+}
+
+/** Same catalog grouped by sub-category — powers the Services landing + nav. */
+export async function listCategories() {
+  const rows = await mentoringPackages()
+  const out = []
+  const idx = new Map()
+  for (const row of rows) {
+    const key = row.parent.slug
+    if (!idx.has(key)) {
+      idx.set(key, out.length)
+      out.push({ slug: row.parent.slug, name: row.parent.name, tagline: row.parent.tagline, order: row.parent.order, programs: [] })
+    }
+    out[idx.get(key)].programs.push(programDTO(row))
+  }
+  return out
 }
 
 async function programBySku(sku) {

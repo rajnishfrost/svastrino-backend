@@ -20,44 +20,15 @@ const here = dirname(fileURLToPath(import.meta.url))
 // ---------------------------------------------------------------------------
 // Mentoring programs  (source: svastrino.com program pages)
 // ---------------------------------------------------------------------------
+// Model Session was retired — the catalog now starts at Bull's Eye.
 const PROGRAMS = [
-  {
-    slug: 'model-session',
-    name: 'Model Session',
-    tagline: "Chart your path towards a 'Fulfilling Career'",
-    summary:
-      'A quick and engaging 15-minute session that helps you identify your career needs, ' +
-      'verify a decision you have already made, and see which mentoring program fits you ' +
-      'before committing to anything longer.',
-    duration: '15–20 minutes (extendable to 30)',
-    sessions: '1 introductory session',
-    mode: 'Online',
-    chooseIf: [
-      'You want to identify what you actually need help with',
-      'You want a professional to verify a career decision you have made',
-      'You want a glimpse of how the mentoring process works',
-      'You want to be matched to the right program for your personality',
-      'You want to make an informed decision before a long-term commitment',
-    ],
-    journey: [
-      { label: 'Step 1', title: 'Getting to know your concerns', description: 'A one-on-one conversation to identify what you need.' },
-      { label: 'Step 2', title: 'Verifying your background', description: 'Reviewing your academic and personal history.' },
-      { label: 'Step 3', title: 'Resolving your immediate queries', description: 'Quick solutions to your pressing career questions.' },
-      { label: 'Step 4', title: 'Exploring programs for your future needs', description: 'Recommending the mentoring program that suits you.' },
-    ],
-    benefits: [
-      'Quick evaluation of your career fit',
-      'Career options from 8th grade to post-graduation',
-      'Guidance on educational application processes',
-      'A mentoring program tailored to your strengths and interests',
-      'Fully online — attend from home',
-    ],
-    sourceUrl: 'https://svastrino.com/model-session/',
-    order: 1,
-  },
   {
     slug: 'bulls-eye',
     name: "Bull's Eye Program",
+    // Which "Services" sub-category this program sits under (for the site nav
+    // + landing grouping). Matches the mentoring catalog sub-categories.
+    category: { slug: 'career-counselling', name: 'Career Counselling' },
+    bookingSku: 'mentoring-bullseye',
     tagline: "Get a quick yet accurate solution for your 'Career Confusion'",
     summary:
       'A focused 2-hour session designed to achieve clarity when you are stuck between ' +
@@ -94,6 +65,8 @@ const PROGRAMS = [
   {
     slug: 'bloom',
     name: 'Bloom Program',
+    category: { slug: 'personalised-mentoring', name: 'Personalised Mentoring' },
+    bookingSku: 'mentoring-bloom',
     tagline: 'Cultivate a visionary mindset and set goals for a bright future',
     summary:
       "Svastrino's personality-based mentoring program. Over 45–60 days it moves from a full " +
@@ -131,6 +104,8 @@ const PROGRAMS = [
   {
     slug: 'breakthrough',
     name: 'Breakthrough Program',
+    category: { slug: 'personalised-mentoring', name: 'Personalised Mentoring' },
+    bookingSku: 'mentoring-breakthrough',
     tagline: "Ace the art of self-discipline and evolve into an 'Enterprising Leader'",
     summary:
       'A two-year personalised mentoring program to craft future leaders and entrepreneurs — ' +
@@ -530,7 +505,9 @@ async function run() {
     await MentoringProgram.findOneAndUpdate({ slug: p.slug }, { $set: doc }, { upsert: true })
     console.log(`  ✓ Program: ${p.name}`)
   }
-  console.log(`✓ Mentoring programs: ${PROGRAMS.length}`)
+  // Model Session was retired — remove any stale copy so it can't resurface.
+  await MentoringProgram.deleteMany({ slug: { $nin: PROGRAMS.map((p) => p.slug) } })
+  console.log(`✓ Mentoring programs: ${PROGRAMS.length} (retired ones removed)`)
 
   // FAQs and testimonials have no natural slug — replace the set wholesale so
   // reruns don't accumulate duplicates.

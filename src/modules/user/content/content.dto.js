@@ -8,6 +8,8 @@ export function toProgramCardDTO(p) {
     duration: p.duration,
     sessions: p.sessions,
     mode: p.mode,
+    category: p.category?.slug ? { slug: p.category.slug, name: p.category.name } : null,
+    bookingSku: p.bookingSku || '',
   }
 }
 
