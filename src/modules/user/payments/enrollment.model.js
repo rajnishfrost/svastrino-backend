@@ -22,6 +22,12 @@ const enrollmentSchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
+    // Phase-wise access. A one-time plan opens every phase at once; a
+    // per-phase plan starts at 1 and grows by one with each further payment.
+    paymentMode: { type: String, enum: ['one-time', 'per-phase'], default: 'one-time' },
+    phasesUnlocked: { type: Number, default: 1 },
+    phasesTotal: { type: Number, default: 1 },
+
     startsAt: { type: Date, default: () => new Date() },
     expiresAt: { type: Date, default: null }, // null = lifetime / one-time
   },

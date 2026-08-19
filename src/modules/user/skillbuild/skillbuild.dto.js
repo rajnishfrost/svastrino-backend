@@ -31,5 +31,20 @@ export function toPackageDTO(pkg) {
     featured: pkg.featured,
     badge: pkg.badge,
     priceInr: rupees(pkg.price),
+    // Phase-wise selling. 'per-phase' cards charge `price` once per phase, so
+    // the card shows the instalment and the full run alongside it.
+    paymentMode: pkg.paymentMode || 'one-time',
+    phases: pkg.phases || 1,
+    includesPsychometric: !!pkg.includesPsychometric,
+    totalPrice:
+      pkg.paymentMode === 'per-phase' && pkg.phases > 1
+        ? formatInr(pkg.price * pkg.phases)
+        : null,
+    // What the student actually pays today, after the pay-once discount.
+    payableNow: formatInr(pkg.earlyBird != null ? pkg.earlyBird : pkg.price),
+    savingPercent:
+      pkg.earlyBird != null && pkg.price > 0
+        ? Math.round(((pkg.price - pkg.earlyBird) / pkg.price) * 100)
+        : null,
   }
 }

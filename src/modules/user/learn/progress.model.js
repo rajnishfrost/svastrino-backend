@@ -13,6 +13,10 @@ const progressSchema = new mongoose.Schema(
     session: { type: mongoose.Schema.Types.ObjectId, ref: 'Session', required: true },
     skillBuild: { type: mongoose.Schema.Types.ObjectId, ref: 'SkillBuild', required: true },
     videoDoneAt: { type: Date }, // first 90% watch — drives Q1 unlock + seek unlock
+    // Anti-piracy: a video may be started at most PLAY_LIMIT times. Counted on
+    // the server so clearing browser storage does not reset it.
+    plays: { type: Number, default: 0 },
+
     completed: { type: Boolean, default: false }, // all questions answered
     completedAt: { type: Date }, // when the last question was answered
   },

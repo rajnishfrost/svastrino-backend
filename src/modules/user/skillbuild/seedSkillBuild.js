@@ -21,38 +21,81 @@ const NIRMAAN = {
 // Prices in PAISE. Features/pricing mirror the SRS §9 tiers.
 const PACKAGES = [
   {
-    sku: 'nirmaan-discover', slug: 'discover', name: 'Discover', tagline: 'Test the waters',
-    price: 49900, earlyBird: null, period: 'one-time', durationDays: null,
+    sku: 'nirmaan-full', slug: 'full', name: 'Nirmaan', tagline: 'Pay once, save 25%',
+    // List price Rs 6,000; paying at once takes 25% off, so Rs 4,500 is charged.
+    price: 600000, earlyBird: 450000, period: 'one-time', durationDays: 365,
+    paymentMode: 'one-time', phases: 6, includesPsychometric: false,
     features: [
-      'Psychometric Test',
-      'Career Report (PDF)',
-      'Pre-recorded Report Explanation Video',
-      'Career Roadmap (Basic — Top 5 Careers)',
+      '24 life-changing aspects of future life',
+      'Structured personal & professional skill development',
+      'Daily worksheets / tasks for overall development',
+      'Daily progress tracking',
+      'Daily task reminders',
+      'Total course validity 1 year from the date of enrolment',
+      'Pay at once and get a 25% discount immediately',
     ],
-    cta: 'Get Discover', variant: 'btn-secondary', featured: false, badge: null, order: 1,
+    cta: 'Get Nirmaan', variant: 'btn-primary', featured: true, badge: 'Best value', order: 1,
   },
   {
-    sku: 'nirmaan-clarity', slug: 'clarity', name: 'Clarity', tagline: 'Build the plan',
-    price: 199900, earlyBird: 169900, period: '6 months', durationDays: 182,
+    sku: 'nirmaan-payu', slug: 'pay-as-you-use', name: 'Nirmaan (Pay as you Use)',
+    tagline: 'Spread the cost over 6 phases',
+    // Rs 1,000 per phase x 6 phases = Rs 6,000. No interest, no discount.
+    price: 100000, earlyBird: null, period: 'per phase', durationDays: 365,
+    paymentMode: 'per-phase', phases: 6, includesPsychometric: false,
     features: [
-      'Everything in Discover',
-      '12 Mindset Mentoring Sessions + Worksheets',
-      'Community Access',
-      'Scholarship Information',
+      '24 life-changing aspects of future life',
+      'Structured personal & professional skill development',
+      'Daily worksheets / tasks for overall development',
+      'Daily progress tracking',
+      'Daily task reminders',
+      'Course has to be completed in 1 year',
+      'Video & task validity 1 year from first enrolment; each video plays 5 times',
+      'After the 1-year expiry, tasks can be viewed for 3 years',
+      'Six equal payments, without interest',
+      'Resume where you left off by paying for each phase at a time',
     ],
-    cta: 'Get Clarity', variant: 'btn-primary', featured: true, badge: 'Most Popular', order: 2,
+    cta: 'Start with 1 phase', variant: 'btn-secondary', featured: false, badge: null, order: 2,
   },
   {
-    sku: 'nirmaan-launch', slug: 'launch', name: 'Launch', tagline: 'Go all-in',
-    price: 349900, earlyBird: 299900, period: '12 months', durationDays: 365,
+    sku: 'nirmaan-psy-full', slug: 'with-psychometric', name: 'Nirmaan + Psychometric Testing',
+    tagline: 'The course plus the test — pay once, save 25%',
+    // List Rs 6,900 (course Rs 6,000 + test Rs 900); 25% off = Rs 5,175.
+    price: 690000, earlyBird: 517500, period: 'one-time', durationDays: 365,
+    paymentMode: 'one-time', phases: 6, includesPsychometric: true,
     features: [
-      'Everything in Clarity',
-      'Full 20 Mindset Sessions + Worksheets',
-      '2 Career Webinars',
-      'Personality Development Module',
-      '1 × 30-min Career Call',
+      '24 life-changing aspects of future life',
+      'Structured personal & professional skill development',
+      'Daily worksheets / tasks for overall development',
+      'Daily progress tracking',
+      'Daily task reminders',
+      'Total course validity 1 year from the date of enrolment',
+      "India's best psychometric testing, guiding students on the RIASEC scale",
+      'Up to a 40-page report covering strengths, weaknesses, personality, interests, preferences and your top 5 career options',
+      'Psychometric testing is for students of class 7 to 12 only',
+      'Pay at once and get a 25% discount immediately',
     ],
-    cta: 'Get Launch', variant: 'btn-secondary', featured: false, badge: null, order: 3,
+    cta: 'Get Nirmaan + Test', variant: 'btn-primary', featured: false, badge: null, order: 3,
+  },
+  {
+    sku: 'nirmaan-psy-payu', slug: 'with-psychometric-pay-as-you-use',
+    name: 'Nirmaan + Psychometric Testing (Pay as you Use)',
+    tagline: 'Course plus test, spread over 6 phases',
+    // Rs 1,150 per phase x 6 phases = Rs 6,900.
+    price: 115000, earlyBird: null, period: 'per phase', durationDays: 365,
+    paymentMode: 'per-phase', phases: 6, includesPsychometric: true,
+    features: [
+      '24 life-changing aspects of future life',
+      'Structured personal & professional skill development',
+      'Daily worksheets / tasks for overall development',
+      'Daily progress tracking',
+      'Daily task reminders',
+      'Course has to be completed in 1 year',
+      'Video & task validity 1 year from first enrolment; each video plays 5 times',
+      'After the 1-year expiry, tasks can be viewed for 3 years',
+      "India's best psychometric testing, guiding students on the RIASEC scale",
+      'Six equal payments, without interest',
+    ],
+    cta: 'Start with 1 phase', variant: 'btn-secondary', featured: false, badge: null, order: 4,
   },
 ]
 
@@ -113,6 +156,17 @@ async function run() {
     )
     console.log(`  ✓ Package: ${p.name} (${p.sku})`)
   }
+
+  // Retire any package of this course that is no longer in the seed list —
+  // otherwise renamed or dropped plans (Discover / Clarity / Launch) keep
+  // showing on the pricing cards. Deactivated rather than deleted so existing
+  // orders and enrollments still resolve their package name.
+  const keep = PACKAGES.map((p) => p.sku)
+  const retired = await Package.updateMany(
+    { skillBuild: sb._id, sku: { $nin: keep }, active: true },
+    { $set: { active: false } }
+  )
+  if (retired.modifiedCount) console.log(`  ⏻ Retired ${retired.modifiedCount} old package(s)`)
 
   // Reseed sessions for this skill-build (idempotent: clear then insert).
   await Session.deleteMany({ skillBuild: sb._id })

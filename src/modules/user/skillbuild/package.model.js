@@ -19,6 +19,15 @@ const packageSchema = new mongoose.Schema(
     period: { type: String, default: 'one-time' },       // display: 'one-time' | '6 months' | '12 months'
     durationDays: { type: Number, default: null },       // access length for the enrollment (null = one-time)
     // Mentoring programs only: how many bookable sessions this SKU includes.
+    // How the student pays for this plan.
+    //   'one-time'  — pay once, the whole course opens
+    //   'per-phase' — pay for one phase at a time; each payment opens the next
+    // The course is always cut into `phases` equal blocks of sessions.
+    paymentMode: { type: String, enum: ['one-time', 'per-phase'], default: 'one-time' },
+    phases: { type: Number, default: 1 },
+    // Bundles the Mindler psychometric test with the course.
+    includesPsychometric: { type: Boolean, default: false },
+
     sessionsCount: { type: Number, default: null },
     sessionMins: { type: Number, default: null },        // e.g. 120 (2-hour slots)
 

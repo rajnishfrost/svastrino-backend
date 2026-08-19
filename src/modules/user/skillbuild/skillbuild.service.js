@@ -60,5 +60,10 @@ export async function getPackageBySku(sku) {
     price: pkg.price,
     earlyBird: pkg.earlyBird,
     durationDays: pkg.durationDays,
+    // Phase-wise selling: payments needs these to decide how much of the course
+    // a payment opens, and whether buying the same plan again is allowed.
+    paymentMode: pkg.paymentMode || 'one-time',
+    phases: pkg.phases || 1,
+    includesPsychometric: !!pkg.includesPsychometric,
   }
 }

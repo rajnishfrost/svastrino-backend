@@ -21,6 +21,35 @@ const httpError = (message, status, code) => {
  * The highest package rank a user owns for a skill-build (or 0 if none).
  * Rank = Package.order (1 Discover, 2 Clarity, 3 Launch). Access is tier ≤ rank.
  */
+/** A video may be started this many times before it stops playing (anti-piracy). */
+export const PLAY_LIMIT = 5
+
+/**
+ * The course is cut into equal blocks of sessions — "phases". A pay-as-you-use
+ * student buys them one at a time; a pay-once student gets them all.
+ * Phase numbers are 1-based, and the last phase absorbs any remainder.
+ */
+export function phaseOfSession(index, totalSessions, phases) {
+  if (!phases || phases < 2) return 1
+  const perPhase = Math.ceil(totalSessions / phases)
+  return Math.min(phases, Math.floor(index / perPhase) + 1)
+}
+
+/** The strongest active enrollment's phase access for this course. */
+async function phaseAccess(userId, skillBuildSlug) {
+  const enrollments = await Enrollment.find({
+    user: userId, product: skillBuildSlug, status: 'active',
+  })
+  if (!enrollments.length) return { unlocked: 0, total: 1, paymentMode: 'one-time' }
+  // Take the most generous access the student holds.
+  const best = enrollments.reduce((a, b) => (b.phasesUnlocked > a.phasesUnlocked ? b : a))
+  return {
+    unlocked: best.phasesUnlocked ?? 1,
+    total: best.phasesTotal ?? 1,
+    paymentMode: best.paymentMode || 'one-time',
+  }
+}
+
 async function userRank(userId, skillBuildSlug) {
   const enrollments = await Enrollment.find({ user: userId, product: skillBuildSlug, status: 'active' })
   if (!enrollments.length) return { rank: 0, packageName: null }
@@ -105,7 +134,9 @@ async function loadState(userId, slug) {
   }
   const answersByQid = new Map(answers.map((a) => [String(a.question), a]))
 
-  return { sb, rank, packageName, sessions, learnState, progressMap, questionsBySession, answersByQid }
+  const phases = await phaseAccess(userId, slug)
+
+  return { sb, rank, packageName, sessions, learnState, progressMap, questionsBySession, answersByQid, phases }
 }
 
 /** loadState + locate a specific session (with its index) for the given user. */
@@ -138,8 +169,16 @@ export async function getCourse(userId, slug) {
   const shaped = st.sessions.map((s, i) => {
     const prog = st.progressMap.get(String(s._id))
     const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt)
-    const videoLocked = !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
-    const qs = computeQuestions(st.questionsBySession.get(String(s._id)) || [], st.answersByQid, prog?.videoDoneAt, now)
+    // Two separate gates. The drip clock decides WHEN a session opens; the phase
+    // decides WHETHER it has been paid for at all. A phase the student has not
+    // bought yet stays shut no matter how far the clock has run.
+    const phase = phaseOfSession(i, st.sessions.length, st.phases.total)
+    const phaseLocked = phase > st.phases.unlocked
+    const plays = prog?.plays || 0
+    const videoLocked = phaseLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
+    const qs = phaseLocked
+      ? { current: null, nextUnlockAt: null, answered: [], total: (st.questionsBySession.get(String(s._id)) || []).length }
+      : computeQuestions(st.questionsBySession.get(String(s._id)) || [], st.answersByQid, prog?.videoDoneAt, now)
 
     return {
       id: s._id,
@@ -152,8 +191,13 @@ export async function getCourse(userId, slug) {
       captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
       worksheet: s.worksheet,
       notes: s.notes || [],
+      phase,
+      phaseLocked,          // true = this phase has not been paid for yet
       videoLocked,
-      videoUnlockAt,
+      videoUnlockAt: phaseLocked ? null : videoUnlockAt,
+      plays,
+      playsLeft: Math.max(0, PLAY_LIMIT - plays),
+      playLimitReached: plays >= PLAY_LIMIT,
       videoDone: !!prog?.videoDoneAt, // controls seek-unlock on the client
       completed: !!prog?.completed,   // session fully done (all questions answered)
       completedAt: prog?.completedAt || null,
@@ -165,6 +209,14 @@ export async function getCourse(userId, slug) {
   return {
     skillBuild: { slug: st.sb.slug, name: st.sb.name },
     packageName: st.packageName,
+    phases: {
+      unlocked: st.phases.unlocked,
+      total: st.phases.total,
+      paymentMode: st.phases.paymentMode,
+      // What the student must buy next, if anything.
+      nextPhase: st.phases.unlocked < st.phases.total ? st.phases.unlocked + 1 : null,
+    },
+    playLimit: PLAY_LIMIT,
     rank: st.rank,
     started: !!startedAt,
     startedAt,
@@ -190,6 +242,41 @@ export async function startCourse(userId, slug) {
  * Record that the video passed 90% (first watch only — the first time is the
  * schedule anchor for Q1 and permanently unlocks seeking on this video).
  */
+/**
+ * Count one play of a video and say how many are left. Called by the player the
+ * moment playback actually starts, NOT on page load — otherwise simply opening
+ * the page would burn a play. Refuses once the limit is spent, and refuses for
+ * a phase the student has not paid for.
+ */
+export async function registerPlay(userId, sessionId) {
+  const st = await loadStateForSession(userId, sessionId)
+  const phase = phaseOfSession(st.index, st.sessions.length, st.phases.total)
+  if (phase > st.phases.unlocked) {
+    throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
+  }
+
+  const existing = await Progress.findOne({ user: userId, session: sessionId })
+  const plays = existing?.plays || 0
+  if (plays >= PLAY_LIMIT) {
+    throw httpError(
+      `You have watched this video the maximum of ${PLAY_LIMIT} times.`,
+      403,
+      'PLAY_LIMIT_REACHED'
+    )
+  }
+
+  const prog = await Progress.findOneAndUpdate(
+    { user: userId, session: sessionId },
+    { $inc: { plays: 1 }, $setOnInsert: { skillBuild: st.sb._id } },
+    { new: true, upsert: true }
+  )
+  return {
+    plays: prog.plays,
+    playsLeft: Math.max(0, PLAY_LIMIT - prog.plays),
+    playLimit: PLAY_LIMIT,
+  }
+}
+
 export async function markVideoDone(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   const { session, index } = st

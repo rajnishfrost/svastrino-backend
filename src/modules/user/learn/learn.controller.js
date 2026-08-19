@@ -13,6 +13,15 @@ export const startCourse = asyncHandler(async (req, res) => {
   res.json(course)
 })
 
+// POST /api/user/learn/sessions/:id/play  → count one play of this video
+// The player calls this when playback STARTS. Each video may be played a fixed
+// number of times; the server keeps the count so clearing the browser cannot
+// reset it.
+export const registerPlay = asyncHandler(async (req, res) => {
+  const out = await service.registerPlay(req.user.id, req.params.id)
+  res.json(out)
+})
+
 // POST /api/user/learn/sessions/:id/video-done  → first 90% watch
 export const videoDone = asyncHandler(async (req, res) => {
   const out = await service.markVideoDone(req.user.id, req.params.id)
