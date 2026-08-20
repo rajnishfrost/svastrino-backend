@@ -31,6 +31,11 @@ const packageSchema = new mongoose.Schema(
     sessionsCount: { type: Number, default: null },
     sessionMins: { type: Number, default: null },        // e.g. 120 (2-hour slots)
 
+    // How this package is bought. 'self-serve' is the normal checkout. With
+    // 'expert-call' the visitor cannot pay online at all: they request a call
+    // and the team sends a payment link afterwards (Breakthrough).
+    buyMode: { type: String, enum: ['self-serve', 'expert-call'], default: 'self-serve' },
+
     features: { type: [String], default: [] },
 
     cta: { type: String, default: 'Buy now' },

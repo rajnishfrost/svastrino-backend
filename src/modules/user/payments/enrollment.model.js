@@ -8,7 +8,10 @@ import mongoose from 'mongoose'
 const enrollmentSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true },
+    // One payment grants exactly one enrollment. The unique index is what makes
+    // that true even when the browser callback and the gateway webhook complete
+    // the same order at the same moment — without it the guard is a race.
+    order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true, unique: true },
 
     product: { type: String, required: true },   // 'nirmaan'
     packageId: { type: String, required: true },  // 'nirmaan-clarity'

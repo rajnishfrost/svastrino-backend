@@ -39,3 +39,12 @@ export const getReport = asyncHandler(async (req, res) => {
   const report = await service.getReport(req.user.id, req.params.slug)
   res.json(report)
 })
+
+// GET /api/user/learn/:slug/record  → the student's own record of the course:
+// the questions, the answers they wrote, and the dates. The client turns this
+// into the branded PDF. It stays available for three years after the course
+// year ends; the service decides how much of it may still be given out.
+export const getRecord = asyncHandler(async (req, res) => {
+  const record = await service.courseRecord(req.user.id, req.params.slug)
+  res.json(record)
+})

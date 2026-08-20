@@ -8,6 +8,8 @@ import scholarshipAdminRoutes from '../user/scholarship/scholarship.admin.routes
 import blogsAdminRoutes from './blogs/blogs.admin.routes.js'
 import careerLibraryAdminRoutes from './careerlibrary/careerLibrary.admin.routes.js'
 import enquiryAdminRoutes from '../user/enquiry/enquiry.admin.routes.js'
+import notificationsAdminRoutes from '../user/notifications/notifications.admin.routes.js'
+import ticketsAdminRoutes from '../user/tickets/tickets.admin.routes.js'
 import settingsRoutes from './settings/settings.routes.js'
 import manageRoutes from './manage/manage.routes.js'
 
@@ -25,6 +27,8 @@ router.use('/scholarship', scholarshipAdminRoutes) // Nirmaan scholarship: insti
 router.use('/blogs', blogsAdminRoutes)             // blog posts (drafts + published)
 router.use('/career-library', careerLibraryAdminRoutes) // streams, course pages, quick news
 router.use('/enquiries', enquiryAdminRoutes)     // public enquiry form submissions
+router.use('/notifications', notificationsAdminRoutes) // broadcast offers for the bell + "New offers" page
+router.use('/tickets', ticketsAdminRoutes)       // student support threads + reopening course access
 router.use('/settings', settingsRoutes)          // site settings (superadmin)
 router.use('/', manageRoutes)                // stats, users, packages, content
 

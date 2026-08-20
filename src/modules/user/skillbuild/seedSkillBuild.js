@@ -6,6 +6,7 @@ import { connectDB } from '../../../config/db.js'
 import { SkillBuild } from './skillbuild.model.js'
 import { Package } from './package.model.js'
 import { Session } from '../learn/session.model.js'
+import { formatInr } from '../../../utils/money.js'
 
 const NIRMAAN = {
   slug: 'nirmaan',
@@ -138,6 +139,41 @@ const SESSIONS = [
     worksheet: { title: 'Your roadmap', tasks: ['Define your 1-year target', 'List 5 milestones', 'Identify one mentor to reach out to'] } },
 ]
 
+// Once a package exists the admin panel is the source of truth for money: the
+// team edits prices there and a seed re-run must never quietly undo that. The
+// seed therefore only supplies the *opening* price — `price` and `earlyBird`
+// are written through $setOnInsert, which Mongo applies only when the document
+// is created — while every descriptive field stays in $set so content fixes
+// still land on packages that are already selling.
+const COMMERCIAL_FIELDS = ['price', 'earlyBird']
+
+// Mongo rejects an update that names the same field in both $set and
+// $setOnInsert, so the seed object is split field by field instead of being
+// spread wholesale into $set.
+function buildUpdate(pkg, alsoSet) {
+  const $set = { ...alsoSet }
+  const $setOnInsert = {}
+  for (const [field, value] of Object.entries(pkg)) {
+    if (COMMERCIAL_FIELDS.includes(field)) $setOnInsert[field] = value
+    else $set[field] = value
+  }
+  return Object.keys($setOnInsert).length ? { $set, $setOnInsert } : { $set }
+}
+
+const earlyBirdLabel = (paise) => (paise == null ? 'none' : formatInr(paise))
+
+// A stored price that survived the upsert unchanged means somebody edited it in
+// the panel. Say so out loud, otherwise the seed looks like it applied a price
+// that it deliberately left alone.
+function reportKeptPrices(pkg, saved) {
+  if (saved.price !== pkg.price) {
+    console.log(`    • ${pkg.name} — kept the panel price ${formatInr(saved.price)} (seed says ${formatInr(pkg.price)})`)
+  }
+  if ('earlyBird' in pkg && saved.earlyBird !== pkg.earlyBird) {
+    console.log(`    • ${pkg.name} — kept the panel early-bird price ${earlyBirdLabel(saved.earlyBird)} (seed says ${earlyBirdLabel(pkg.earlyBird)})`)
+  }
+}
+
 async function run() {
   await connectDB()
 
@@ -149,12 +185,13 @@ async function run() {
   console.log(`✓ SkillBuild: ${sb.name} (${sb.slug})`)
 
   for (const p of PACKAGES) {
-    await Package.findOneAndUpdate(
+    const saved = await Package.findOneAndUpdate(
       { sku: p.sku },
-      { $set: { ...p, skillBuild: sb._id } },
-      { upsert: true, new: true }
+      buildUpdate(p, { skillBuild: sb._id }),
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     )
     console.log(`  ✓ Package: ${p.name} (${p.sku})`)
+    reportKeptPrices(p, saved)
   }
 
   // Retire any package of this course that is no longer in the seed list —

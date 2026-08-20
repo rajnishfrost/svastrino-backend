@@ -89,7 +89,8 @@ export function validateGuest(body) {
   return { name, email, phone: phone ?? undefined }
 }
 
-/** Partial account update — any of name/phone. At least one must be present. */
+/** Partial account update — any of name/phone/studentClass. At least one must
+ *  be present. */
 export function validateUpdateProfile(body) {
   const out = {}
   if (body.name != null) {
@@ -99,6 +100,13 @@ export function validateUpdateProfile(body) {
   }
   if (body.phone != null) {
     out.phone = parsePhone(body.phone) // string, or null to clear
+  }
+  if (body.studentClass != null) {
+    // No enum on purpose: the home enquiry form offers 'Class 7' … 'Class 12',
+    // 'Graduate' and 'Other', and that list is worded by marketing rather than by
+    // us. A bounded free string keeps every one of those answers valid, and the
+    // psychometric eligibility check reads the number out of it. '' clears it.
+    out.studentClass = clean(body.studentClass).slice(0, 40)
   }
   if (Object.keys(out).length === 0) fail('Nothing to update')
   return out
@@ -147,6 +155,10 @@ export function toUserDTO(user, extra = {}) {
     name: user.name,
     email: user.email,
     phone: user.phone || null,
+    // Empty unless the account told us. The Nirmaan package cards use it to show
+    // which plans this student is eligible for, and checkout enforces the same
+    // rule for real: psychometric plans are only sold to classes 7 to 12.
+    studentClass: user.studentClass || '',
     avatar: user.avatar || '',
     role: user.role || 'student',
     emailVerified: user.emailVerified,

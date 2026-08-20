@@ -4,12 +4,14 @@ export function toProgramCardDTO(p) {
     slug: p.slug,
     name: p.name,
     tagline: p.tagline,
+    trustLine: p.trustLine || '',
     summary: p.summary,
     duration: p.duration,
     sessions: p.sessions,
     mode: p.mode,
     category: p.category?.slug ? { slug: p.category.slug, name: p.category.name } : null,
     bookingSku: p.bookingSku || '',
+    buyMode: p.buyMode || 'self-serve',
   }
 }
 
@@ -25,6 +27,7 @@ export function toProgramDTO(p) {
     })),
     benefits: p.benefits,
     brochureUrl: p.brochureUrl,
+    faqs: (p.faqs || []).map((f) => ({ q: f.q, a: f.a })),
   }
 }
 

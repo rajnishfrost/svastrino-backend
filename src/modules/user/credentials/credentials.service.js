@@ -392,13 +392,18 @@ export async function findUserById(id) {
 
 // --- Profile & password management ------------------------------------------
 
-/** Update name and/or phone. Changing the phone marks it unverified again. */
+/** Update name, phone and/or class. Changing the phone marks it unverified again. */
 export async function updateProfile(userId, changes) {
   // Select the hash so the returned DTO reports `hasPassword` correctly.
   const user = await User.findById(userId).select('+passwordHash')
   if (!user) throw httpError('User not found', 404)
 
   if (changes.name !== undefined) user.name = changes.name
+
+  // The class gates which psychometric plans this account may buy, but it is
+  // never part of profile completeness — an adult booking mentoring has no class
+  // and must not be nagged for one. See `isProfileComplete` on the model.
+  if (changes.studentClass !== undefined) user.studentClass = changes.studentClass
 
   if (changes.phone !== undefined && changes.phone !== (user.phone || null)) {
     // No duplicate check — phone is not unique (same rule as signup).

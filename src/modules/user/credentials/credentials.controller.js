@@ -128,7 +128,7 @@ export const getMe = asyncHandler(async (req, res) => {
   res.json({ user: toUserDTO(user, await accountFlags(user)) })
 })
 
-// PATCH /api/user/profile  (requireUserAuth) — update name and/or phone
+// PATCH /api/user/profile  (requireUserAuth) — update name, phone and/or class
 export const updateProfile = asyncHandler(async (req, res) => {
   const dto = validateUpdateProfile(req.body)
   const user = await service.updateProfile(req.user.id, dto)

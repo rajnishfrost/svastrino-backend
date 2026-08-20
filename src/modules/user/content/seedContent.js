@@ -33,8 +33,8 @@ const PROGRAMS = [
     summary:
       'A focused 2-hour session designed to achieve clarity when you are stuck between ' +
       'options or facing a deadline — ending with concrete career recommendations and a plan.',
-    duration: '2 hours (≈5 hours total with pre/post work)',
-    sessions: '1 main session + a follow-up',
+    duration: '10 days',
+    sessions: '2 sessions — about 5 hours in total, including the pre-work and the follow-up',
     mode: 'Online',
     chooseIf: [
       'You want a second opinion on a career plan with multiple options',
@@ -61,6 +61,25 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/bulls-eye/',
     order: 2,
+    // Questions people ask about this programme specifically.
+    faqs: [
+      {
+        q: "How is this different from a full mentoring programme?",
+        a: "Bull's Eye is built for an immediate decision — you come with a specific confusion and leave with a recommendation. The longer programmes work on you over months; this one works on the choice in front of you.",
+      },
+      {
+        q: "What happens before the session?",
+        a: "You fill in a short form about your background, academics and interests. That is reviewed before you arrive, so the session itself is spent on your questions rather than on gathering facts.",
+      },
+      {
+        q: "Is one session really enough?",
+        a: "For a specific decision — a stream, a course, a college, a second opinion on a plan — yes. There is also a follow-up a week later to reaffirm the choice and answer anything that came up since.",
+      },
+      {
+        q: "Who is it not for?",
+        a: "If you want to build mindset, habits and a long-term plan rather than settle one question, Bloom or Breakthrough will serve you far better.",
+      },
+    ],
   },
   {
     slug: 'bloom',
@@ -72,8 +91,8 @@ const PROGRAMS = [
       "Svastrino's personality-based mentoring program. Over 45–60 days it moves from a full " +
       'personality analysis through self-discovery tasks and vision building, ending in a ' +
       'personalised 5-year career plan.',
-    duration: '45–60 days',
-    sessions: '3 sessions of 2 hours each + regular follow-ups',
+    duration: '2 months',
+    sessions: '3 sessions of 2 hours each plus weekly follow-ups — about 10 hours in total',
     mode: 'Online',
     chooseIf: [
       'You want to discover your unique potential and build a customised vision',
@@ -100,9 +119,31 @@ const PROGRAMS = [
     brochureUrl: 'https://svastrino.com/wp-content/uploads/2025/04/bloom-new-brochure.pdf',
     sourceUrl: 'https://svastrino.com/bloom/',
     order: 3,
+    // Questions people ask about this programme specifically.
+    faqs: [
+      {
+        q: "How much time do I need to give it?",
+        a: "Three sessions of two hours each across about two months, plus the tasks between them and weekly follow-ups — roughly ten hours in total.",
+      },
+      {
+        q: "What do I actually walk away with?",
+        a: "A five-year career plan built around your own personality and strengths, not a template — plus the self-awareness to keep adjusting it as things change.",
+      },
+      {
+        q: "What are the tasks between sessions?",
+        a: "Short self-discovery exercises. They are where most of the change happens; the sessions make sense of what the tasks bring up.",
+      },
+      {
+        q: "Can I do this while preparing for exams?",
+        a: "Yes. The pace is deliberately spread over two months so it sits alongside school rather than competing with it.",
+      },
+    ],
   },
   {
     slug: 'breakthrough',
+    // Sold after a call, not from a checkout page — see the Breakthrough row
+    // in the emotional flow: Service Page → Talking to an Expert → payment link.
+    buyMode: 'expert-call',
     name: 'Breakthrough Program',
     category: { slug: 'personalised-mentoring', name: 'Personalised Mentoring' },
     bookingSku: 'mentoring-breakthrough',
@@ -112,7 +153,7 @@ const PROGRAMS = [
       'building mindset first, then attitude, with consistent mentoring and accountability ' +
       'across academics, professional skills, experience, extracurriculars and social work.',
     duration: '2 years',
-    sessions: '10 sessions of 2 hours each (1200+ minutes)',
+    sessions: '20 sessions of 1 hour or 10 of 2 hours, at your own pace, plus weekly follow-ups — about 45 hours in total',
     mode: 'Online',
     chooseIf: [
       'You want a comprehensive analysis of your career needs and strengths',
@@ -143,6 +184,25 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/breakthrough/',
     order: 4,
+    // Questions people ask about this programme specifically.
+    faqs: [
+      {
+        q: "Why does it run for two years?",
+        a: "Because mindset and character do not change in a weekend. The first months build the plan and the habits; the rest is spent applying them with someone watching your progress.",
+      },
+      {
+        q: "Can I choose the session length?",
+        a: "Yes — twenty sessions of one hour, or ten of two hours, whichever suits your pace. Both add up to the same programme.",
+      },
+      {
+        q: "What happens between sessions?",
+        a: "Weekly follow-ups, tasks, and course corrections. You are not left alone for a month at a time.",
+      },
+      {
+        q: "Is this only for students?",
+        a: "It is built for students, freshers and young professionals who want to grow into leaders — not just to pick a career, but to become someone who can handle whatever they pick.",
+      },
+    ],
   },
 ]
 

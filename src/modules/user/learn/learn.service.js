@@ -6,6 +6,7 @@ import { Progress } from './progress.model.js'
 import { Question } from './question.model.js'
 import { Answer } from './answer.model.js'
 import { LearnState } from './learnState.model.js'
+import { courseAccess } from './courseAccess.js'
 import { nextIstMidnight, istDaysBetween } from '../../../utils/schedule.js'
 
 const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions = 7 days per session
@@ -15,6 +16,22 @@ const httpError = (message, status, code) => {
   err.status = status
   if (code) err.code = code
   return err
+}
+
+/**
+ * The gate on the one-year rule. Every door that hands out course content goes
+ * through this one check — opening the course, starting it, playing a video,
+ * marking a video watched, answering a question — because a door left unguarded
+ * is a way back into a course the student no longer has.
+ */
+async function assertActiveCourse(userId, slug) {
+  const access = await courseAccess(userId, slug)
+  if (access.state === 'active') return access
+  throw httpError(
+    'Your one year with this course is over, so the videos and tasks are closed. You can still download your work. If you would like more time, please write to us and we will help.',
+    403,
+    'COURSE_EXPIRED',
+  )
 }
 
 /**
@@ -160,20 +177,67 @@ function videoUnlockAtFor(index, sessions, progressMap, startedAt) {
   return null // previous session not finished → next video not scheduled yet
 }
 
+/**
+ * How one session looks once the course year is over. It is the same shape a
+ * locked phase already sends — nothing playable, no questions, no unlock dates
+ * — so the page renders it without needing to learn anything new. What the
+ * student already achieved is left in place, because that part is theirs.
+ */
+function closedSession(session, prog, phase, phaseLocked, st) {
+  const questions = st.questionsBySession.get(String(session._id)) || []
+  const answeredCount = questions.filter((q) => st.answersByQid.has(String(q._id))).length
+  return {
+    id: session._id,
+    order: session.order,
+    tier: session.tier,
+    title: session.title,
+    description: session.description,
+    videoUrl: '',
+    durationMins: session.durationMins,
+    captions: [],
+    worksheet: { title: '', tasks: [] },
+    notes: [],
+    phase,
+    phaseLocked,
+    videoLocked: true,
+    videoUnlockAt: null,
+    plays: prog?.plays || 0,
+    playsLeft: 0,
+    playLimitReached: true,
+    videoDone: !!prog?.videoDoneAt,
+    completed: !!prog?.completed,
+    completedAt: prog?.completedAt || null,
+    questions: {
+      total: questions.length,
+      answeredCount,
+      sessionCompleted: questions.length > 0 && answeredCount === questions.length,
+      current: null,
+      nextUnlockAt: null,
+      answered: [],
+    },
+  }
+}
+
 /** Full course for the learning page — gated by tier AND the drip schedule. */
 export async function getCourse(userId, slug) {
+  // The year is read before any content is shaped. Once it is over the course
+  // still loads, because the student needs this page to reach their record and
+  // to ask for more time — but every session comes back closed below.
+  const access = await courseAccess(userId, slug)
   const st = await loadState(userId, slug)
   const now = new Date()
   const startedAt = st.learnState?.startedAt || null
+  const closed = access.state !== 'active'
 
   const shaped = st.sessions.map((s, i) => {
     const prog = st.progressMap.get(String(s._id))
-    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt)
     // Two separate gates. The drip clock decides WHEN a session opens; the phase
     // decides WHETHER it has been paid for at all. A phase the student has not
     // bought yet stays shut no matter how far the clock has run.
     const phase = phaseOfSession(i, st.sessions.length, st.phases.total)
     const phaseLocked = phase > st.phases.unlocked
+    if (closed) return closedSession(s, prog, phase, phaseLocked, st)
+    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt)
     const plays = prog?.plays || 0
     const videoLocked = phaseLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
     const qs = phaseLocked
@@ -209,6 +273,9 @@ export async function getCourse(userId, slug) {
   return {
     skillBuild: { slug: st.sb.slug, name: st.sb.name },
     packageName: st.packageName,
+    // The one-year rule, so the page can show the right screen: how many days
+    // are left, or what is still possible now that the year has gone by.
+    access,
     phases: {
       unlocked: st.phases.unlocked,
       total: st.phases.total,
@@ -231,6 +298,7 @@ export async function getCourse(userId, slug) {
 
 /** Begin the course (idempotent). Sets the schedule anchor; Video 1 opens now. */
 export async function startCourse(userId, slug) {
+  await assertActiveCourse(userId, slug)   // the year must still be running
   const st = await loadState(userId, slug) // also enforces enrolment
   if (!st.learnState) {
     await LearnState.create({ user: userId, skillBuild: st.sb._id, slug, startedAt: new Date() })
@@ -250,6 +318,7 @@ export async function startCourse(userId, slug) {
  */
 export async function registerPlay(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
+  await assertActiveCourse(userId, st.sb.slug)
   const phase = phaseOfSession(st.index, st.sessions.length, st.phases.total)
   if (phase > st.phases.unlocked) {
     throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
@@ -279,6 +348,7 @@ export async function registerPlay(userId, sessionId) {
 
 export async function markVideoDone(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
+  await assertActiveCourse(userId, st.sb.slug)
   const { session, index } = st
   const videoUnlockAt = videoUnlockAtFor(index, st.sessions, st.progressMap, st.learnState?.startedAt)
   if (!videoUnlockAt || Date.now() < videoUnlockAt.getTime()) {
@@ -305,6 +375,7 @@ export async function submitAnswer(userId, questionId, text) {
   if (!question || !question.active) throw httpError('Question not found', 404)
 
   const st = await loadStateForSession(userId, String(question.session))
+  await assertActiveCourse(userId, st.sb.slug)
   const { session } = st
 
   const prog = st.progressMap.get(String(session._id))
@@ -343,6 +414,13 @@ export async function submitAnswer(userId, questionId, text) {
  * disagree. Works off a getCourse() payload.
  */
 export function todayTask(course) {
+  // Once the year is over nothing is due any more. Saying so here keeps the
+  // page honest — and, because the daily reminder reads the same line, it also
+  // stops us nudging a student about a video that will never open again.
+  if (course.access && course.access.state !== 'active') {
+    return { type: 'closed', label: 'Your one year with this course is over. You can still download your work.' }
+  }
+
   const s = course.sessions.find((x) => !x.completed)
   if (!s) return { type: 'done', label: 'Course complete — great work!' }
 
@@ -424,6 +502,126 @@ export async function getReport(userId, slug) {
     // The single source of truth for "what should I do today" — the same value
     // the daily reminder e-mail uses.
     todayTask: task,
+  }
+}
+
+/**
+ * The student's own record of the course: the questions they were asked, the
+ * answers they wrote in their own words, and the dates around them. The client
+ * prints this as the branded PDF.
+ *
+ * This is the only place the three-year retention rule lives. The course itself
+ * closes after a year, but the work is theirs to keep for three years more —
+ * and after that, all that honestly remains is which course they took.
+ */
+export async function courseRecord(userId, slug) {
+  const access = await courseAccess(userId, slug)
+  if (access.state === 'none') {
+    throw httpError('We could not find this course in your account.', 404, 'NOT_ENROLLED')
+  }
+
+  const st = await loadState(userId, slug)
+  const startedAt = st.learnState?.startedAt || null
+
+  // A course counts as finished only when every session the student has is
+  // done, so an unfinished course carries no finish date. This is the same rule
+  // the progress report uses, so the two can never tell different stories.
+  let lastCompletedAt = null
+  let sessionsCompleted = 0
+  for (const s of st.sessions) {
+    const prog = st.progressMap.get(String(s._id))
+    if (!prog?.completed) continue
+    sessionsCompleted += 1
+    if (prog.completedAt && (!lastCompletedAt || prog.completedAt > lastCompletedAt)) {
+      lastCompletedAt = prog.completedAt
+    }
+  }
+  const sessionsTotal = st.sessions.length
+  const completedAt = sessionsTotal > 0 && sessionsCompleted === sessionsTotal ? lastCompletedAt : null
+
+  // Three years after the course expired, the work goes as well. What is left
+  // is which course they did and when — no questions and no answers.
+  if (access.state === 'archived') {
+    return {
+      course: { name: st.sb.name, slug: st.sb.slug },
+      enrolledAt: access.enrolledAt,
+      startedAt,
+      completedAt,
+      expiresAt: access.expiresAt,
+      recordUntil: access.recordUntil,
+      downloadable: false,
+      sessions: [],
+    }
+  }
+
+  // Is the year still running? A record asked for mid-course is a second door
+  // onto the same questions, so while the course is live it opens only as wide
+  // as the course page does — see the drip note below.
+  const live = access.state === 'active'
+
+  const sessions = st.sessions.map((s, i) => {
+    const prog = st.progressMap.get(String(s._id))
+    // The same phase paywall the course page applies. A phase the student has
+    // not bought is listed by title only: printing its questions here would
+    // hand over the part of the course they have not paid for, which is exactly
+    // what the course page refuses to do. This is not the same as a session
+    // they simply have not reached yet — that one keeps its questions on
+    // purpose, so please do not fold the two cases back together.
+    const phaseLocked = phaseOfSession(i, st.sessions.length, st.phases.total) > st.phases.unlocked
+    const held = (st.questionsBySession.get(String(s._id)) || [])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+    // And the second gate the course page applies is the daily drip: a question
+    // the student has not reached yet is not shown to them. That still holds
+    // while the year is running, so a live course records only the questions
+    // they have already answered — otherwise pressing Download on day one would
+    // read the whole course ahead of its own schedule. Once the year is over
+    // there is nothing left to run ahead of, so the questions they never got to
+    // come back with the rest and the record shows the gaps.
+    const questions = phaseLocked
+      ? []
+      : live
+        ? held.filter((q) => st.answersByQid.has(String(q._id)))
+        : held
+    return {
+      index: s.order, // the session number the student saw on the course page
+      title: s.title,
+      phaseLocked, // true = never paid for, so it carries no questions
+      // How many questions the session really holds, so a document can say why
+      // it is printing fewer of them rather than imply there were none.
+      questionsTotal: held.length,
+      videoWatchedAt: prog?.videoDoneAt || null,
+      completedAt: prog?.completedAt || null,
+      // A session the student never reached is still listed here, with its
+      // questions and no answers. An honest record shows the gaps too.
+      questions: questions.map((q) => {
+        const answer = st.answersByQid.get(String(q._id))
+        return {
+          order: q.order,
+          question: q.prompt,
+          answer: answer?.text || null,
+          answeredAt: answer?.submittedAt || null,
+        }
+      }),
+    }
+  })
+
+  return {
+    course: { name: st.sb.name, slug: st.sb.slug },
+    packageName: st.packageName,
+    enrolledAt: access.enrolledAt,
+    startedAt,
+    completedAt,
+    expiresAt: access.expiresAt,
+    recordUntil: access.recordUntil,
+    // Whole days from the day they started to the day they finished.
+    daysTaken: startedAt && completedAt
+      ? istDaysBetween(new Date(startedAt), new Date(completedAt))
+      : null,
+    sessionsTotal,
+    sessionsCompleted,
+    downloadable: true,
+    sessions,
   }
 }
 

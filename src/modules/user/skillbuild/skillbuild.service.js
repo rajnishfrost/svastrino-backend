@@ -65,5 +65,9 @@ export async function getPackageBySku(sku) {
     paymentMode: pkg.paymentMode || 'one-time',
     phases: pkg.phases || 1,
     includesPsychometric: !!pkg.includesPsychometric,
+    // How the package is bought. Payments refuses a checkout for an
+    // 'expert-call' package unless the team has approved that caller, so this
+    // must travel with the projection — without it the guard silently passes.
+    buyMode: pkg.buyMode || 'self-serve',
   }
 }

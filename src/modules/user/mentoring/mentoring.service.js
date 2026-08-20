@@ -66,6 +66,7 @@ const programDTO = ({ pkg, parent }) => ({
   earlyBird: pkg.earlyBird,
   sessions: pkg.sessionsCount || 1,
   sessionMins: pkg.sessionMins || SLOT_MINS,
+  buyMode: pkg.buyMode || 'self-serve',
   features: pkg.features,
   featured: pkg.featured,
   badge: pkg.badge,

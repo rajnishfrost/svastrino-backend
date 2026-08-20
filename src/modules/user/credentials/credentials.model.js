@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema(
     // used by siblings). Uniqueness lives on `email` only.
     phone: { type: String, trim: true },
 
+    // Which class the student is in. The psychometric assessment is only offered
+    // to students in classes 7 to 12, so the account has to know where the
+    // student is before a plan can be sold to them. Free-form rather than an enum
+    // because this mirrors what the enquiry forms already collect ('Class 7' …
+    // 'Class 12', 'Graduate', 'Other') and that wording changes with the site.
+    // Empty for anyone who never told us — an adult buying mentoring, typically.
+    studentClass: { type: String, trim: true, default: '' },
+
     // Unified account role, referencing a Role by its `key` (see modules/admin/
     // roles). Roles are managed on the Roles page, so this is a free-form key
     // (validated against existing roles when set) rather than a fixed enum.
@@ -71,6 +79,9 @@ const userSchema = new mongoose.Schema(
     // doc once this instant passes. Cleared on verification so the account stays.
     purgeAt: { type: Date, select: false },
 
+    // Deliberately NOT derived from `studentClass`: plenty of accounts are adults
+    // buying mentoring for themselves and have no class at all, so requiring one
+    // would leave their profile permanently incomplete.
     isProfileComplete: { type: Boolean, default: false },
     lastLoginAt: { type: Date },
   },

@@ -15,7 +15,10 @@ export function validateEnquiry(body = {}) {
   const message = clean(body.message, 2000)
   const studentClass = clean(body.studentClass, 40)
   const city = clean(body.city, 80)
-  const source = body.source === 'home' ? 'home' : 'contact'
+  const program = clean(body.program, 60)
+  const preferredTime = clean(body.preferredTime, 80)
+  const SOURCES = ['home', 'expert-call', 'contact']
+  const source = SOURCES.includes(body.source) ? body.source : 'contact'
 
   if (name.length < 2) throw fail('Please tell us your name', 'name')
 
@@ -33,7 +36,7 @@ export function validateEnquiry(body = {}) {
   // with, which may legitimately be left blank once class and city are given.
   if (source === 'contact' && message.length < 3) throw fail('Please tell us how we can help', 'message')
 
-  return { name, email, phone, message, studentClass, city, source }
+  return { name, email, phone, message, studentClass, city, program, preferredTime, source }
 }
 
 export function toEnquiryDTO(e) {
@@ -45,8 +48,11 @@ export function toEnquiryDTO(e) {
     message: e.message,
     studentClass: e.studentClass,
     city: e.city,
+    program: e.program,
+    preferredTime: e.preferredTime,
     source: e.source,
     status: e.status,
+    approvedAt: e.approvedAt,
     notes: e.notes,
     createdAt: e.createdAt,
   }

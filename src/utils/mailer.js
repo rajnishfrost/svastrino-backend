@@ -226,30 +226,81 @@ export async function sendBookingEmail(to, details) {
  * not the visitor — with reply-to pointed at the person who wrote in, so
  * hitting Reply answers them directly.
  */
-export function buildEnquiryEmail({ name, email, phone, message, studentClass, city, source }) {
-  const where = source === 'home' ? 'home page banner' : 'contact page'
+const ENQUIRY_SOURCE = {
+  home: 'home page banner',
+  'expert-call': 'Breakthrough expert-call form',
+  contact: 'contact page',
+}
+
+export function buildEnquiryEmail(details) {
+  const { name, email, phone, message, studentClass, city, program, preferredTime, source } = details
+  const where = ENQUIRY_SOURCE[source] || ENQUIRY_SOURCE.contact
+  const isCall = source === 'expert-call'
+
   const rows = [
     ['Name', name],
     ['Email', email],
     ['Phone', phone],
+    ['Programme', program],
+    ['Best time to call', preferredTime],
     ['Class', studentClass],
     ['City', city],
     ['Message', message],
   ].filter(([, v]) => v)
 
+  // A call-back request is time-sensitive in a way a general enquiry is not, so
+  // it says so in the subject line — that is all the team sees on a phone.
+  const subject = isCall
+    ? `Call back requested — ${name}${city ? ` (${city})` : ''}`
+    : `New enquiry — ${name}${city ? ` (${city})` : ''}`
+
   return {
-    subject: `New enquiry — ${name}${city ? ` (${city})` : ''}`,
-    text: `New enquiry from the ${where}.\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join('\n'),
+    subject,
+    text: `${isCall ? 'Call-back request' : 'New enquiry'} from the ${where}.\n\n` +
+      rows.map(([k, v]) => `${k}: ${v}`).join('\n'),
     html: template({
-      heading: 'New enquiry 📨',
+      heading: isCall ? 'Call back requested 📞' : 'New enquiry 📨',
       preheader: `${name}${city ? ` · ${city}` : ''} — via the ${where}`,
       intro:
-        `Someone got in touch through the ${where}:<br><br>` +
+        (isCall
+          ? 'Someone wants to talk to an expert before buying:<br><br>'
+          : `Someone got in touch through the ${where}:<br><br>`) +
         rows.map(([k, v]) => `<strong>${esc(k)}:</strong> ${esc(v)}`).join('<br>'),
-      note: 'Reply to this email to answer them directly.',
+      note: isCall
+        ? 'They have been told to expect a call within one working day. Send the payment link after the call.'
+        : 'Reply to this email to answer them directly.',
     }),
     replyTo: email,
   }
+}
+
+/**
+ * Sent to the caller once the team has spoken to them and cleared them to pay.
+ * The link drops them straight into the booking wizard for that programme.
+ */
+export function buildExpertApprovalEmail({ name, program }) {
+  const first = String(name || '').trim().split(/\s+/)[0] || 'there'
+  const sku = program ? `mentoring-${String(program).replace('bulls-eye', 'bullseye')}` : ''
+  const link = `${clientUrl()}/book-online${sku ? `?program=${sku}` : ''}`
+
+  return {
+    subject: 'You can book your program now',
+    text: `Hi ${first}, thanks for speaking with us. You can pick your first session and pay here: ${link}`,
+    html: template({
+      heading: 'Your program is ready to book 🎉',
+      preheader: 'Pick your first session and complete the payment.',
+      intro:
+        `Hi ${esc(first)}! Thank you for taking the time to speak with us. ` +
+        'You can now choose a date and time for your first session and complete the payment.',
+      cta: 'Pick a slot and pay',
+      link,
+      note: 'If anything is still unclear, just reply to this email — we would rather answer first.',
+    }),
+  }
+}
+
+export async function sendExpertApprovalEmail(to, details) {
+  await sendMail({ to, ...buildExpertApprovalEmail(details) })
 }
 
 export async function sendEnquiryEmail(to, details) {
