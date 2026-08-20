@@ -24,3 +24,15 @@ export const emailLimiter = rateLimit({
   max: 5,
   ...common,
 })
+
+/**
+ * Public enquiry form. Generous enough that a family filling it in twice is
+ * never blocked, tight enough that a bot cannot flood the inbox.
+ */
+export const enquiryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many enquiries from this device. Please try again later.' },
+})

@@ -9,6 +9,7 @@ import scholarshipRoutes from './scholarship/scholarship.routes.js'
 import organisationRoutes from './organisation/organisation.routes.js'
 import blogsRoutes from './blogs/blogs.routes.js'
 import contentRoutes from './content/content.routes.js'
+import enquiryRoutes from './enquiry/enquiry.routes.js'
 import { getMe, updateProfile, changePassword } from './credentials/credentials.controller.js'
 import { uploadAvatar, removeAvatar, uploadAvatarMw } from './credentials/avatar.controller.js'
 import { requireUserAuth } from '../../middleware/auth.js'
@@ -50,6 +51,9 @@ router.use('/scholarship', scholarshipRoutes)
 
 // Blog archive (public — migrated from the legacy svastrino.com site)
 router.use('/blogs', blogsRoutes)
+
+// Public enquiry form — the Contact page and the home-page banner both post here
+router.use('/enquiry', enquiryRoutes)
 
 // Marketing/site content: mentoring programs, FAQs, success stories, career library
 router.use('/content', contentRoutes)

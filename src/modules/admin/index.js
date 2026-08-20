@@ -7,6 +7,8 @@ import mentoringAdminRoutes from '../user/mentoring/mentoring.admin.routes.js'
 import scholarshipAdminRoutes from '../user/scholarship/scholarship.admin.routes.js'
 import blogsAdminRoutes from './blogs/blogs.admin.routes.js'
 import careerLibraryAdminRoutes from './careerlibrary/careerLibrary.admin.routes.js'
+import enquiryAdminRoutes from '../user/enquiry/enquiry.admin.routes.js'
+import settingsRoutes from './settings/settings.routes.js'
 import manageRoutes from './manage/manage.routes.js'
 
 // ---- Admin area router ----
@@ -22,6 +24,8 @@ router.use('/mentoring', mentoringAdminRoutes) // bookings + session updates/tas
 router.use('/scholarship', scholarshipAdminRoutes) // Nirmaan scholarship: institutions, test, results
 router.use('/blogs', blogsAdminRoutes)             // blog posts (drafts + published)
 router.use('/career-library', careerLibraryAdminRoutes) // streams, course pages, quick news
+router.use('/enquiries', enquiryAdminRoutes)     // public enquiry form submissions
+router.use('/settings', settingsRoutes)          // site settings (superadmin)
 router.use('/', manageRoutes)                // stats, users, packages, content
 
 export default router

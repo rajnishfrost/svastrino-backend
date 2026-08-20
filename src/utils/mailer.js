@@ -35,11 +35,14 @@ function getTransport() {
 // The layout's <img src="cid:svastrino-logo"> resolves to this attachment.
 const LOGO_CID = 'svastrino-logo'
 
-async function sendMail({ to, subject, html, text }) {
+async function sendMail({ to, subject, html, text, replyTo }) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER
   return getTransport().sendMail({
     from,
     to,
+    // Set where a mail is really from someone else — an enquiry, say — so that
+    // hitting Reply answers them rather than our own sending address.
+    ...(replyTo ? { replyTo } : {}),
     subject,
     html,
     text,
@@ -218,6 +221,41 @@ export async function sendBookingEmail(to, details) {
  * Daily learning nudge — sent (max once a day) when the student's next item on
  * the drip schedule is open: a new video, or today's question.
  */
+/**
+ * Tells the team about a new enquiry from the public site. Sent to the team,
+ * not the visitor — with reply-to pointed at the person who wrote in, so
+ * hitting Reply answers them directly.
+ */
+export function buildEnquiryEmail({ name, email, phone, message, studentClass, city, source }) {
+  const where = source === 'home' ? 'home page banner' : 'contact page'
+  const rows = [
+    ['Name', name],
+    ['Email', email],
+    ['Phone', phone],
+    ['Class', studentClass],
+    ['City', city],
+    ['Message', message],
+  ].filter(([, v]) => v)
+
+  return {
+    subject: `New enquiry — ${name}${city ? ` (${city})` : ''}`,
+    text: `New enquiry from the ${where}.\n\n` + rows.map(([k, v]) => `${k}: ${v}`).join('\n'),
+    html: template({
+      heading: 'New enquiry 📨',
+      preheader: `${name}${city ? ` · ${city}` : ''} — via the ${where}`,
+      intro:
+        `Someone got in touch through the ${where}:<br><br>` +
+        rows.map(([k, v]) => `<strong>${esc(k)}:</strong> ${esc(v)}`).join('<br>'),
+      note: 'Reply to this email to answer them directly.',
+    }),
+    replyTo: email,
+  }
+}
+
+export async function sendEnquiryEmail(to, details) {
+  await sendMail({ to, ...buildEnquiryEmail(details) })
+}
+
 export function buildLearningReminderEmail({ name, courseName, taskLabel, slug }) {
   const first = String(name || '').trim().split(/\s+/)[0] || 'there'
   return {
