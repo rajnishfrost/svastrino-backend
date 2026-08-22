@@ -630,7 +630,22 @@ export async function adminRefund({ orderId, reason }) {
 }
 
 export async function createCoupon(data) {
-  return Coupon.create(data)
+  // A coupon code is what the customer types, so a clash is an ordinary mistake
+  // an admin makes, not a system fault. Check first for the clear message, and
+  // keep the 11000 catch as the backstop for two admins saving at once.
+  const code = String(data.code || '').trim().toUpperCase()
+  const clash = await Coupon.findOne({ code })
+  if (clash) {
+    throw httpError(`A coupon called ${code} already exists. Pick a different code.`, 409, 'COUPON_EXISTS')
+  }
+  try {
+    return await Coupon.create(data)
+  } catch (e) {
+    if (e?.code === 11000) {
+      throw httpError(`A coupon called ${code} already exists. Pick a different code.`, 409, 'COUPON_EXISTS')
+    }
+    throw e
+  }
 }
 
 export async function listCoupons() {
