@@ -3,6 +3,7 @@ import * as service from './payments.service.js'
 import { enrollmentProgress } from '../learn/learn.service.js'
 import { courseAccess } from '../learn/courseAccess.js'
 import * as gateway from './gateway.js'
+import { getPackageBySku } from '../skillbuild/skillbuild.service.js'
 import {
   validateCheckout,
   validateVerify,
@@ -74,8 +75,15 @@ export const listEnrollments = asyncHandler(async (req, res) => {
         courseAccess(req.user.id, e.product),
         enrollmentProgress(req.user.id, e),
       ])
+      // Which half of the dashboard this belongs under, and what the course is
+      // actually called. Both come from the package, because the enrollment
+      // itself only stores the plan name ("Bull's Eye Program") and cannot say
+      // whether that plan is a course or a mentoring programme.
+      const pkg = await getPackageBySku(e.packageId)
+      const kind = pkg?.kind === 'mentoring' ? 'mentoring' : 'course'
+
       return {
-        ...toEnrollmentDTO(e),
+        ...toEnrollmentDTO(e, { kind, courseName: pkg?.courseName || '', courseSlug: e.product }),
         // A plan with no end date never closes, and `expiresAt` is null then —
         // the dashboard simply says nothing about validity, which is right.
         startsAt: access.enrolledAt || e.startsAt,

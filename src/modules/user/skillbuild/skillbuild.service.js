@@ -69,5 +69,11 @@ export async function getPackageBySku(sku) {
     // 'expert-call' package unless the team has approved that caller, so this
     // must travel with the projection — without it the guard silently passes.
     buyMode: pkg.buyMode || 'self-serve',
+    // The parent the package hangs off: 'mentoring' for a counselling or
+    // mentoring programme, otherwise a course. The dashboard needs this to put
+    // a purchase under the right heading.
+    kind: pkg.skillBuild?.kind || 'course',
+    courseName: pkg.skillBuild?.name || '',
+    courseSlug: pkg.skillBuild?.slug || '',
   }
 }

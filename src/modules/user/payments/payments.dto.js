@@ -79,7 +79,7 @@ export function toOrderDTO(order) {
   }
 }
 
-export function toEnrollmentDTO(e) {
+export function toEnrollmentDTO(e, extra = {}) {
   return {
     id: e._id,
     product: e.product,
@@ -88,5 +88,13 @@ export function toEnrollmentDTO(e) {
     status: e.status,
     startsAt: e.startsAt,
     expiresAt: e.expiresAt,
+    // Buying a mentoring programme creates an enrollment too, so the dashboard
+    // has to be told which half it belongs under — otherwise Bull's Eye lands
+    // beside Nirmaan in Skill Build. 'course' | 'mentoring'.
+    kind: extra.kind || 'course',
+    // The course this package belongs to ("Nirmaan"), so a card can name itself
+    // instead of every card being labelled Nirmaan by the client.
+    courseName: extra.courseName || '',
+    courseSlug: extra.courseSlug || '',
   }
 }
