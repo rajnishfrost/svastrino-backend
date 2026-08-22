@@ -312,7 +312,7 @@ const FAQS = [
     question: 'How do I know which program to select?',
     answer:
       'Each program page has a "choose this program if…" section. Match those points against your own needs — ' +
-      'or take a Model Session and we will recommend one.',
+      'or tell us where you are on the Contact page and we will recommend one.',
   },
   {
     section: 'Mentoring Programs',
@@ -394,13 +394,22 @@ const FAQS = [
     section: 'Mentoring Programs',
     question: 'How do I choose if I am unsure?',
     answer:
-      'Take the Model Session — it is designed to clarify the differences between the programs based on ' +
-      'your specific needs.',
+      "Start with the Bull's Eye Program. It is the shortest of the three and is built for exactly this — " +
+      'getting clarity when you are stuck between options. Your mentor will tell you at the end whether a ' +
+      'longer program would help you more.',
   },
 ]
 
 // ---------------------------------------------------------------------------
 // Success stories  (source: svastrino.com/success-stories)
+//
+// Every quote below was re-checked word for word against the live site in
+// August 2026. The /success-stories/ page carries seven of them; the other
+// five live only on the programme pages they were given for, so those five
+// were checked against /breakthrough/ and /model-session/ instead. These are
+// real people's words, so the wording here matches the live page exactly apart
+// from two obvious typing slips ("Aso" for "Also", a stray full stop) that were
+// corrected so a visitor reads clean English.
 // ---------------------------------------------------------------------------
 const TESTIMONIALS = [
   {
@@ -421,7 +430,8 @@ const TESTIMONIALS = [
       'A very good experience. Very easy to talk to and to clarify any doubts or uncertainties regarding my ' +
       'career. Mr. Rohit Gala was able to provide various different career options along with its pros and ' +
       'cons and an in-depth understanding of each of the options which helped me get a better perspective of ' +
-      'which career I should be choosing.',
+      'which career I should be choosing. I would definitely recommend visiting him for any doubts ' +
+      'regarding your career.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/47-Shaili.jpg',
     program: 'bulls-eye',
     featured: true,
@@ -444,7 +454,8 @@ const TESTIMONIALS = [
       'We got in touch with Svastrino in 2019. During our sessions, he helped us understand the value career ' +
       'adds to our life, rather than the other way round. Our experience with Mr. Rohit Gala yielded great ' +
       'results as he helped in clarifying our present, hence making us better prepared for what the future ' +
-      "has in store! One of the best people we've come across.",
+      "has in store! Would totally recommend his processes and advice. One of the best people we've " +
+      "come across.",
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/55-Gurjas.jpg',
     program: 'bloom',
     featured: false,
@@ -463,12 +474,13 @@ const TESTIMONIALS = [
   },
   {
     name: 'Gnan Desai',
-    role: 'Parent · Territory Manager–Gulf, MINDWARE',
+    role: 'Father of Tanishi · Territory Manager–Gulf, MINDWARE',
     quote:
       'This is honestly the best consultancy agency, hands down. The main focus of Mr. Rohit was to ' +
       "understand the child's psyche and that's not something you find everywhere. Helping kids discover " +
       'their full potential in any sector possible was also a major focus when we consulted him and it was ' +
-      'really eye-opening as to how many job options the world has to offer.',
+      'really eye-opening as to how many job options the world has to offer. 10/10 for this ' +
+      'consultancy, would love to consult with them again.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/04/57-gnan.jpg',
     program: 'bloom',
     featured: false,
@@ -478,8 +490,9 @@ const TESTIMONIALS = [
     role: 'Mother of Khushi, FYJC, NM College, Mumbai',
     quote:
       'The counselling sessions were very fruitful for me. I appreciate the unique ways of mentorship and ' +
-      'the examples which were used to explain topics to me. It helped me choose my goal in my life. If my ' +
-      'friends or relatives are ever in a fix to choose their career, I would like to refer you to them.',
+      'the examples which were used to explain topics to me. It helped me choose my goal in my life. ' +
+      'Also, the suggestions about taking up physical activities were very helpful. If my friends or ' +
+      'relatives are ever in a fix to choose their career, I would like to refer you to them.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/tara.jpg',
     program: '',
     featured: false,
@@ -489,7 +502,10 @@ const TESTIMONIALS = [
     role: 'Brother of Actor Arshad Warsi',
     quote:
       "Svastrino & surely Mr. Rohit Gala have been a source of my kids' inspiration, guidance and support " +
-      'through his career counselling.',
+      'through his career counselling — right from my first visit to Svastrino Consultancy in the year ' +
+      "2015. He has been a driving force in shaping my kids' career path in the field of their interests. " +
+      'I would like to thank Mr. Rohit Gala for his invaluable counselling with immense patience and an ' +
+      'ever smiling face.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/70-Iqbal.jpg',
     program: 'breakthrough',
     featured: false,
@@ -498,7 +514,12 @@ const TESTIMONIALS = [
     name: 'Shameka Chitnis',
     role: 'A+ levels Singhania International School, Thane',
     quote:
-      "Rohit sir's detailed analysis in every field helped us figure out our child's true interests & capacity.",
+      'I still remember the day we had our 1st session with Rohit sir 3 years back. Like everyone else, ' +
+      "we were totally confused about our son's career aspirations. Rohit sir's detailed analysis in " +
+      "every field helped us figure out our child's true interests & capacity. He is truly an " +
+      'experienced, knowledgeable and yet, an approachable individual. Even today our son considers ' +
+      'Rohit sir his ONE POINT CONTACT whenever in dilemma. We would surely & always recommend ' +
+      'SVASTRINO to everyone who needs guidance in career and life.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/71Shamika.jpg',
     program: 'breakthrough',
     featured: false,
@@ -514,7 +535,10 @@ const TESTIMONIALS = [
       'complete confidence that choosing with Svastrino Consultancy for our process was the best decision ' +
       'that we made.',
     photo: 'https://svastrino.com/wp-content/uploads/2024/03/newFalguniPatil.png',
-    program: 'model-session',
+    // Given after a Model Session, which the new site no longer offers. Live
+    // has these on the Model Session page only, so rather than move them to a
+    // programme this person never took, they run as general success stories.
+    program: '',
     featured: false,
   },
   {
@@ -526,7 +550,10 @@ const TESTIMONIALS = [
       'kind and someone who will help you get the best out of you. All worth it. Big thumbs up to Rohit Sir ' +
       'and his team!',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/40-Heet.jpg',
-    program: 'model-session',
+    // Given after a Model Session, which the new site no longer offers. Live
+    // has these on the Model Session page only, so rather than move them to a
+    // programme this person never took, they run as general success stories.
+    program: '',
     featured: false,
   },
   {
@@ -536,7 +563,10 @@ const TESTIMONIALS = [
       'As a parent it was good knowledge for me with their vast experience. This will help me in taking ' +
       'joint decision with my son.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/39-Manasi-.jpg',
-    program: 'model-session',
+    // Given after a Model Session, which the new site no longer offers. Live
+    // has these on the Model Session page only, so rather than move them to a
+    // programme this person never took, they run as general success stories.
+    program: '',
     featured: false,
   },
 ]
@@ -555,6 +585,49 @@ const CAREER_FIELDS = JSON.parse(
 )
 
 // ---------------------------------------------------------------------------
+// Who owns which field: the seed, or the admin panel
+//
+// The career library has a live admin panel (Admin → Career Library) where the
+// team re-orders streams, moves a course between streams and edits the course
+// copy. Once a document exists that panel is the source of truth for those
+// fields, so a seed re-run must never quietly undo an editor's work — the same
+// rule the services seed already follows for prices. The seed therefore writes
+// admin-owned fields through $setOnInsert, which Mongo applies only when it
+// actually creates the document, while the fields the seed genuinely owns —
+// the slug, the migrated name and the source link — stay in $set so a
+// correction still lands on documents that are already live.
+//
+// To deliberately pull everything back from the migrated files, ask for it:
+//   npm run seed:content -- --reimport      (or SEED_REIMPORT=1)
+// ---------------------------------------------------------------------------
+const REIMPORT = process.argv.includes('--reimport') || process.env.SEED_REIMPORT === '1'
+
+const FIELD_ADMIN_OWNED = ['courses', 'order', 'description']
+
+// `fields` is a course's stream membership, which the admin panel treats as the
+// single source of truth (it rebuilds each stream's course list from it), and
+// `active` is how the panel hides a course — both are editorial decisions.
+const COURSE_ADMIN_OWNED = [
+  'overview', 'topQualities', 'topJobs',
+  'institutesIndia', 'institutesInternational', 'careerLadder',
+  'fields', 'active',
+]
+
+// Mongo rejects an update that names the same field in both $set and
+// $setOnInsert, so the seed document is split field by field instead of being
+// spread wholesale into $set.
+function splitUpdate(doc, adminOwned) {
+  if (REIMPORT) return { $set: doc }
+  const $set = {}
+  const $setOnInsert = {}
+  for (const [field, value] of Object.entries(doc)) {
+    if (adminOwned.includes(field)) $setOnInsert[field] = value
+    else $set[field] = value
+  }
+  return Object.keys($setOnInsert).length ? { $set, $setOnInsert } : { $set }
+}
+
+// ---------------------------------------------------------------------------
 
 async function run() {
   await connectDB()
@@ -570,7 +643,10 @@ async function run() {
   console.log(`✓ Mentoring programs: ${PROGRAMS.length} (retired ones removed)`)
 
   // FAQs and testimonials have no natural slug — replace the set wholesale so
-  // reruns don't accumulate duplicates.
+  // reruns don't accumulate duplicates. Nothing is lost today because these two
+  // are read-only on the site and no admin screen writes them; if one is ever
+  // added, they need the same seed/panel ownership split as the career library
+  // below rather than this delete-and-reinsert.
   await Faq.deleteMany({})
   await Faq.insertMany(FAQS.map((f, i) => ({ ...f, order: i, active: true })))
   console.log(`✓ FAQs: ${FAQS.length} across ${new Set(FAQS.map((f) => f.section)).size} sections`)
@@ -582,12 +658,15 @@ async function run() {
   console.log(`✓ Testimonials: ${TESTIMONIALS.length}`)
 
   for (const c of CAREER_FIELDS) {
-    await CareerField.findOneAndUpdate({ slug: c.slug }, { $set: c }, { upsert: true })
+    await CareerField.findOneAndUpdate({ slug: c.slug }, splitUpdate(c, FIELD_ADMIN_OWNED), { upsert: true })
   }
   const courseLinks = CAREER_FIELDS.reduce((n, f) => n + f.courses.length, 0)
   const distinct = new Set(CAREER_FIELDS.flatMap((f) => f.courses.map((c) => c.slug))).size
+  // Say which way the run went, so nobody reads the counts as "everything was
+  // rewritten from the files" when the panel edits were in fact left alone.
   console.log(
-    `✓ Career library: ${CAREER_FIELDS.length} streams · ${distinct} courses (${courseLinks} stream links)`
+    `✓ Career library: ${CAREER_FIELDS.length} streams · ${distinct} courses (${courseLinks} stream links)` +
+      (REIMPORT ? ' — re-imported wholesale' : ' — existing streams kept their panel edits')
   )
 
   // ---- Course detail pages (scraped into data/courses/<slug>.json) ----
@@ -609,7 +688,7 @@ async function run() {
       const c = JSON.parse(fs.readFileSync(join(coursesDir, file), 'utf8'))
       await Course.findOneAndUpdate(
         { slug: c.slug },
-        { $set: { ...c, fields: fieldsBySlug.get(c.slug) || [], active: true } },
+        splitUpdate({ ...c, fields: fieldsBySlug.get(c.slug) || [], active: true }, COURSE_ADMIN_OWNED),
         { upsert: true }
       )
       courseCount++
