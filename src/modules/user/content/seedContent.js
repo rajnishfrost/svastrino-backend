@@ -34,7 +34,7 @@ const PROGRAMS = [
       'A focused 2-hour session designed to achieve clarity when you are stuck between ' +
       'options or facing a deadline — ending with concrete career recommendations and a plan.',
     duration: '10 days',
-    sessions: '2 sessions — about 5 hours in total, including the pre-work and the follow-up',
+    sessions: '3 sessions of 2 hours each — about 6 hours in total, plus the pre-work and the follow-up',
     mode: 'Online',
     chooseIf: [
       'You want a second opinion on a career plan with multiple options',
@@ -92,7 +92,7 @@ const PROGRAMS = [
       'personality analysis through self-discovery tasks and vision building, ending in a ' +
       'personalised 5-year career plan.',
     duration: '2 months',
-    sessions: '3 sessions of 2 hours each plus weekly follow-ups — about 10 hours in total',
+    sessions: '5 sessions of 2 hours each plus weekly follow-ups — about 10 hours in total',
     mode: 'Online',
     chooseIf: [
       'You want to discover your unique potential and build a customised vision',
@@ -153,7 +153,7 @@ const PROGRAMS = [
       'building mindset first, then attitude, with consistent mentoring and accountability ' +
       'across academics, professional skills, experience, extracurriculars and social work.',
     duration: '2 years',
-    sessions: '20 sessions of 1 hour or 10 of 2 hours, at your own pace, plus weekly follow-ups — about 45 hours in total',
+    sessions: '22 sessions of 2 hours each, at your own pace, plus weekly follow-ups — about 44 hours in total',
     mode: 'Online',
     chooseIf: [
       'You want a comprehensive analysis of your career needs and strengths',
