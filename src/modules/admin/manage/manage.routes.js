@@ -9,6 +9,9 @@ import {
   getQuestions, putQuestions, getSessionAnswers,
 } from './manage.controller.js'
 import { uploadVideoMw, uploadVideo, uploadProgress } from './upload.controller.js'
+import {
+  uploadMode, initUpload, partUrl, completeUpload, abortUpload,
+} from './s3Upload.controller.js'
 import { uploadImageMw, uploadImage } from './imageUpload.controller.js'
 import { uploadCaptionMw, uploadCaption, deleteCaption, translateCaption } from './captionUpload.controller.js'
 
@@ -21,6 +24,15 @@ router.get('/stats', getStats) // dashboard — open to every signed-in admin
 // Media upload (video → local storage; returns a streamable URL)
 router.post('/upload/video', requirePermission('content'), uploadVideoMw, uploadVideo)
 router.get('/upload/progress/:id', requirePermission('content'), uploadProgress)
+
+// Browser-direct upload to S3. The bytes never reach this server, which is what
+// keeps a multi-gigabyte video clear of CloudFront's 60-second origin timeout.
+// `mode` lets the client ask which path to take instead of guessing.
+router.get('/upload/mode', requirePermission('content'), uploadMode)
+router.post('/upload/s3/init', requirePermission('content'), initUpload)
+router.post('/upload/s3/part-url', requirePermission('content'), partUrl)
+router.post('/upload/s3/complete', requirePermission('content'), completeUpload)
+router.post('/upload/s3/abort', requirePermission('content'), abortUpload)
 // Editorial images (blog covers) — shared by every module that stores artwork.
 router.post('/upload/image', requirePermission('content', 'blogs', 'career-library'), uploadImageMw, uploadImage)
 

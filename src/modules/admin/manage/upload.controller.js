@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
 
 // The largest course video the admin panel will accept. Written once so the
 // cap and the message the uploader reads can never drift apart.
-const MAX_VIDEO_MB = 2048 // 2 GB
+export const MAX_VIDEO_MB = 2048 // 2 GB
 
 const single = multer({
   storage,
@@ -133,3 +133,40 @@ export const uploadVideo = asyncHandler(async (req, res) => {
 
   processUpload(uploadId, req.file)
 })
+
+/**
+ * Start building the adaptive ladder for a file the browser has already put
+ * into S3, and return a job id the admin panel can poll — the same job shape
+ * the through-the-server path uses, so the client follows one thing either way.
+ *
+ * The fallback here costs nothing, which is the nice part of uploading direct:
+ * if the ladder cannot be built the raw file is already sitting in the bucket
+ * on a public URL, so the video is playable regardless.
+ */
+export function startTranscodeFromS3({ key, url }) {
+  const jobId = crypto.randomBytes(9).toString('hex')
+  jobs.set(jobId, { status: 'processing', pct: 0, startedAt: Date.now() })
+
+  transcodeFromS3(key)
+    .then((r) => finish(jobId, { status: 'ready', pct: 100, type: 'hls', ...r }))
+    .catch((err) => {
+      // No ladder — serve what was uploaded. This is the state today, because
+      // the MediaConvert branch in transcoder.js is still a TODO.
+      finish(jobId, { status: 'ready', pct: 100, type: 'mp4', url, key, warning: err.message })
+    })
+
+  return jobId
+}
+
+/**
+ * Transcode an object already in S3. Delegates to the configured transcoder;
+ * with TRANSCODER=aws that means a MediaConvert job, which is not wired yet and
+ * therefore throws — handled by the caller above.
+ */
+async function transcodeFromS3(key) {
+  const { transcodeS3Object } = await import('../../../config/transcoder.js')
+  if (typeof transcodeS3Object !== 'function') {
+    throw new Error('No S3-side transcoder is configured yet (MediaConvert pending)')
+  }
+  return transcodeS3Object(key)
+}
