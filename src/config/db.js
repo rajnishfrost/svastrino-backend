@@ -4,16 +4,16 @@ import mongoose from 'mongoose'
 export async function connectDB() {
   const uri = process.env.MONGODB_URI
   if (!uri) {
-    console.error('✗ MONGODB_URI is not set. Copy .env.example to .env first.')
+    console.error('💥 MONGODB_URI is not set. Copy .env.example to .env first.')
     process.exit(1)
   }
 
   try {
     mongoose.set('strictQuery', true)
     await mongoose.connect(uri)
-    console.log('✓ MongoDB connected')
+    console.log('✅ MongoDB connected')
   } catch (err) {
-    console.error('✗ MongoDB connection failed:', err.message)
+    console.error('💥 MongoDB connection failed:', err.message)
     process.exit(1)
   }
 }
