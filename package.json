@@ -20,7 +20,8 @@
     "seed:questions": "node src/modules/user/learn/seedQuestions.js",
     "send:reminders": "node src/modules/user/learn/sendReminders.js",
     "seed:mentoring": "node src/modules/user/mentoring/seedMentoring.js",
-    "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js"
+    "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js",
+    "build:sitemap": "node src/modules/user/content/buildSitemap.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",
