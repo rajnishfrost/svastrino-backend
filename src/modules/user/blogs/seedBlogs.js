@@ -80,6 +80,16 @@ async function run() {
     else updated++
   }
 
+  // A post dropped from the source file must leave the site too. Without this
+  // the seed only ever adds, so a duplicate or a retracted article stays on
+  // /blog for good — which is how a second copy of "Creative Writing" survived
+  // being removed from the data.
+  const keep = posts.map((p) => p.slug)
+  const dropped = await Blog.deleteMany({ slug: { $nin: keep } })
+  if (dropped.deletedCount) {
+    console.log(`  ⏻ Removed ${dropped.deletedCount} post(s) no longer in the source file`)
+  }
+
   const total = await Blog.countDocuments()
   const cats = await Blog.distinct('categories')
 
