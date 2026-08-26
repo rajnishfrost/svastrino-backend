@@ -54,3 +54,18 @@ export const getSitePage = asyncHandler(async (req, res) => {
   const page = await service.getSitePageBySlug(req.params.slug)
   res.json({ page: toSitePageDTO(page) })
 })
+
+/**
+ * GET /api/user/content/resolve/:slug  →  { type: 'course' | 'blog' }
+ *
+ * What lives at a root-level address. The legacy site published both articles
+ * and course pages straight off the root — svastrino.com/law/ — and those URLs
+ * hold the search ranking, so they are kept rather than moved under a folder.
+ * A single route therefore serves both kinds, and this is how it finds out
+ * which one it is looking at.
+ */
+export const resolveSlug = asyncHandler(async (req, res) => {
+  const type = await service.resolveRootSlug(req.params.slug)
+  if (!type) return res.status(404).json({ type: null, error: 'Nothing lives at that address' })
+  res.json({ type })
+})

@@ -4,6 +4,8 @@ import { Testimonial } from './testimonial.model.js'
 import { CareerField } from './careerField.model.js'
 import { Course } from './course.model.js'
 import { SitePage } from './sitePage.model.js'
+// The root-slug resolver has to look across both sets; see resolveRootSlug.
+import { Blog } from '../blogs/blog.model.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -66,3 +68,25 @@ export async function getSitePageBySlug(slug) {
   return page
 }
 
+/**
+ * What kind of thing, if anything, lives at a root-level slug.
+ *
+ * The legacy WordPress site published both articles and course pages straight
+ * off the root — svastrino.com/law/ — and those addresses carry the site's
+ * search ranking, so they are kept rather than moved under a folder and
+ * redirected. One route has to answer for both kinds, and only the database
+ * knows which a slug belongs to.
+ *
+ * Returns just the kind, not the content: the page then fetches through the
+ * same endpoint it always used, so nothing else had to learn about this.
+ */
+export async function resolveRootSlug(slug) {
+  const clean = String(slug || '').trim().toLowerCase()
+  if (!clean) return null
+
+  // A course wins a tie. Slugs are unique across the two sets today, but a
+  // course page is the more considered destination if that ever changes.
+  if (await Course.exists({ slug: clean, active: true })) return 'course'
+  if (await Blog.exists({ slug: clean, published: true })) return 'blog'
+  return null
+}
