@@ -65,7 +65,9 @@ export const getSitePage = asyncHandler(async (req, res) => {
  * which one it is looking at.
  */
 export const resolveSlug = asyncHandler(async (req, res) => {
-  const type = await service.resolveRootSlug(req.params.slug)
-  if (!type) return res.status(404).json({ type: null, error: 'Nothing lives at that address' })
-  res.json({ type })
+  const found = await service.resolveRootSlug(req.params.slug)
+  if (!found) return res.status(404).json({ type: null, error: 'Nothing lives at that address' })
+  // `movedTo` is present only when the address asked for is one this page used
+  // to answer on; the caller sends the visitor there instead of rendering.
+  res.json({ type: found.type, movedTo: found.movedTo || null })
 })

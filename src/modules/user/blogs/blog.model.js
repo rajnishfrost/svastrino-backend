@@ -11,6 +11,14 @@ import mongoose from 'mongoose'
 const blogSchema = new mongoose.Schema(
   {
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+
+    // Addresses this page used to answer on.
+    //
+    // A slug is a public URL: changing it throws away whatever the old one
+    // ranked for and turns every existing link into a 404. Rather than forbid
+    // the change, the old address is remembered and redirected — so renaming
+    // stays possible and costs nothing.
+    previousSlugs: { type: [String], default: [], index: true },
     title: { type: String, required: true, trim: true },
 
     owner: { type: String, enum: ['svastrino', 'nirmaan'], default: 'svastrino', index: true },

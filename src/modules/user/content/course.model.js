@@ -21,6 +21,14 @@ const jobSchema = new mongoose.Schema(
 const courseSchema = new mongoose.Schema(
   {
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+
+    // Addresses this page used to answer on.
+    //
+    // A slug is a public URL: changing it throws away whatever the old one
+    // ranked for and turns every existing link into a 404. Rather than forbid
+    // the change, the old address is remembered and redirected — so renaming
+    // stays possible and costs nothing.
+    previousSlugs: { type: [String], default: [], index: true },
     name: { type: String, required: true, trim: true },
 
     overview: { type: String, default: '' },

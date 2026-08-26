@@ -207,6 +207,15 @@ export async function updateCourse(id, body = {}) {
     if (slug !== course.slug) {
       const clash = await Course.findOne({ slug, _id: { $ne: course._id } })
       if (clash) throw httpError('A course with this slug already exists', 409)
+      // Nor onto an address another page is still redirecting from.
+      const held = await Course.findOne({ previousSlugs: slug, _id: { $ne: course._id } })
+      if (held) throw httpError(`“${slug}” still redirects to “${held.slug}” — free it there first`, 409)
+      // Remember where this page used to live, so the old address keeps
+      // working instead of becoming a 404. A slug coming back to one it held
+      // before is dropped from the list — otherwise it would redirect to
+      // itself.
+      course.previousSlugs = [...new Set([...(course.previousSlugs || []), course.slug])]
+        .filter((s) => s && s !== slug)
       course.slug = slug
     }
   }

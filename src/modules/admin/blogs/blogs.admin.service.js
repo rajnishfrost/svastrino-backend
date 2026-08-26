@@ -130,7 +130,17 @@ export async function updatePost(id, body = {}) {
     if (slug !== post.slug) {
       const clash = await Blog.findOne({ slug, _id: { $ne: post._id } })
       if (clash) throw httpError('A post with this slug already exists', 409)
+      // Nor onto an address another page is still redirecting from.
+      const held = await Blog.findOne({ previousSlugs: slug, _id: { $ne: post._id } })
+      if (held) throw httpError(`“${slug}” still redirects to “${held.slug}” — free it there first`, 409)
       patch.slug = slug
+      // Remember where this page used to live, so the old address keeps
+      // working instead of becoming a 404. A slug coming back to one it held
+      // before is dropped from the list — otherwise it would redirect to
+      // itself.
+      post.previousSlugs = [...new Set([...(post.previousSlugs || []), post.slug])]
+        .filter((s) => s && s !== slug)
+
     }
   }
 

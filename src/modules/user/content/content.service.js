@@ -86,7 +86,15 @@ export async function resolveRootSlug(slug) {
 
   // A course wins a tie. Slugs are unique across the two sets today, but a
   // course page is the more considered destination if that ever changes.
-  if (await Course.exists({ slug: clean, active: true })) return 'course'
-  if (await Blog.exists({ slug: clean, published: true })) return 'blog'
+  if (await Course.exists({ slug: clean, active: true })) return { type: 'course' }
+  if (await Blog.exists({ slug: clean, published: true })) return { type: 'blog' }
+
+  // Not a live address — but it may be one this page used to answer on, before
+  // somebody renamed it. Say where it went rather than let an old link 404.
+  const movedCourse = await Course.findOne({ previousSlugs: clean, active: true }).select('slug').lean()
+  if (movedCourse) return { type: 'course', movedTo: movedCourse.slug }
+  const movedPost = await Blog.findOne({ previousSlugs: clean, published: true }).select('slug').lean()
+  if (movedPost) return { type: 'blog', movedTo: movedPost.slug }
+
   return null
 }
