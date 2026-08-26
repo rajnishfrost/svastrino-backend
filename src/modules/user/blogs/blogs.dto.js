@@ -22,5 +22,9 @@ export function toBlogDTO(post) {
     ...toBlogCardDTO(post),
     body: post.body,
     sourceUrl: post.sourceUrl,
+    // Empty unless an admin has set one; the page then falls back to the
+    // wording the old site published for this address.
+    seoTitle: post.seoTitle || '',
+    seoDescription: post.seoDescription || '',
   }
 }

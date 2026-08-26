@@ -22,6 +22,13 @@ const blogSchema = new mongoose.Schema(
     coverImage: { type: String, default: '' },
 
     sourceUrl: { type: String, default: '' }, // original WordPress permalink
+
+    // What search engines should show for this page. Left empty, the page keeps
+    // the wording svastrino.com published — see client/src/seo/legacyRootSeo.js
+    // — which is what these addresses have ranked with for years. Filling it in
+    // overrides that, deliberately.
+    seoTitle: { type: String, default: '', trim: true },
+    seoDescription: { type: String, default: '', trim: true },
     publishedAt: { type: Date, default: Date.now, index: true },
     readingMins: { type: Number, default: 1 },
 

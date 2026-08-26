@@ -38,6 +38,13 @@ const courseSchema = new mongoose.Schema(
     },
 
     sourceUrl: { type: String, default: '' },
+
+    // What search engines should show for this page. Left empty, the page keeps
+    // the wording svastrino.com published — see client/src/seo/legacyRootSeo.js
+    // — which is what these addresses have ranked with for years. Filling it in
+    // overrides that, deliberately.
+    seoTitle: { type: String, default: '', trim: true },
+    seoDescription: { type: String, default: '', trim: true },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

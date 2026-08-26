@@ -156,6 +156,8 @@ function buildCoursePatch(body = {}) {
   if (body.institutesInternational !== undefined) patch.institutesInternational = asLines(body.institutesInternational)
   if (body.careerLadder !== undefined) patch.careerLadder = asLines(body.careerLadder)
   if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
+  if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
+  if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
   if (body.active !== undefined) patch.active = !!body.active
   if (body.topJobs !== undefined) {
     patch.topJobs = (Array.isArray(body.topJobs) ? body.topJobs : [])

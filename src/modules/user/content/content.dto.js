@@ -77,5 +77,9 @@ export function toCourseDTO(c) {
     institutesInternational: c.institutesInternational,
     careerLadder: c.careerLadder,
     fields: c.fields.map((f) => ({ name: f.name, slug: f.slug })),
+    // Empty unless an admin has set one; the page then falls back to the
+    // wording the old site published for this address.
+    seoTitle: c.seoTitle || '',
+    seoDescription: c.seoDescription || '',
   }
 }
