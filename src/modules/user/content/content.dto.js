@@ -81,5 +81,6 @@ export function toCourseDTO(c) {
     // wording the old site published for this address.
     seoTitle: c.seoTitle || '',
     seoDescription: c.seoDescription || '',
+    canonicalSlug: c.canonicalSlug || '',
   }
 }

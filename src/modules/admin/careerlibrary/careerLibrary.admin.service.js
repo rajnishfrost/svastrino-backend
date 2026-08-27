@@ -158,6 +158,7 @@ function buildCoursePatch(body = {}) {
   if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
   if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
   if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
+  if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(body.canonicalSlug)
   if (body.active !== undefined) patch.active = !!body.active
   if (body.topJobs !== undefined) {
     patch.topJobs = (Array.isArray(body.topJobs) ? body.topJobs : [])

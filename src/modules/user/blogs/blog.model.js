@@ -37,6 +37,12 @@ const blogSchema = new mongoose.Schema(
     // overrides that, deliberately.
     seoTitle: { type: String, default: '', trim: true },
     seoDescription: { type: String, default: '', trim: true },
+
+    // The address search engines should treat as the real one, when two pages
+    // say close to the same thing. Both keep answering — nothing is taken away
+    // from anyone holding a link — but only one accumulates the ranking, rather
+    // than the two of them splitting it and competing with each other.
+    canonicalSlug: { type: String, default: '', lowercase: true, trim: true },
     publishedAt: { type: Date, default: Date.now, index: true },
     readingMins: { type: Number, default: 1 },
 

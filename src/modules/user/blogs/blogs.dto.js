@@ -26,5 +26,6 @@ export function toBlogDTO(post) {
     // wording the old site published for this address.
     seoTitle: post.seoTitle || '',
     seoDescription: post.seoDescription || '',
+    canonicalSlug: post.canonicalSlug || '',
   }
 }

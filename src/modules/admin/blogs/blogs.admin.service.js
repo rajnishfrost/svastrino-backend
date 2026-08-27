@@ -91,6 +91,7 @@ function buildPatch(body = {}) {
   if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
   if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
   if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
+  if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(body.canonicalSlug)
   if (body.published !== undefined) patch.published = !!body.published
   if (body.order !== undefined) patch.order = Number(body.order) || 0
   if (body.publishedAt) {
