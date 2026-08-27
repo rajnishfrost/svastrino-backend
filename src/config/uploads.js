@@ -34,6 +34,31 @@ mkdirSync(TMP_DIR, { recursive: true })
 export const STORAGE = process.env.STORAGE || 'local'
 
 /**
+ * Public URL for something already stored, whatever mode it was stored in.
+ *
+ * Most media reaches the database as an absolute CDN URL, because saveVideo and
+ * the rest return one when STORAGE=s3. The content imported from WordPress did
+ * not: it was seeded as `/uploads/content/...`, a path only this server can
+ * answer, and only when it has the files on disk. In production it does not —
+ * the container starts with an empty uploads directory — so 214 blog covers, 12
+ * testimonial photos and a brochure pointed at nothing.
+ *
+ * The files themselves are on S3 already, under the same path minus `uploads/`.
+ * So the stored value is translated on the way out rather than rewritten in the
+ * database, which keeps local development working off the disk it already has.
+ */
+export function mediaUrl(stored) {
+  const value = String(stored || '')
+  if (!value) return value
+  if (/^(https?:|data:|blob:)/i.test(value)) return value // already absolute
+  if (STORAGE !== 's3') return value                      // dev: served from disk
+  // Only /uploads/ paths are ours to translate. A value like /logo.png belongs
+  // to the frontend build and would be sent to a bucket that has never held it.
+  const m = value.match(/^\/uploads\/(.+)$/)
+  return m ? publicUrl(m[1]) : value
+}
+
+/**
  * Persist a just-uploaded temp file and return its public URL + storage key.
  * `tmpPath` is the multer-staged file; `originalName` is used only for the ext.
  */

@@ -1,3 +1,5 @@
+import { mediaUrl } from '../../../config/uploads.js'
+
 /** Compact program shape for the mentoring list cards. */
 export function toProgramCardDTO(p) {
   return {
@@ -26,7 +28,7 @@ export function toProgramDTO(p) {
       description: s.description,
     })),
     benefits: p.benefits,
-    brochureUrl: p.brochureUrl,
+    brochureUrl: mediaUrl(p.brochureUrl),
     faqs: (p.faqs || []).map((f) => ({ q: f.q, a: f.a })),
   }
 }
@@ -41,7 +43,7 @@ export function toTestimonialDTO(t) {
     name: t.name,
     role: t.role,
     quote: t.quote,
-    photo: t.photo,
+    photo: mediaUrl(t.photo),
     program: t.program,
     featured: t.featured,
   }

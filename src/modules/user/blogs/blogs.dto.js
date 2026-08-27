@@ -1,3 +1,5 @@
+import { mediaUrl } from '../../../config/uploads.js'
+
 /**
  * Card shape for the listing grid — deliberately omits `body` so a page of 12
  * posts stays small.
@@ -10,7 +12,7 @@ export function toBlogCardDTO(post) {
     author: post.author,
     categories: post.categories,
     excerpt: post.excerpt,
-    coverImage: post.coverImage,
+    coverImage: mediaUrl(post.coverImage),
     publishedAt: post.publishedAt,
     readingMins: post.readingMins,
   }

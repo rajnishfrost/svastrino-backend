@@ -8,6 +8,7 @@ import { Answer } from './answer.model.js'
 import { LearnState } from './learnState.model.js'
 import { courseAccess } from './courseAccess.js'
 import { nextIstMidnight, istDaysBetween } from '../../../utils/schedule.js'
+import { mediaUrl } from '../../../config/uploads.js'
 
 const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions = 7 days per session
 
@@ -250,7 +251,7 @@ export async function getCourse(userId, slug) {
       tier: s.tier,
       title: s.title,
       description: s.description,
-      videoUrl: s.videoUrl,
+      videoUrl: mediaUrl(s.videoUrl),
       durationMins: s.durationMins,
       captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
       worksheet: s.worksheet,
