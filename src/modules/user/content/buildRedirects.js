@@ -135,12 +135,21 @@ function handler(event) {
   //
   // Prerendering writes each page as <path>/index.html, and an S3 REST origin
   // has no notion of a directory index: asked for /law it looks for an object
-  // literally named "law", finds nothing, and the 404 rule hands back the app
-  // shell — so every page answers with the home page's title and none of the
-  // prerendered HTML is ever served. Rewriting here is what connects them.
+  // named "law" and finds nothing. This function used to answer that by sending
+  // every address to /index.html, which worked — and meant all 292 prerendered
+  // pages were never served, every one of them answering with the home page's
+  // title.
   //
-  // Anything carrying a file extension is left alone; those are the real assets.
-  if (uri.indexOf('.') === -1 || uri.lastIndexOf('.') < uri.lastIndexOf('/')) {
+  // So each address is pointed at its own file instead. An address with no file
+  // behind it — an app route like /dashboard, or a typo — misses, and the
+  // distribution's 403/404 rule returns the app shell, exactly as before. That
+  // rule is what makes this safe; without it a missed address would return S3's
+  // XML error rather than the site.
+  //
+  // Anything carrying a file extension is left alone, so a genuinely missing
+  // asset still fails as one.
+  var last = key.substring(key.lastIndexOf('/') + 1)
+  if (last.indexOf('.') === -1) {
     request.uri = key === '/' ? '/index.html' : key + '/index.html'
   }
 
