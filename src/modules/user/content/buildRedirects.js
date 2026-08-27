@@ -131,6 +131,19 @@ function handler(event) {
     }
   }
 
+  // Point an address at the file that holds it.
+  //
+  // Prerendering writes each page as <path>/index.html, and an S3 REST origin
+  // has no notion of a directory index: asked for /law it looks for an object
+  // literally named "law", finds nothing, and the 404 rule hands back the app
+  // shell — so every page answers with the home page's title and none of the
+  // prerendered HTML is ever served. Rewriting here is what connects them.
+  //
+  // Anything carrying a file extension is left alone; those are the real assets.
+  if (uri.indexOf('.') === -1 || uri.lastIndexOf('.') < uri.lastIndexOf('/')) {
+    request.uri = key === '/' ? '/index.html' : key + '/index.html'
+  }
+
   return request
 }
 `
