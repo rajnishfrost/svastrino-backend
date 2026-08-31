@@ -148,6 +148,18 @@ async function run() {
   const sb = await SkillBuild.findOne({ slug: 'nirmaan' })
   if (!sb) throw new Error('the nirmaan SkillBuild is missing — seed it first')
 
+  // Refuse to run against local disk by accident. The whole point is to put the
+  // course where production can reach it; storing 28 GB of HLS on a laptop and
+  // writing /uploads/... into the database would leave every video dead in
+  // production and the work still to do. --local says you meant it.
+  if (STORAGE !== 's3' && !args.includes('--local')) {
+    throw new Error(
+      'STORAGE is not s3 — the videos would land on this disk, not the bucket.\n'
+      + '    source /tmp/nirmaan-env.sh   (STORAGE, S3_BUCKET, AWS_REGION, CDN_URL)\n'
+      + '    or pass --local if that is genuinely what you want.',
+    )
+  }
+
   console.log(`Nirmaan ingest — storage: ${STORAGE} · source: ${SRC}`)
   const have = existsSync(SRC) ? readdirSync(SRC).filter((f) => f.endsWith('.mp4')).length : 0
   console.log(`  ${have} videos on disk · ${WEEKS.length} weeks in the sheet\n`)
