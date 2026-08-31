@@ -22,7 +22,7 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { connectDB } from '../../../config/db.js'
-import { transcodeToHls } from '../../../config/transcoder.js'
+import { transcodeToHls, TRANSCODER } from '../../../config/transcoder.js'
 import { saveSubtitle, STORAGE } from '../../../config/uploads.js'
 import { srtToVtt } from '../../../utils/subtitles.js'
 import { Session } from './session.model.js'
@@ -160,7 +160,18 @@ async function run() {
     )
   }
 
-  console.log(`Nirmaan ingest — storage: ${STORAGE} · source: ${SRC}`)
+  // Setting STORAGE=s3 silently switches the transcoder to MediaConvert, which
+  // is not built — so every week fails one at a time, several minutes apart,
+  // with the same message. Say it once, before any of them start.
+  if (TRANSCODER !== 'local') {
+    throw new Error(
+      `TRANSCODER is "${TRANSCODER}" — it follows STORAGE=s3 by default, and the`
+      + ' AWS path is not implemented.\n    export TRANSCODER=local to encode here'
+      + ' and store to the bucket, which is what production does too.',
+    )
+  }
+
+  console.log(`Nirmaan ingest — storage: ${STORAGE} · transcoder: ${TRANSCODER} · source: ${SRC}`)
   const have = existsSync(SRC) ? readdirSync(SRC).filter((f) => f.endsWith('.mp4')).length : 0
   console.log(`  ${have} videos on disk · ${WEEKS.length} weeks in the sheet\n`)
 
