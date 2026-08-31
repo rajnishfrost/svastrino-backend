@@ -1,0 +1,176 @@
+// Load the Nirmaan course from the files exported out of Drive.
+//   node src/modules/user/learn/ingestNirmaan.js            (everything)
+//   node src/modules/user/learn/ingestNirmaan.js --only 1,2 (just those weeks)
+//   node src/modules/user/learn/ingestNirmaan.js --dry      (say what it would do)
+//
+// The course arrives as three separate things that have to be stitched back
+// together per week: an .mp4, an .srt, and a row block in a spreadsheet. This
+// walks the 24 weeks and, for each, transcodes the video to HLS, stores it and
+// the subtitles, and writes one Session carrying the week's title, its rule and
+// its six daily tasks.
+//
+// Deliberately NOT part of seedSkillBuild.js. That script opens with
+// Session.deleteMany() and rebuilds from hardcoded URLs — it ran on 19 August
+// and wiped a set of uploaded videos. This one only ever upserts the week it is
+// working on, so a re-run costs time and nothing else.
+//
+// Safe to interrupt: a week whose video is already stored is skipped unless
+// --force is given, so a run that dies at week 9 can simply be started again.
+import '../../../config/env.js'
+import mongoose from 'mongoose'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { connectDB } from '../../../config/db.js'
+import { transcodeToHls } from '../../../config/transcoder.js'
+import { saveSubtitle, STORAGE } from '../../../config/uploads.js'
+import { srtToVtt } from '../../../utils/subtitles.js'
+import { Session } from './session.model.js'
+import { SkillBuild } from '../skillbuild/skillbuild.model.js'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const WEEKS = JSON.parse(readFileSync(join(here, 'data', 'nirmaanWeeks.json'), 'utf8'))
+
+// Where the Drive export was downloaded to. Override with NIRMAAN_SRC.
+const SRC = process.env.NIRMAAN_SRC || '/tmp/nirmaan-dl'
+const SRT_DIR = join(SRC, 'srt')
+
+const args = process.argv.slice(2)
+const DRY = args.includes('--dry')
+const FORCE = args.includes('--force')
+const ONLY = (() => {
+  const i = args.indexOf('--only')
+  if (i === -1) return null
+  return new Set(String(args[i + 1] || '').split(',').map((n) => Number(n.trim())).filter(Boolean))
+})()
+
+const pad = (n) => String(n).padStart(2, '0')
+
+/**
+ * The week's video and subtitles on disk.
+ *
+ * Names came off Drive by hand and are not quite uniform — the subtitles are
+ * "W_01.srt" but the introduction's is "Introduction.srt" — so each is looked
+ * up rather than assumed.
+ */
+function sourcesFor(week) {
+  const video = join(SRC, `W_${pad(week)}.mp4`)
+  const srt = join(SRT_DIR, `W_${pad(week)}.srt`)
+  return { video, srt, hasVideo: existsSync(video), hasSrt: existsSync(srt) }
+}
+
+/** A readable title: the sheet writes them as `"Knowing Yourself" Challenge`. */
+function titleFor(w) {
+  const clean = String(w.title || '').replace(/["“”]/g, '').replace(/\s+/g, ' ').trim()
+  return clean ? `Week ${w.week} — ${clean}` : `Week ${w.week}`
+}
+
+/** What the student reads under the video. */
+function descriptionFor(w) {
+  if (w.note) return w.note
+  return w.rule ? `Rule of the week: ${w.rule}` : ''
+}
+
+async function ingestWeek(skillBuildId, w) {
+  const { video, srt, hasVideo, hasSrt } = sourcesFor(w.week)
+  const label = `W${pad(w.week)}`
+
+  const existing = await Session.findOne({ skillBuild: skillBuildId, order: w.week })
+  if (existing?.videoUrl && !FORCE) {
+    console.log(`  · ${label} already has a video — skipping (--force to redo)`)
+    return { week: w.week, skipped: true }
+  }
+  if (!hasVideo) {
+    console.log(`  ✗ ${label} — no video at ${video}`)
+    return { week: w.week, missing: 'video' }
+  }
+
+  if (DRY) {
+    console.log(`  ? ${label} would ingest: video${hasSrt ? ' + srt' : ' (no srt)'} · ${w.days.length} tasks`)
+    return { week: w.week, dry: true }
+  }
+
+  // ---- video -------------------------------------------------------------
+  const id = `nirmaan-w${pad(w.week)}`
+  process.stdout.write(`  … ${label} transcoding`)
+  const t0 = Date.now()
+  // transcodeToHls stores the finished folder itself and hands back the master
+  // playlist's URL — there is no separate save step.
+  const hls = await transcodeToHls(video, id, {
+    onProgress: (p) => {
+      if (p?.percent != null) process.stdout.write(`\r  … ${label} transcoding ${Math.round(p.percent)}%   `)
+    },
+  })
+  console.log(`\r  … ${label} transcoded in ${((Date.now() - t0) / 60000).toFixed(1)} min → ${hls.masterUrl}`)
+
+  // ---- subtitles ---------------------------------------------------------
+  const captions = []
+  if (hasSrt) {
+    const vtt = srtToVtt(readFileSync(srt, 'utf8'))
+    const sub = await saveSubtitle(vtt)
+    // Spoken in Hindi with English words throughout, which is what the source
+    // transcript reads like; labelled the way a student would recognise it.
+    captions.push({ lang: 'hi', label: 'Hindi', url: sub.url, key: sub.key || '' })
+  }
+
+  // ---- the week itself ---------------------------------------------------
+  const doc = {
+    skillBuild: skillBuildId,
+    order: w.week,
+    tier: 1,
+    title: titleFor(w),
+    description: descriptionFor(w),
+    videoUrl: hls.masterUrl,
+    durationMins: hls.durationMins || 0,
+    captions,
+    worksheet: {
+      title: w.rule ? `Rule of the week: ${w.rule}` : 'This week',
+      tasks: w.days.map((d) => `Day ${d.day}: ${d.task}`),
+    },
+    active: true,
+  }
+
+  await Session.findOneAndUpdate(
+    { skillBuild: skillBuildId, order: w.week },
+    { $set: doc },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  )
+  console.log(`  ✓ ${label} — ${doc.title} · ${captions.length ? 'captions' : 'no captions'} · ${doc.worksheet.tasks.length} tasks`)
+  return { week: w.week, ok: true }
+}
+
+async function run() {
+  await connectDB()
+  const sb = await SkillBuild.findOne({ slug: 'nirmaan' })
+  if (!sb) throw new Error('the nirmaan SkillBuild is missing — seed it first')
+
+  console.log(`Nirmaan ingest — storage: ${STORAGE} · source: ${SRC}`)
+  const have = existsSync(SRC) ? readdirSync(SRC).filter((f) => f.endsWith('.mp4')).length : 0
+  console.log(`  ${have} videos on disk · ${WEEKS.length} weeks in the sheet\n`)
+
+  const results = []
+  for (const w of WEEKS) {
+    if (ONLY && !ONLY.has(w.week)) continue
+    try {
+      results.push(await ingestWeek(sb._id, w))
+    } catch (err) {
+      console.log(`  ✗ W${pad(w.week)} — ${err.message}`)
+      results.push({ week: w.week, error: err.message })
+    }
+  }
+
+  const ok = results.filter((r) => r.ok).length
+  const skipped = results.filter((r) => r.skipped).length
+  const failed = results.filter((r) => r.error || r.missing)
+  console.log(`\n✓ ${ok} ingested · ${skipped} already done`)
+  if (failed.length) {
+    console.log(`✗ ${failed.length} did not go in:`)
+    failed.forEach((f) => console.log(`    W${pad(f.week)} — ${f.error || `missing ${f.missing}`}`))
+  }
+  await mongoose.disconnect()
+}
+
+run().catch((err) => {
+  console.error('✗ Ingest failed:', err.message)
+  process.exit(1)
+})

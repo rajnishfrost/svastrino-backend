@@ -96,7 +96,15 @@ export async function transcodeToHls(inputPath, id, { onProgress } = {}) {
   const { height, hasAudio, durationMins, durationSec } = await probe(inputPath)
 
   // Never upscale: keep ladder rungs at/below the source height (always ≥1 rung).
-  const usable = LADDER.filter((r) => r.h <= height)
+  //
+  // Capped as well, because the ladder's cost is the SUM of its rungs. A 4K
+  // source fills all eight — 34 Mbps together — and a thirteen-minute video
+  // then occupies 3.4 GB, against 1 GB for the same video capped at 1080p.
+  // Nobody watching a course on an Indian mobile connection will ever pull the
+  // 4K rung, so it costs storage and bandwidth and buys nothing. Raise
+  // HLS_MAX_HEIGHT deliberately if a particular source is worth it.
+  const cap = Number(process.env.HLS_MAX_HEIGHT || 1080)
+  const usable = LADDER.filter((r) => r.h <= height && r.h <= cap)
   const rungs = usable.length ? usable : [LADDER[0]]
   const n = rungs.length
 
