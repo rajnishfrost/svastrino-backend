@@ -75,9 +75,14 @@ async function ingestWeek(skillBuildId, w) {
   const { video, srt, hasVideo, hasSrt } = sourcesFor(w.week)
   const label = `W${pad(w.week)}`
 
+  // Skip only what THIS import already put in, recognised by the storage id it
+  // writes. Orders 1-10 are the old ten-session course and do carry videos —
+  // treating "has a video" as "already done" would leave those ten in place and
+  // quietly ingest only weeks 11-24.
+  const id = `nirmaan-w${pad(w.week)}`
   const existing = await Session.findOne({ skillBuild: skillBuildId, order: w.week })
-  if (existing?.videoUrl && !FORCE) {
-    console.log(`  · ${label} already has a video — skipping (--force to redo)`)
+  if (existing?.videoUrl?.includes(id) && !FORCE) {
+    console.log(`  · ${label} already ingested — skipping (--force to redo)`)
     return { week: w.week, skipped: true }
   }
   if (!hasVideo) {
@@ -91,7 +96,6 @@ async function ingestWeek(skillBuildId, w) {
   }
 
   // ---- video -------------------------------------------------------------
-  const id = `nirmaan-w${pad(w.week)}`
   process.stdout.write(`  … ${label} transcoding`)
   const t0 = Date.now()
   // transcodeToHls stores the finished folder itself and hands back the master
