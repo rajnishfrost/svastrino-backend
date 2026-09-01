@@ -43,14 +43,29 @@ async function assertActiveCourse(userId, slug) {
 export const PLAY_LIMIT = 5
 
 /**
- * The course is cut into equal blocks of sessions — "phases". A pay-as-you-use
+ * The course is cut into equal blocks of weeks — "phases". A pay-as-you-use
  * student buys them one at a time; a pay-once student gets them all.
  * Phase numbers are 1-based, and the last phase absorbs any remainder.
  */
-export function phaseOfSession(index, totalSessions, phases) {
+export function phaseOfSession(order, totalWeeks, phases) {
   if (!phases || phases < 2) return 1
-  const perPhase = Math.ceil(totalSessions / phases)
-  return Math.min(phases, Math.floor(index / perPhase) + 1)
+
+  // Keyed on the session's own number, not its position in the list.
+  //
+  // The introduction sits at order 0: it has no tasks, belongs to no phase, and
+  // is not one of the 24 weeks the course is sold as. Counting it would push
+  // every boundary along — six phases over 25 sessions comes out as five of
+  // five with the sixth empty, so a student who had paid for phase 2 would find
+  // weeks 5-9 in it instead of 5-8.
+  if (!order) return 1
+
+  const perPhase = Math.ceil(totalWeeks / phases)
+  return Math.min(phases, Math.floor((order - 1) / perPhase) + 1)
+}
+
+/** How many real weeks a session list holds — the introduction is not one. */
+export function weekCount(sessions) {
+  return sessions.filter((s) => s.order > 0).length || sessions.length
 }
 
 /** The strongest active enrollment's phase access for this course. */
@@ -245,7 +260,7 @@ export async function getCourse(userId, slug) {
     // Two separate gates. The drip clock decides WHEN a session opens; the phase
     // decides WHETHER it has been paid for at all. A phase the student has not
     // bought yet stays shut no matter how far the clock has run.
-    const phase = phaseOfSession(i, st.sessions.length, st.phases.total)
+    const phase = phaseOfSession(s.order, weekCount(st.sessions), st.phases.total)
     const phaseLocked = phase > st.phases.unlocked
     if (closed) return closedSession(s, prog, phase, phaseLocked, st)
     const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt, st.questionsBySession)
@@ -330,7 +345,7 @@ export async function startCourse(userId, slug) {
 export async function registerPlay(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   await assertActiveCourse(userId, st.sb.slug)
-  const phase = phaseOfSession(st.index, st.sessions.length, st.phases.total)
+  const phase = phaseOfSession(st.session.order, weekCount(st.sessions), st.phases.total)
   if (phase > st.phases.unlocked) {
     throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
   }
@@ -586,7 +601,7 @@ export async function courseRecord(userId, slug) {
     // what the course page refuses to do. This is not the same as a session
     // they simply have not reached yet — that one keeps its questions on
     // purpose, so please do not fold the two cases back together.
-    const phaseLocked = phaseOfSession(i, st.sessions.length, st.phases.total) > st.phases.unlocked
+    const phaseLocked = phaseOfSession(s.order, weekCount(st.sessions), st.phases.total) > st.phases.unlocked
     const held = (st.questionsBySession.get(String(s._id)) || [])
       .slice()
       .sort((a, b) => a.order - b.order)
