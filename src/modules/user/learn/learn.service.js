@@ -12,6 +12,40 @@ import { mediaUrl } from '../../../config/uploads.js'
 
 const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions = 7 days per session
 
+/**
+ * TEST MODE (`LEARN_TEST_MODE=1` in the server env). Off by default, and only a
+ * server restart turns it on or off — nothing in the app can flip it.
+ *
+ * The course is paced by a calendar: a task opens at the IST midnight AFTER the
+ * one before it was finished, so walking a student's whole journey takes as many
+ * real days as the course has tasks. That is right for students and useless for
+ * checking whether the chain actually works. With this on, "the next midnight"
+ * becomes "right now", so finishing a task opens the next one immediately, and
+ * finishing a week opens the next week's video immediately. The play limit is
+ * lifted for the same reason, and the client is told (see `testMode` in
+ * getCourse) so it unlocks forward-seeking on the video.
+ *
+ * Nothing else changes: the order of the chain, the "answer only the open
+ * question" rule, phase payment and the one-year gate are all still enforced.
+ * What you see in test mode is the real flow, only without the waiting.
+ */
+export const TEST_MODE = process.env.LEARN_TEST_MODE === '1' || process.env.LEARN_TEST_MODE === 'true'
+
+if (TEST_MODE) {
+  console.warn(
+    '\n⚠️  LEARN_TEST_MODE is ON — the daily drip and the play limit are OFF.\n' +
+    '    Every task opens the moment the one before it is finished.\n' +
+    '    Remove LEARN_TEST_MODE from the env and restart before real students use this.\n'
+  )
+}
+
+/**
+ * When does the thing after `date` open? Normally the next IST midnight; in test
+ * mode, straight away. Every drip date in this file goes through here, so the
+ * two schedules can never drift apart.
+ */
+const unlockAfter = (date) => (TEST_MODE ? new Date(date) : nextIstMidnight(date))
+
 const httpError = (message, status, code) => {
   const err = new Error(message)
   err.status = status
@@ -40,7 +74,7 @@ async function assertActiveCourse(userId, slug) {
  * Rank = Package.order (1 Discover, 2 Clarity, 3 Launch). Access is tier ≤ rank.
  */
 /** A video may be started this many times before it stops playing (anti-piracy). */
-export const PLAY_LIMIT = 5
+export const PLAY_LIMIT = TEST_MODE ? Number.MAX_SAFE_INTEGER : 5
 
 /**
  * The course is cut into equal blocks of weeks — "phases". A pay-as-you-use
@@ -120,7 +154,7 @@ function computeQuestions(questions, answersByQid, videoDoneAt, now) {
         continue
       }
       // First unanswered question — it is either open now or waiting for its day.
-      const unlockAt = nextIstMidnight(prevSource)
+      const unlockAt = unlockAfter(prevSource)
       if (now.getTime() >= unlockAt.getTime()) {
         current = { id: q._id, order: q.order, prompt: q.prompt, placeholder: q.placeholder || '', unlockAt }
       } else {
@@ -199,7 +233,7 @@ function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySe
   const prevTasks = questionsBySession?.get(String(prev._id))?.length || 0
   if (!prevTasks) return prevProg?.videoDoneAt || null
 
-  if (prevProg?.completed && prevProg.completedAt) return nextIstMidnight(prevProg.completedAt)
+  if (prevProg?.completed && prevProg.completedAt) return unlockAfter(prevProg.completedAt)
   return null // previous session not finished → next video not scheduled yet
 }
 
@@ -221,7 +255,6 @@ function closedSession(session, prog, phase, phaseLocked, st) {
     videoUrl: '',
     durationMins: session.durationMins,
     captions: [],
-    worksheet: { title: '', tasks: [] },
     notes: [],
     phase,
     phaseLocked,
@@ -279,7 +312,11 @@ export async function getCourse(userId, slug) {
       videoUrl: mediaUrl(s.videoUrl),
       durationMins: s.durationMins,
       captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
-      worksheet: s.worksheet,
+      // The worksheet is NOT sent. It holds every one of the week's six tasks,
+      // and handing that over would undo the drip the line below is careful to
+      // keep: computeQuestions deliberately withholds a prompt the student has
+      // not reached, so sending the same text in another field just moved the
+      // whole week into the Network tab. Admins still get it (manage.controller).
       notes: s.notes || [],
       phase,
       phaseLocked,          // true = this phase has not been paid for yet
@@ -310,6 +347,10 @@ export async function getCourse(userId, slug) {
       nextPhase: st.phases.unlocked < st.phases.total ? st.phases.unlocked + 1 : null,
     },
     playLimit: PLAY_LIMIT,
+    // Told to the client so it can drop the first-watch seek lock and show the
+    // "test mode" banner. It is never true unless the server was started with
+    // LEARN_TEST_MODE set.
+    testMode: TEST_MODE,
     rank: st.rank,
     started: !!startedAt,
     startedAt,

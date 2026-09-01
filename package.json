@@ -18,6 +18,7 @@
     "reset:progress": "node src/modules/user/learn/resetProgress.js",
     "reset:user": "node src/modules/user/learn/resetUser.js",
     "seed:questions": "node src/modules/user/learn/seedQuestions.js",
+    "check:learn": "node src/modules/user/learn/checkLearnFlow.js",
     "send:reminders": "node src/modules/user/learn/sendReminders.js",
     "seed:mentoring": "node src/modules/user/mentoring/seedMentoring.js",
     "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js",
