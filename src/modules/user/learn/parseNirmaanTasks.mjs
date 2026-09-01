@@ -20,7 +20,12 @@ function parseCsv(text) {
   return rows
 }
 
-const rows = parseCsv(readFileSync('/tmp/nirmaan-dl/Nirmaan Tasks - Sheet1.csv', 'utf8')).slice(1)
+// Paths may be passed in; the originals stay the defaults so the old command
+// line keeps working.
+const IN = process.argv[2] || '/tmp/nirmaan-dl/Nirmaan Tasks - Sheet1.csv'
+const OUT = process.argv[3] || '/tmp/nirmaan-weeks.json'
+
+const rows = parseCsv(readFileSync(IN, 'utf8')).slice(1)
 const weeks = []
 let cur = null
 for (const r of rows) {
@@ -35,7 +40,7 @@ for (const r of rows) {
   if (dy && c) cur.days.push({ day: +dy[1], task: c, example: d })
 }
 weeks.sort((x, y) => x.week - y.week)
-writeFileSync('/tmp/nirmaan-weeks.json', JSON.stringify(weeks, null, 2))
+writeFileSync(OUT, JSON.stringify(weeks, null, 2))
 
 console.log(`  weeks       : ${weeks.length}`)
 console.log(`  tasks       : ${weeks.reduce((n, w) => n + w.days.length, 0)}`)

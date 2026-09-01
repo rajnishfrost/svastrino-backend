@@ -2,6 +2,12 @@
 //   node src/modules/user/learn/syncNirmaanTasks.js
 //   node src/modules/user/learn/syncNirmaanTasks.js --dry
 //
+// Also re-writes each week's TEXT on its session: the title, the rule shown
+// under the video, and the worksheet panel. Those come from the same sheet rows
+// as the tasks, so a sheet edit that renames a week or rewrites its rule would
+// otherwise only land half-way — new tasks under an old heading. Only the text
+// is touched: videoUrl, durationMins and captions are left exactly as they are.
+//
 // The six daily tasks ARE a week's questions: the student answers one a day,
 // and answering the sixth is what opens the next video. They arrive in the
 // course sheet with a worked example each, which becomes the placeholder in
@@ -22,6 +28,7 @@ import { connectDB } from '../../../config/db.js'
 import { Session } from './session.model.js'
 import { Question } from './question.model.js'
 import { SkillBuild } from '../skillbuild/skillbuild.model.js'
+import { titleFor, descriptionFor, worksheetFor } from './nirmaanText.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const WEEKS = JSON.parse(readFileSync(join(here, 'data', 'nirmaanWeeks.json'), 'utf8'))
@@ -36,10 +43,21 @@ async function run() {
   const byOrder = new Map(sessions.map((s) => [s.order, s]))
   console.log(`${DRY ? 'Would sync' : 'Syncing'} ${WEEKS.length} weeks against ${sessions.length} sessions\n`)
 
-  let written = 0, empty = []
+  let written = 0, retitled = 0, empty = []
   for (const w of WEEKS) {
     const session = byOrder.get(w.week)
     if (!session) { console.log(`  ✗ W${w.week} — no session at order ${w.week}`); continue }
+
+    // The week's own text, from the same sheet row as its tasks.
+    const text = { title: titleFor(w), description: descriptionFor(w), worksheet: worksheetFor(w) }
+    const titleChanged = session.title !== text.title
+    const descChanged = (session.description || '') !== text.description
+    if (titleChanged || descChanged) {
+      retitled += 1
+      if (titleChanged) console.log(`  ~ W${String(w.week).padStart(2, '0')} title  → ${text.title}`)
+      if (descChanged) console.log(`  ~ W${String(w.week).padStart(2, '0')} rule   → ${text.description.slice(0, 72)}`)
+    }
+    if (!DRY) await Session.updateOne({ _id: session._id }, { $set: text })
 
     if (!w.days.length) {
       // Weeks 24 has no tasks by design; its video is the whole of it.
@@ -49,6 +67,9 @@ async function run() {
     }
 
     if (DRY) {
+      // Counted here too, so the closing summary tells the truth about what a
+      // real run would do rather than always reporting zero.
+      written += w.days.length
       console.log(`  ? W${String(w.week).padStart(2, '0')} — ${w.days.length} tasks, ${w.days.filter((d) => d.example).length} with an example`)
       continue
     }
@@ -72,6 +93,7 @@ async function run() {
   if (orphans && !DRY) await Question.deleteMany({ session: { $nin: liveIds } })
 
   console.log(`\n${DRY ? 'Would write' : 'Wrote'} ${written} questions`)
+  console.log(`  ${retitled} week(s) whose title or rule ${DRY ? 'would change' : 'changed'}`)
   if (empty.length) console.log(`  ${empty.length} week(s) left with none, by design: ${empty.join(', ')}`)
   console.log(`  ${orphans} orphaned question(s) ${DRY ? 'to remove' : 'removed'}`)
   await mongoose.disconnect()

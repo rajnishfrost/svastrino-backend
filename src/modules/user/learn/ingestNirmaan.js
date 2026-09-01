@@ -25,6 +25,7 @@ import { connectDB } from '../../../config/db.js'
 import { transcodeToHls, TRANSCODER } from '../../../config/transcoder.js'
 import { saveSubtitle, STORAGE } from '../../../config/uploads.js'
 import { srtToVtt } from '../../../utils/subtitles.js'
+import { titleFor, descriptionFor, worksheetFor } from './nirmaanText.js'
 import { Session } from './session.model.js'
 import { Question } from './question.model.js'
 import { SkillBuild } from '../skillbuild/skillbuild.model.js'
@@ -58,18 +59,6 @@ function sourcesFor(week) {
   const video = join(SRC, `W_${pad(week)}.mp4`)
   const srt = join(SRT_DIR, `W_${pad(week)}.srt`)
   return { video, srt, hasVideo: existsSync(video), hasSrt: existsSync(srt) }
-}
-
-/** A readable title: the sheet writes them as `"Knowing Yourself" Challenge`. */
-function titleFor(w) {
-  const clean = String(w.title || '').replace(/["“”]/g, '').replace(/\s+/g, ' ').trim()
-  return clean ? `Week ${w.week} — ${clean}` : `Week ${w.week}`
-}
-
-/** What the student reads under the video. */
-function descriptionFor(w) {
-  if (w.note) return w.note
-  return w.rule ? `Rule of the week: ${w.rule}` : ''
 }
 
 async function ingestWeek(skillBuildId, w) {
@@ -128,10 +117,7 @@ async function ingestWeek(skillBuildId, w) {
     videoUrl: hls.masterUrl,
     durationMins: hls.durationMins || 0,
     captions,
-    worksheet: {
-      title: w.rule ? `Rule of the week: ${w.rule}` : 'This week',
-      tasks: w.days.map((d) => `Day ${d.day}: ${d.task}`),
-    },
+    worksheet: worksheetFor(w),
     active: true,
   }
 
