@@ -12,6 +12,12 @@ const questionSchema = new mongoose.Schema(
     skillBuild: { type: mongoose.Schema.Types.ObjectId, ref: 'SkillBuild', required: true },
     order: { type: Number, required: true }, // 1..6 within the session
     prompt: { type: String, required: true },
+    // A worked answer, shown greyed out in the box the student types into.
+    // The course sheet writes one for every task, and they do real work: the
+    // tasks are open-ended ("write three things you are grateful for"), and an
+    // example is the difference between a student knowing what is being asked
+    // and guessing at it.
+    placeholder: { type: String, default: '' },
     active: { type: Boolean, default: true },
   },
   { timestamps: true }

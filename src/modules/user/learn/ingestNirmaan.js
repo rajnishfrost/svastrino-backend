@@ -26,6 +26,7 @@ import { transcodeToHls, TRANSCODER } from '../../../config/transcoder.js'
 import { saveSubtitle, STORAGE } from '../../../config/uploads.js'
 import { srtToVtt } from '../../../utils/subtitles.js'
 import { Session } from './session.model.js'
+import { Question } from './question.model.js'
 import { SkillBuild } from '../skillbuild/skillbuild.model.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -134,12 +135,31 @@ async function ingestWeek(skillBuildId, w) {
     active: true,
   }
 
-  await Session.findOneAndUpdate(
+  const saved = await Session.findOneAndUpdate(
     { skillBuild: skillBuildId, order: w.week },
     { $set: doc },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   )
-  console.log(`  ✓ ${label} — ${doc.title} · ${captions.length ? 'captions' : 'no captions'} · ${doc.worksheet.tasks.length} tasks`)
+
+  // The six daily tasks ARE the week's questions — the student answers one a
+  // day, and answering the last is what opens the next video. Kept as Questions
+  // rather than only as worksheet text so the answers are stored, the progress
+  // bar means something, and the Q&A download has something to gather.
+  //
+  // Replaced wholesale: this week previously carried questions written for a
+  // different course, and leaving them would ask about a video no longer here.
+  await Question.deleteMany({ session: saved._id })
+  if (w.days.length) {
+    await Question.insertMany(w.days.map((d) => ({
+      session: saved._id,
+      skillBuild: skillBuildId,
+      order: d.day,
+      prompt: d.task,
+      placeholder: d.example || '',
+      active: true,
+    })))
+  }
+  console.log(`  ✓ ${label} — ${doc.title} · ${captions.length ? 'captions' : 'no captions'} · ${w.days.length} tasks`)
   return { week: w.week, ok: true }
 }
 

@@ -86,7 +86,8 @@ async function userRank(userId, skillBuildSlug) {
  *   - Q1 opens the IST-midnight after the video was watched (videoDoneAt).
  *   - Each next question opens the IST-midnight after the previous is answered.
  *   - Only the CURRENT (unlocked + unanswered) question and already-answered
- *     ones expose their prompt; future prompts stay hidden (just counted).
+ *     ones expose their prompt and its worked example; future prompts stay
+ *     hidden (just counted).
  */
 function computeQuestions(questions, answersByQid, videoDoneAt, now) {
   const total = questions.length
@@ -106,7 +107,7 @@ function computeQuestions(questions, answersByQid, videoDoneAt, now) {
       // First unanswered question — it is either open now or waiting for its day.
       const unlockAt = nextIstMidnight(prevSource)
       if (now.getTime() >= unlockAt.getTime()) {
-        current = { id: q._id, order: q.order, prompt: q.prompt, unlockAt }
+        current = { id: q._id, order: q.order, prompt: q.prompt, placeholder: q.placeholder || '', unlockAt }
       } else {
         nextUnlockAt = unlockAt
       }
@@ -169,11 +170,20 @@ async function loadStateForSession(userId, sessionId) {
 }
 
 /** When does a given session's VIDEO open? (chained, sequential, IST-midnight). */
-function videoUnlockAtFor(index, sessions, progressMap, startedAt) {
+function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySession) {
   if (!startedAt) return null // course not started
   if (index === 0) return startedAt // first video opens immediately on start
   const prev = sessions[index - 1]
   const prevProg = progressMap.get(String(prev._id))
+
+  // A session with no tasks — the introduction, and the closing week — has
+  // nothing to answer, so it can never be "completed" the way the rest are.
+  // Waiting for that would leave the next video shut for good. Watching it
+  // through opens the next one immediately: the midnight wait exists to pace
+  // six days of daily tasks, and there are none to pace.
+  const prevTasks = questionsBySession?.get(String(prev._id))?.length || 0
+  if (!prevTasks) return prevProg?.videoDoneAt || null
+
   if (prevProg?.completed && prevProg.completedAt) return nextIstMidnight(prevProg.completedAt)
   return null // previous session not finished → next video not scheduled yet
 }
@@ -238,7 +248,7 @@ export async function getCourse(userId, slug) {
     const phase = phaseOfSession(i, st.sessions.length, st.phases.total)
     const phaseLocked = phase > st.phases.unlocked
     if (closed) return closedSession(s, prog, phase, phaseLocked, st)
-    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt)
+    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt, st.questionsBySession)
     const plays = prog?.plays || 0
     const videoLocked = phaseLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
     const qs = phaseLocked
@@ -351,7 +361,7 @@ export async function markVideoDone(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   await assertActiveCourse(userId, st.sb.slug)
   const { session, index } = st
-  const videoUnlockAt = videoUnlockAtFor(index, st.sessions, st.progressMap, st.learnState?.startedAt)
+  const videoUnlockAt = videoUnlockAtFor(index, st.sessions, st.progressMap, st.learnState?.startedAt, st.questionsBySession)
   if (!videoUnlockAt || Date.now() < videoUnlockAt.getTime()) {
     throw httpError('This video is not open yet', 403, 'LOCKED')
   }
@@ -359,9 +369,17 @@ export async function markVideoDone(userId, sessionId) {
   const prog = st.progressMap.get(String(session._id))
   if (prog?.videoDoneAt) return { ok: true } // already anchored — keep the first watch
 
+  // A session with no tasks is finished the moment its video is — there is
+  // nothing else in it. Marking it complete keeps the progress bar and the
+  // report honest; without this the introduction would sit at "started" for
+  // the rest of the course.
+  const taskCount = st.questionsBySession?.get(String(session._id))?.length || 0
+  const now = new Date()
+  const patch = taskCount ? { videoDoneAt: now } : { videoDoneAt: now, completed: true, completedAt: now }
+
   await Progress.findOneAndUpdate(
     { user: userId, session: session._id },
-    { $setOnInsert: { skillBuild: session.skillBuild }, $set: { videoDoneAt: new Date() } },
+    { $setOnInsert: { skillBuild: session.skillBuild }, $set: patch },
     { upsert: true },
   )
   return { ok: true }
