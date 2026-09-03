@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url'
 import { connectDB } from '../../../config/db.js'
 import { transcodeToHls, TRANSCODER } from '../../../config/transcoder.js'
 import { saveSubtitle, STORAGE } from '../../../config/uploads.js'
-import { srtToVtt } from '../../../utils/subtitles.js'
+import { srtToVtt, parseVttCues, removeOverlaps, buildVtt } from '../../../utils/subtitles.js'
 import { titleFor, descriptionFor, worksheetFor } from './nirmaanText.js'
 import { Session } from './session.model.js'
 import { Question } from './question.model.js'
@@ -100,7 +100,9 @@ async function ingestWeek(skillBuildId, w) {
   // ---- subtitles ---------------------------------------------------------
   const captions = []
   if (hasSrt) {
-    const vtt = srtToVtt(readFileSync(srt, 'utf8'))
+    // Same de-overlapping the admin upload does — the course SRTs come from
+    // the same speech-to-text pass.
+    const vtt = buildVtt(removeOverlaps(parseVttCues(srtToVtt(readFileSync(srt, 'utf8')))))
     const sub = await saveSubtitle(vtt)
     // Spoken in Hindi with English words throughout, which is what the source
     // transcript reads like; labelled the way a student would recognise it.

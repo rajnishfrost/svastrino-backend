@@ -13,7 +13,7 @@ import {
   uploadMode, initUpload, partUrl, completeUpload, abortUpload,
 } from './s3Upload.controller.js'
 import { uploadImageMw, uploadImage } from './imageUpload.controller.js'
-import { uploadCaptionMw, uploadCaption, deleteCaption, translateCaption } from './captionUpload.controller.js'
+import { uploadCaptionMw, uploadCaption, deleteCaption } from './captionUpload.controller.js'
 
 // Mounted under /api/admin — all admin-only.
 const router = Router()
@@ -56,9 +56,8 @@ router.get('/sessions/:id/questions', requirePermission('content'), getQuestions
 router.put('/sessions/:id/questions', requirePermission('content'), putQuestions)
 router.get('/sessions/:id/answers', requirePermission('content'), getSessionAnswers)
 
-// Caption tracks (SRT/VTT upload → stored as WebVTT; optional AI translation)
+// Caption tracks (SRT/VTT upload → stored as WebVTT)
 router.post('/sessions/:id/captions', requirePermission('content'), uploadCaptionMw, uploadCaption)
 router.delete('/sessions/:id/captions/:lang', requirePermission('content'), deleteCaption)
-router.post('/sessions/:id/captions/:lang/translate', requirePermission('content'), translateCaption)
 
 export default router

@@ -19,6 +19,7 @@
     "reset:user": "node src/modules/user/learn/resetUser.js",
     "seed:questions": "node src/modules/user/learn/seedQuestions.js",
     "check:learn": "node src/modules/user/learn/checkLearnFlow.js",
+    "fix:captions": "node src/modules/user/learn/fixCaptionOverlaps.js",
     "send:reminders": "node src/modules/user/learn/sendReminders.js",
     "seed:mentoring": "node src/modules/user/mentoring/seedMentoring.js",
     "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js",

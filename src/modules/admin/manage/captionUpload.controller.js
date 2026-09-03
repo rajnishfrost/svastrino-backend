@@ -1,11 +1,9 @@
 import multer from 'multer'
 import crypto from 'node:crypto'
 import { readFileSync, unlinkSync } from 'node:fs'
-import { join } from 'node:path'
 import { asyncHandler } from '../../../utils/asyncHandler.js'
-import { TMP_DIR, UPLOADS_ROOT, saveSubtitle, deleteByKey } from '../../../config/uploads.js'
-import { srtToVtt, parseVttCues, buildVtt } from '../../../utils/subtitles.js'
-import { translateCues } from '../../../utils/aiTranslate.js'
+import { TMP_DIR, saveSubtitle, deleteByKey } from '../../../config/uploads.js'
+import { srtToVtt, parseVttCues, buildVtt, removeOverlaps } from '../../../utils/subtitles.js'
 import { Session } from '../../user/learn/session.model.js'
 
 /**
@@ -60,8 +58,12 @@ export const uploadCaption = asyncHandler(async (req, res) => {
 
   const raw = readFileSync(req.file.path, 'utf8')
   try { unlinkSync(req.file.path) } catch { /* ignore */ }
-  const vtt = srtToVtt(raw)
-  if (!parseVttCues(vtt).length) throw httpError('That file has no readable captions')
+  const cues = parseVttCues(srtToVtt(raw))
+  if (!cues.length) throw httpError('That file has no readable captions')
+  // Speech-to-text hands back segments that run into each other. Left as they
+  // are, the player shows two cues at once and the student reads a sentence
+  // they have already heard on top of the one being spoken.
+  const vtt = buildVtt(removeOverlaps(cues))
 
   const { url, key } = await saveSubtitle(vtt)
   await upsertTrack(session, { lang, label, url, key })
@@ -78,36 +80,4 @@ export const deleteCaption = asyncHandler(async (req, res) => {
   session.captions = session.captions.filter((c) => c.lang !== lang)
   await session.save()
   res.json({ captions: captionsDTO(session) })
-})
-
-// Read a stored VTT back (local file or remote CDN URL) so it can be translated.
-async function readTrackVtt(track) {
-  if (track.url?.startsWith('/uploads/')) {
-    return readFileSync(join(UPLOADS_ROOT, track.url.slice('/uploads/'.length)), 'utf8')
-  }
-  const res = await fetch(track.url)
-  if (!res.ok) throw httpError('Could not read the source caption file', 502)
-  return res.text()
-}
-
-// POST /api/admin/sessions/:id/captions/:lang/translate  { targetLang, targetLabel }
-export const translateCaption = asyncHandler(async (req, res) => {
-  const session = await Session.findById(req.params.id)
-  if (!session) throw httpError('Session not found', 404)
-  const source = session.captions.find((c) => c.lang === String(req.params.lang || '').toLowerCase())
-  if (!source) throw httpError('Source caption language not found', 404)
-
-  const targetLang = String(req.body.targetLang || '').trim().toLowerCase()
-  const targetLabel = String(req.body.targetLabel || '').trim() || targetLang.toUpperCase()
-  if (!/^[a-z]{2}(-[a-z]{2,})?$/i.test(targetLang)) throw httpError('Enter a valid target language code')
-  if (targetLang === source.lang) throw httpError('Pick a different target language')
-
-  const cues = parseVttCues(await readTrackVtt(source))
-  if (!cues.length) throw httpError('Source captions are empty')
-
-  const translated = await translateCues(cues.map((c) => c.text), source.label, targetLabel)
-  const outCues = cues.map((c, i) => ({ ...c, text: translated[i] ?? c.text }))
-  const { url, key } = await saveSubtitle(buildVtt(outCues))
-  await upsertTrack(session, { lang: targetLang, label: targetLabel, url, key })
-  res.status(201).json({ captions: captionsDTO(session) })
 })

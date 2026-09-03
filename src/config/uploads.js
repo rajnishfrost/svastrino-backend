@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, join, extname } from 'node:path'
-import { mkdirSync, renameSync, unlinkSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, renameSync, unlinkSync, readdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import crypto from 'node:crypto'
 import { putFile, putBuffer, deleteObject, contentTypeFor, publicUrl } from './s3.js'
 
@@ -171,6 +171,25 @@ export async function saveSubtitle(vttText) {
 
   writeFileSync(join(SUBTITLES_DIR, name), vttText, 'utf8')
   return { url: `/uploads/subtitles/${name}`, key }
+}
+
+/**
+ * Read back a stored text file (a caption track) from whichever place it lives.
+ *
+ * The same record is a local path in dev and a CDN address in production, so
+ * anything that re-reads what it stored has to cope with both. Without this,
+ * code written against one mode fails on the other for no reason a reader can
+ * see — a relative URL handed to fetch() just says "failed".
+ */
+export async function readStoredText(url) {
+  const value = String(url || '')
+  if (!value) throw new Error('No file address given')
+  if (value.startsWith('/uploads/')) {
+    return readFileSync(join(UPLOADS_ROOT, value.slice('/uploads/'.length)), 'utf8')
+  }
+  const res = await fetch(value)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.text()
 }
 
 /**

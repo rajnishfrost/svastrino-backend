@@ -16,6 +16,10 @@
 // Separate from ingestNirmaan so the text can be corrected without touching the
 // videos — re-transcoding 24 lectures to fix a typo in a task would cost hours.
 //
+// Questions are matched on (session, order) and updated in place, so their ids
+// survive a re-run and the answers students have already written stay attached
+// to them. Only a task that no longer exists is removed.
+//
 // Also clears out questions left pointing at sessions that no longer exist. The
 // weeks replaced a ten-session course, and its questions asked about videos
 // that are no longer in it.
@@ -74,17 +78,35 @@ async function run() {
       continue
     }
 
-    await Question.deleteMany({ session: session._id })
-    await Question.insertMany(w.days.map((d) => ({
-      session: session._id,
-      skillBuild: sb._id,
-      order: d.day,
-      prompt: d.task,
-      placeholder: d.example || '',
-      active: true,
+    // Matched on (session, order) and updated in place, NEVER deleted and
+    // re-made. An Answer points at a question by its id, so recreating the row
+    // would cut every student's work loose from the task they wrote it for:
+    // the page would count them as unanswered and ask for them again. The text
+    // of day 3 can change; day 3 itself is the same question it always was.
+    const res = await Question.bulkWrite(w.days.map((d) => ({
+      updateOne: {
+        filter: { session: session._id, order: d.day },
+        update: {
+          $set: { prompt: d.task, placeholder: d.example || '', active: true },
+          $setOnInsert: { session: session._id, skillBuild: sb._id, order: d.day },
+        },
+        upsert: true,
+      },
     })))
+
+    // A week that lost days: anything past the end of the new list is gone.
+    const stale = await Question.deleteMany({
+      session: session._id,
+      order: { $nin: w.days.map((d) => d.day) },
+    })
+
     written += w.days.length
-    console.log(`  ✓ W${String(w.week).padStart(2, '0')} — ${w.days.length} tasks`)
+    const made = res.upsertedCount || 0
+    console.log(
+      `  ✓ W${String(w.week).padStart(2, '0')} — ${w.days.length} tasks` +
+      ` (${w.days.length - made} updated in place, ${made} new` +
+      `${stale.deletedCount ? `, ${stale.deletedCount} removed` : ''})`
+    )
   }
 
   // Anything still pointing at a session that is gone.

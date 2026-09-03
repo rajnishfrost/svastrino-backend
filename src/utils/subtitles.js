@@ -78,6 +78,49 @@ export function parseVttCues(vtt) {
   return cues
 }
 
+/** Seconds for a normalised "HH:MM:SS.mmm" stamp, or NaN if it is not one. */
+function stampSeconds(t) {
+  const m = /^(\d{2}):(\d{2}):(\d{2})\.(\d{3})$/.exec(String(t || '').trim())
+  return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] + +m[4] / 1000 : NaN
+}
+
+/**
+ * Stop a cue from running into the one after it.
+ *
+ * Speech-to-text tools hand back segments that overlap by a few seconds — the
+ * next line starts before the previous one is due to end. WebVTT takes that
+ * literally: both cues are active, so the player stacks them and the student
+ * reads two different sentences at once, one of them already spoken.
+ *
+ * The end is pulled back to where the next cue begins, never the start, so no
+ * caption appears before its words are said. A cue that would be left with no
+ * duration keeps a sliver, because a zero-length cue never draws at all.
+ */
+export function removeOverlaps(cues) {
+  const MIN = 0.2 // seconds — a cue shorter than this would flash and vanish
+  return cues.map((cue, i) => {
+    const next = cues[i + 1]
+    if (!next) return cue
+    const start = stampSeconds(cue.start)
+    const end = stampSeconds(cue.end)
+    const nextStart = stampSeconds(next.start)
+    if (!Number.isFinite(end) || !Number.isFinite(nextStart) || end <= nextStart) return cue
+    const trimmed = Math.max(nextStart, Number.isFinite(start) ? start + MIN : nextStart)
+    return { ...cue, end: secondsToStamp(trimmed) }
+  })
+}
+
+/** "HH:MM:SS.mmm" for a number of seconds. */
+function secondsToStamp(sec) {
+  const t = Math.max(0, sec)
+  const h = Math.floor(t / 3600)
+  const m = Math.floor((t % 3600) / 60)
+  const s = Math.floor(t % 60)
+  const ms = Math.round((t - Math.floor(t)) * 1000)
+  const pad = (n, w = 2) => String(n).padStart(w, '0')
+  return `${pad(h)}:${pad(m)}:${pad(s)}.${pad(ms, 3)}`
+}
+
 /** Rebuild a VTT file from cues whose `text` may have been translated. */
 export function buildVtt(cues) {
   const out = ['WEBVTT', '']
