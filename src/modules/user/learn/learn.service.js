@@ -12,6 +12,40 @@ import { mediaUrl } from '../../../config/uploads.js'
 
 const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions = 7 days per session
 
+/**
+ * TEST MODE (`LEARN_TEST_MODE=1` in the server env). Off by default, and only a
+ * server restart turns it on or off — nothing in the app can flip it.
+ *
+ * The course is paced by a calendar: a task opens at the IST midnight AFTER the
+ * one before it was finished, so walking a student's whole journey takes as many
+ * real days as the course has tasks. That is right for students and useless for
+ * checking whether the chain actually works. With this on, "the next midnight"
+ * becomes "right now", so finishing a task opens the next one immediately, and
+ * finishing a week opens the next week's video immediately. The play limit is
+ * lifted for the same reason, and the client is told (see `testMode` in
+ * getCourse) so it unlocks forward-seeking on the video.
+ *
+ * Nothing else changes: the order of the chain, the "answer only the open
+ * question" rule, phase payment and the one-year gate are all still enforced.
+ * What you see in test mode is the real flow, only without the waiting.
+ */
+export const TEST_MODE = process.env.LEARN_TEST_MODE === '1' || process.env.LEARN_TEST_MODE === 'true'
+
+if (TEST_MODE) {
+  console.warn(
+    '\n⚠️  LEARN_TEST_MODE is ON — the daily drip and the play limit are OFF.\n' +
+    '    Every task opens the moment the one before it is finished.\n' +
+    '    Remove LEARN_TEST_MODE from the env and restart before real students use this.\n'
+  )
+}
+
+/**
+ * When does the thing after `date` open? Normally the next IST midnight; in test
+ * mode, straight away. Every drip date in this file goes through here, so the
+ * two schedules can never drift apart.
+ */
+const unlockAfter = (date) => (TEST_MODE ? new Date(date) : nextIstMidnight(date))
+
 const httpError = (message, status, code) => {
   const err = new Error(message)
   err.status = status
@@ -40,17 +74,32 @@ async function assertActiveCourse(userId, slug) {
  * Rank = Package.order (1 Discover, 2 Clarity, 3 Launch). Access is tier ≤ rank.
  */
 /** A video may be started this many times before it stops playing (anti-piracy). */
-export const PLAY_LIMIT = 5
+export const PLAY_LIMIT = TEST_MODE ? Number.MAX_SAFE_INTEGER : 5
 
 /**
- * The course is cut into equal blocks of sessions — "phases". A pay-as-you-use
+ * The course is cut into equal blocks of weeks — "phases". A pay-as-you-use
  * student buys them one at a time; a pay-once student gets them all.
  * Phase numbers are 1-based, and the last phase absorbs any remainder.
  */
-export function phaseOfSession(index, totalSessions, phases) {
+export function phaseOfSession(order, totalWeeks, phases) {
   if (!phases || phases < 2) return 1
-  const perPhase = Math.ceil(totalSessions / phases)
-  return Math.min(phases, Math.floor(index / perPhase) + 1)
+
+  // Keyed on the session's own number, not its position in the list.
+  //
+  // The introduction sits at order 0: it has no tasks, belongs to no phase, and
+  // is not one of the 24 weeks the course is sold as. Counting it would push
+  // every boundary along — six phases over 25 sessions comes out as five of
+  // five with the sixth empty, so a student who had paid for phase 2 would find
+  // weeks 5-9 in it instead of 5-8.
+  if (!order) return 1
+
+  const perPhase = Math.ceil(totalWeeks / phases)
+  return Math.min(phases, Math.floor((order - 1) / perPhase) + 1)
+}
+
+/** How many real weeks a session list holds — the introduction is not one. */
+export function weekCount(sessions) {
+  return sessions.filter((s) => s.order > 0).length || sessions.length
 }
 
 /** The strongest active enrollment's phase access for this course. */
@@ -86,7 +135,8 @@ async function userRank(userId, skillBuildSlug) {
  *   - Q1 opens the IST-midnight after the video was watched (videoDoneAt).
  *   - Each next question opens the IST-midnight after the previous is answered.
  *   - Only the CURRENT (unlocked + unanswered) question and already-answered
- *     ones expose their prompt; future prompts stay hidden (just counted).
+ *     ones expose their prompt and its worked example; future prompts stay
+ *     hidden (just counted).
  */
 function computeQuestions(questions, answersByQid, videoDoneAt, now) {
   const total = questions.length
@@ -104,9 +154,9 @@ function computeQuestions(questions, answersByQid, videoDoneAt, now) {
         continue
       }
       // First unanswered question — it is either open now or waiting for its day.
-      const unlockAt = nextIstMidnight(prevSource)
+      const unlockAt = unlockAfter(prevSource)
       if (now.getTime() >= unlockAt.getTime()) {
-        current = { id: q._id, order: q.order, prompt: q.prompt, unlockAt }
+        current = { id: q._id, order: q.order, prompt: q.prompt, placeholder: q.placeholder || '', unlockAt }
       } else {
         nextUnlockAt = unlockAt
       }
@@ -169,12 +219,21 @@ async function loadStateForSession(userId, sessionId) {
 }
 
 /** When does a given session's VIDEO open? (chained, sequential, IST-midnight). */
-function videoUnlockAtFor(index, sessions, progressMap, startedAt) {
+function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySession) {
   if (!startedAt) return null // course not started
   if (index === 0) return startedAt // first video opens immediately on start
   const prev = sessions[index - 1]
   const prevProg = progressMap.get(String(prev._id))
-  if (prevProg?.completed && prevProg.completedAt) return nextIstMidnight(prevProg.completedAt)
+
+  // A session with no tasks — the introduction, and the closing week — has
+  // nothing to answer, so it can never be "completed" the way the rest are.
+  // Waiting for that would leave the next video shut for good. Watching it
+  // through opens the next one immediately: the midnight wait exists to pace
+  // six days of daily tasks, and there are none to pace.
+  const prevTasks = questionsBySession?.get(String(prev._id))?.length || 0
+  if (!prevTasks) return prevProg?.videoDoneAt || null
+
+  if (prevProg?.completed && prevProg.completedAt) return unlockAfter(prevProg.completedAt)
   return null // previous session not finished → next video not scheduled yet
 }
 
@@ -196,7 +255,6 @@ function closedSession(session, prog, phase, phaseLocked, st) {
     videoUrl: '',
     durationMins: session.durationMins,
     captions: [],
-    worksheet: { title: '', tasks: [] },
     notes: [],
     phase,
     phaseLocked,
@@ -235,10 +293,10 @@ export async function getCourse(userId, slug) {
     // Two separate gates. The drip clock decides WHEN a session opens; the phase
     // decides WHETHER it has been paid for at all. A phase the student has not
     // bought yet stays shut no matter how far the clock has run.
-    const phase = phaseOfSession(i, st.sessions.length, st.phases.total)
+    const phase = phaseOfSession(s.order, weekCount(st.sessions), st.phases.total)
     const phaseLocked = phase > st.phases.unlocked
     if (closed) return closedSession(s, prog, phase, phaseLocked, st)
-    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt)
+    const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt, st.questionsBySession)
     const plays = prog?.plays || 0
     const videoLocked = phaseLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
     const qs = phaseLocked
@@ -254,7 +312,11 @@ export async function getCourse(userId, slug) {
       videoUrl: mediaUrl(s.videoUrl),
       durationMins: s.durationMins,
       captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
-      worksheet: s.worksheet,
+      // The worksheet is NOT sent. It holds every one of the week's six tasks,
+      // and handing that over would undo the drip the line below is careful to
+      // keep: computeQuestions deliberately withholds a prompt the student has
+      // not reached, so sending the same text in another field just moved the
+      // whole week into the Network tab. Admins still get it (manage.controller).
       notes: s.notes || [],
       phase,
       phaseLocked,          // true = this phase has not been paid for yet
@@ -285,6 +347,10 @@ export async function getCourse(userId, slug) {
       nextPhase: st.phases.unlocked < st.phases.total ? st.phases.unlocked + 1 : null,
     },
     playLimit: PLAY_LIMIT,
+    // Told to the client so it can drop the first-watch seek lock and show the
+    // "test mode" banner. It is never true unless the server was started with
+    // LEARN_TEST_MODE set.
+    testMode: TEST_MODE,
     rank: st.rank,
     started: !!startedAt,
     startedAt,
@@ -320,7 +386,7 @@ export async function startCourse(userId, slug) {
 export async function registerPlay(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   await assertActiveCourse(userId, st.sb.slug)
-  const phase = phaseOfSession(st.index, st.sessions.length, st.phases.total)
+  const phase = phaseOfSession(st.session.order, weekCount(st.sessions), st.phases.total)
   if (phase > st.phases.unlocked) {
     throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
   }
@@ -351,7 +417,7 @@ export async function markVideoDone(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   await assertActiveCourse(userId, st.sb.slug)
   const { session, index } = st
-  const videoUnlockAt = videoUnlockAtFor(index, st.sessions, st.progressMap, st.learnState?.startedAt)
+  const videoUnlockAt = videoUnlockAtFor(index, st.sessions, st.progressMap, st.learnState?.startedAt, st.questionsBySession)
   if (!videoUnlockAt || Date.now() < videoUnlockAt.getTime()) {
     throw httpError('This video is not open yet', 403, 'LOCKED')
   }
@@ -359,9 +425,17 @@ export async function markVideoDone(userId, sessionId) {
   const prog = st.progressMap.get(String(session._id))
   if (prog?.videoDoneAt) return { ok: true } // already anchored — keep the first watch
 
+  // A session with no tasks is finished the moment its video is — there is
+  // nothing else in it. Marking it complete keeps the progress bar and the
+  // report honest; without this the introduction would sit at "started" for
+  // the rest of the course.
+  const taskCount = st.questionsBySession?.get(String(session._id))?.length || 0
+  const now = new Date()
+  const patch = taskCount ? { videoDoneAt: now } : { videoDoneAt: now, completed: true, completedAt: now }
+
   await Progress.findOneAndUpdate(
     { user: userId, session: session._id },
-    { $setOnInsert: { skillBuild: session.skillBuild }, $set: { videoDoneAt: new Date() } },
+    { $setOnInsert: { skillBuild: session.skillBuild }, $set: patch },
     { upsert: true },
   )
   return { ok: true }
@@ -568,7 +642,7 @@ export async function courseRecord(userId, slug) {
     // what the course page refuses to do. This is not the same as a session
     // they simply have not reached yet — that one keeps its questions on
     // purpose, so please do not fold the two cases back together.
-    const phaseLocked = phaseOfSession(i, st.sessions.length, st.phases.total) > st.phases.unlocked
+    const phaseLocked = phaseOfSession(s.order, weekCount(st.sessions), st.phases.total) > st.phases.unlocked
     const held = (st.questionsBySession.get(String(s._id)) || [])
       .slice()
       .sort((a, b) => a.order - b.order)
