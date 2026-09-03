@@ -1,5 +1,18 @@
 import { asyncHandler } from '../../../utils/asyncHandler.js'
 import * as service from './learn.service.js'
+import { startTrial, nirmaanStanding } from './trial.js'
+
+// GET /api/user/learn/trial  → what this student may be offered for Nirmaan
+// ('none' | 'trial' | 'owned' | 'used' | 'expired'). The public Nirmaan page
+// asks this to decide between "start the free trial" and "continue your course".
+export const getTrial = asyncHandler(async (req, res) => {
+  res.json(await nirmaanStanding(req.user.id))
+})
+
+// POST /api/user/learn/trial  → grant the 1-week free trial (once per student)
+export const postTrial = asyncHandler(async (req, res) => {
+  res.json(await startTrial(req.user.id))
+})
 
 // GET /api/user/learn/:slug  → gated course (sessions + drip schedule state)
 export const getCourse = asyncHandler(async (req, res) => {

@@ -382,10 +382,23 @@ async function completePaidOrder(order, { paymentId } = {}) {
   // purchase, not the upgrade date.
   const pkg = await getPackageBySku(current.packageId)
   let startsAt = new Date()
+  // Retire any free trial for this product BEFORE anything else looks at the
+  // student's rows. A trial is not something you upgrade from: it carries a
+  // week-long expiresAt, and courseAccess anchors the student's year on their
+  // EARLIEST active-or-upgraded row. Leave it in either of those states and the
+  // student who just paid for a year is judged by the trial's end date — their
+  // course would shut days after they bought it. 'expired' is the one status
+  // anchorEnrollment ignores, which is exactly what a spent trial is.
+  await Enrollment.updateMany(
+    { user: userId, product: current.product, trial: true, status: { $in: ['active', 'upgraded'] } },
+    { status: 'expired' }
+  )
+
   if (current.isUpgrade) {
     const prev = await Enrollment.findOne({
       user: userId,
       product: current.product,
+      trial: { $ne: true },
       status: 'active',
     }).sort({ createdAt: -1 })
     if (prev) {

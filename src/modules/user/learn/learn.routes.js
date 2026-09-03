@@ -1,10 +1,14 @@
 import { Router } from 'express'
 import { requireUserAuth } from '../../../middleware/auth.js'
-import { getCourse, startCourse, videoDone, registerPlay, answerQuestion, getReport, getRecord } from './learn.controller.js'
+import { getCourse, startCourse, videoDone, registerPlay, answerQuestion, getReport, getRecord, getTrial, postTrial } from './learn.controller.js'
 
 // Mounted at /api/user/learn — all routes require a signed-in student.
 const router = Router()
 router.use(requireUserAuth)
+
+// Before '/:slug', which would otherwise swallow 'trial' as a course name.
+router.get('/trial', getTrial)
+router.post('/trial', postTrial)
 
 router.get('/:slug', getCourse)
 router.get('/:slug/report', getReport)

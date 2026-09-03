@@ -63,7 +63,9 @@ async function assertActiveCourse(userId, slug) {
   const access = await courseAccess(userId, slug)
   if (access.state === 'active') return access
   throw httpError(
-    'Your one year with this course is over, so the videos and tasks are closed. You can still download your work. If you would like more time, please write to us and we will help.',
+    access.trial
+      ? 'Your free trial week is over, so the videos and tasks are closed. Everything you wrote is saved and waiting — pick a package and you carry on from Week 2.'
+      : 'Your one year with this course is over, so the videos and tasks are closed. You can still download your work. If you would like more time, please write to us and we will help.',
     403,
     'COURSE_EXPIRED',
   )

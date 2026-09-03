@@ -103,7 +103,7 @@ export async function effectiveExpiry(e) {
 export async function courseAccess(userId, productSlug) {
   const anchor = await anchorEnrollment(userId, productSlug)
   if (!anchor) {
-    return { state: 'none', enrolledAt: null, expiresAt: null, recordUntil: null, daysLeft: null }
+    return { state: 'none', trial: false, enrolledAt: null, expiresAt: null, recordUntil: null, daysLeft: null }
   }
 
   const enrolledAt = anchor.startsAt || anchor.createdAt || null
@@ -114,7 +114,7 @@ export async function courseAccess(userId, productSlug) {
 
   // A plan with no end date never closes, so there is nothing to archive either.
   if (!expiresAt) {
-    return { state: 'active', enrolledAt, expiresAt: null, recordUntil: null, daysLeft: null }
+    return { state: 'active', trial: !!anchor.trial, enrolledAt, expiresAt: null, recordUntil: null, daysLeft: null }
   }
 
   const recordUntil = addYears(expiresAt, RECORD_YEARS)
@@ -123,6 +123,11 @@ export async function courseAccess(userId, productSlug) {
 
   return {
     state,
+    // Whether this access came from the free trial rather than a purchase. Only
+    // the wording changes — a trial that has run out and a paid year that has
+    // run out shut exactly the same doors, but telling a prospect their "year
+    // is over" after seven days reads as a bug.
+    trial: !!anchor.trial,
     enrolledAt,
     expiresAt,
     recordUntil,
