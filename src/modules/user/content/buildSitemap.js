@@ -92,7 +92,7 @@ async function run() {
   writeFileSync(join(PUBLIC_DIR, 'robots.txt'), robots)
 
   console.log(`✓ sitemap.xml — ${urls.length} URLs`)
-  console.log(`    ${STATIC_PATHS.length} fixed pages · ${posts.length} articles · ${courses.length} career pages · ${programs.length} programmes · ${pages.length} policies`)
+  console.log(`    ${STATIC_PATHS.length} fixed pages · ${posts.length} articles · ${courses.length} career pages · ${programs.length} programs · ${pages.length} policies`)
   console.log('✓ robots.txt')
   await mongoose.disconnect()
 }

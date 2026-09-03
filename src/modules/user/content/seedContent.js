@@ -61,11 +61,11 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/bulls-eye/',
     order: 2,
-    // Questions people ask about this programme specifically.
+    // Questions people ask about this program specifically.
     faqs: [
       {
-        q: "How is this different from a full mentoring programme?",
-        a: "Bull's Eye is built for an immediate decision — you come with a specific confusion and leave with a recommendation. The longer programmes work on you over months; this one works on the choice in front of you.",
+        q: "How is this different from a full mentoring program?",
+        a: "Bull's Eye is built for an immediate decision — you come with a specific confusion and leave with a recommendation. The longer programs work on you over months; this one works on the choice in front of you.",
       },
       {
         q: "What happens before the session?",
@@ -119,7 +119,7 @@ const PROGRAMS = [
     brochureUrl: 'https://svastrino.com/wp-content/uploads/2025/04/bloom-new-brochure.pdf',
     sourceUrl: 'https://svastrino.com/bloom/',
     order: 3,
-    // Questions people ask about this programme specifically.
+    // Questions people ask about this program specifically.
     faqs: [
       {
         q: "How much time do I need to give it?",
@@ -184,7 +184,7 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/breakthrough/',
     order: 4,
-    // Questions people ask about this programme specifically.
+    // Questions people ask about this program specifically.
     faqs: [
       {
         q: "Why does it run for two years?",
@@ -192,7 +192,7 @@ const PROGRAMS = [
       },
       {
         q: "Can I choose the session length?",
-        a: "Yes — twenty sessions of one hour, or ten of two hours, whichever suits your pace. Both add up to the same programme.",
+        a: "Yes — twenty sessions of one hour, or ten of two hours, whichever suits your pace. Both add up to the same program.",
       },
       {
         q: "What happens between sessions?",
@@ -405,7 +405,7 @@ const FAQS = [
 //
 // Every quote below was re-checked word for word against the live site in
 // August 2026. The /success-stories/ page carries seven of them; the other
-// five live only on the programme pages they were given for, so those five
+// five live only on the program pages they were given for, so those five
 // were checked against /breakthrough/ and /model-session/ instead. These are
 // real people's words, so the wording here matches the live page exactly apart
 // from two obvious typing slips ("Aso" for "Also", a stray full stop) that were
@@ -537,7 +537,7 @@ const TESTIMONIALS = [
     photo: 'https://svastrino.com/wp-content/uploads/2024/03/newFalguniPatil.png',
     // Given after a Model Session, which the new site no longer offers. Live
     // has these on the Model Session page only, so rather than move them to a
-    // programme this person never took, they run as general success stories.
+    // program this person never took, they run as general success stories.
     program: '',
     featured: false,
   },
@@ -552,7 +552,7 @@ const TESTIMONIALS = [
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/40-Heet.jpg',
     // Given after a Model Session, which the new site no longer offers. Live
     // has these on the Model Session page only, so rather than move them to a
-    // programme this person never took, they run as general success stories.
+    // program this person never took, they run as general success stories.
     program: '',
     featured: false,
   },
@@ -565,7 +565,7 @@ const TESTIMONIALS = [
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/39-Manasi-.jpg',
     // Given after a Model Session, which the new site no longer offers. Live
     // has these on the Model Session page only, so rather than move them to a
-    // programme this person never took, they run as general success stories.
+    // program this person never took, they run as general success stories.
     program: '',
     featured: false,
   },

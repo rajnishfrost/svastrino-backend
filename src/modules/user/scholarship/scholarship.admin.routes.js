@@ -8,7 +8,7 @@ import { ORG_TYPES, ORG_TYPE_LABELS, ORG_MODULES } from '../organisation/organis
 /**
  * Mounted at /api/admin/scholarship — gated by the 'scholarship' module.
  *
- * Admin sees the whole programme across every organisation: applications and
+ * Admin sees the whole program across every organisation: applications and
  * their review, what each partner has been granted, every cycle with live
  * counts, and — by passing no organisation scope to the service — any cycle's
  * questions, enrolments, leaderboard and individual answer sheets.
@@ -24,7 +24,7 @@ const qDTO = (q) => ({
   maxWords: q.maxWords || 1000,
 })
 
-// ---- Programme overview ------------------------------------------------------
+// ---- Program overview ------------------------------------------------------
 
 // GET /api/admin/scholarship/overview
 router.get('/overview', asyncHandler(async (req, res) => {

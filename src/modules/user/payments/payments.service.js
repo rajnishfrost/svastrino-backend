@@ -196,7 +196,7 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
     buyer = await User.findById(userId).select('email studentClass')
   }
 
-  // Some programmes are deliberately not sold straight from the checkout: the
+  // Some programs are deliberately not sold straight from the checkout: the
   // visitor talks to a mentor first, and only once the team has approved that
   // request does the checkout open for them. Anyone else reaching here has
   // skipped the call, so refuse rather than take the money.

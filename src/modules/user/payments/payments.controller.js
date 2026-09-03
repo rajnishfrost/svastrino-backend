@@ -78,7 +78,7 @@ export const listEnrollments = asyncHandler(async (req, res) => {
       // Which half of the dashboard this belongs under, and what the course is
       // actually called. Both come from the package, because the enrollment
       // itself only stores the plan name ("Bull's Eye Program") and cannot say
-      // whether that plan is a course or a mentoring programme.
+      // whether that plan is a course or a mentoring program.
       const pkg = await getPackageBySku(e.packageId)
       const kind = pkg?.kind === 'mentoring' ? 'mentoring' : 'course'
 

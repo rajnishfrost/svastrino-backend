@@ -184,7 +184,7 @@ export async function myMentoring(userId) {
   // Program enrollments carry product = the package SKU (independent purchases).
   // mentoringPackages() returns { pkg, parent } pairs, not packages — reading
   // .sku straight off the pair gave a list of undefined, so the $in matched
-  // nothing and a paid programme never appeared on the dashboard at all.
+  // nothing and a paid program never appeared on the dashboard at all.
   const rows = await mentoringPackages({ activeOnly: false })
   const pkgs = rows.map((r) => r.pkg)
   const enrollments = await Enrollment.find({

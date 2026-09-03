@@ -37,7 +37,7 @@ const STATUSES = ['new', 'contacted', 'approved', 'closed']
  * Admin: move an enquiry along, or leave a note on it.
  *
  * Approving an expert-call request is what actually opens the checkout for that
- * programme, so it also stamps the time and mails the caller their booking
+ * program, so it also stamps the time and mails the caller their booking
  * link. The mail is best-effort — the approval itself is what matters.
  */
 export async function updateEnquiry(id, { status, notes } = {}) {

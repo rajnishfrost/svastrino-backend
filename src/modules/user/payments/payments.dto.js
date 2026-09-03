@@ -88,7 +88,7 @@ export function toEnrollmentDTO(e, extra = {}) {
     status: e.status,
     startsAt: e.startsAt,
     expiresAt: e.expiresAt,
-    // Buying a mentoring programme creates an enrollment too, so the dashboard
+    // Buying a mentoring program creates an enrollment too, so the dashboard
     // has to be told which half it belongs under — otherwise Bull's Eye lands
     // beside Nirmaan in Skill Build. 'course' | 'mentoring'.
     kind: extra.kind || 'course',

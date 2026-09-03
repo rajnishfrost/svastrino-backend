@@ -211,7 +211,7 @@ called without an organisation scope.
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/overview` | Programme-wide counts + the org type/module vocabularies |
+| GET | `/overview` | Program-wide counts + the org type/module vocabularies |
 | GET | `/organisations` | Query `status`, `type`, `q` |
 | GET | `/organisations/:id` | `{ organisation, stats, cycles }` |
 | PATCH | `/organisations/:id` | Review: `{ status: 'approved' \| 'rejected', reason? }`. Approving provisions the owner account and emails the set-password link |

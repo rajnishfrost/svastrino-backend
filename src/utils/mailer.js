@@ -241,7 +241,7 @@ export function buildEnquiryEmail(details) {
     ['Name', name],
     ['Email', email],
     ['Phone', phone],
-    ['Programme', program],
+    ['Program', program],
     ['Best time to call', preferredTime],
     ['Class', studentClass],
     ['City', city],
@@ -276,7 +276,7 @@ export function buildEnquiryEmail(details) {
 
 /**
  * Sent to the caller once the team has spoken to them and cleared them to pay.
- * The link drops them straight into the booking wizard for that programme.
+ * The link drops them straight into the booking wizard for that program.
  */
 export function buildExpertApprovalEmail({ name, program }) {
   const first = String(name || '').trim().split(/\s+/)[0] || 'there'

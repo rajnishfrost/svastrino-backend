@@ -642,7 +642,7 @@ export async function listAllCycles({ organisation, year, status } = {}) {
   }))
 }
 
-/** Programme-wide numbers for the admin scholarship dashboard. */
+/** Program-wide numbers for the admin scholarship dashboard. */
 export async function adminOverview() {
   const [
     organisations,

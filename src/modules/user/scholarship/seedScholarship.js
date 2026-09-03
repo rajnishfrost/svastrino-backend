@@ -8,7 +8,7 @@ import { ScholarshipCycle, ScholarshipQuestion } from './scholarship.model.js'
 import { Organisation, DEFAULT_ORG_MODULES } from '../organisation/organisation.model.js'
 
 // A deliberate spread of types so the public directory's filters have something
-// to show — it's no longer a schools-and-colleges-only programme.
+// to show — it's no longer a schools-and-colleges-only program.
 const ORGANISATIONS = [
   { name: 'Delhi Public School', type: 'school', branch: 'R.K. Puram', city: 'New Delhi', state: 'Delhi', contactPerson: 'Anita Sharma', phone: '+911123456789', email: 'partner1@example.com', status: 'approved', code: 'DPS-1A01', description: 'A CBSE senior secondary school running the Nirmaan scholarship for classes 9–12.' },
   { name: 'Kendriya Vidyalaya', type: 'school', branch: 'Sector 8', city: 'Gandhinagar', state: 'Gujarat', contactPerson: 'Ravi Patel', phone: '+919812345678', email: 'partner2@example.com', status: 'approved', code: 'KV-2B02', description: 'Central government school partnering to give one student a full Nirmaan package.' },

@@ -18,9 +18,9 @@ const enquirySchema = new mongoose.Schema(
     studentClass: { type: String, default: '', trim: true },
     city: { type: String, default: '', trim: true },
 
-    // Which programme the request is about. Only the expert-call form sets it —
+    // Which program the request is about. Only the expert-call form sets it —
     // Breakthrough is not sold self-serve, so the request has to carry which
-    // programme the caller was reading about.
+    // program the caller was reading about.
     program: { type: String, default: '', trim: true },
 
     // When they would like to be called. Free text on purpose: "after 6pm",
@@ -43,7 +43,7 @@ const enquirySchema = new mongoose.Schema(
      * contacted — someone has spoken to them
      * approved  — only for expert-call requests: the call has happened and the
      *             team has cleared them to pay. Until an enquiry reaches this
-     *             state the checkout refuses the programme (see createOrder).
+     *             state the checkout refuses the program (see createOrder).
      * closed    — dealt with, one way or the other
      */
     status: {

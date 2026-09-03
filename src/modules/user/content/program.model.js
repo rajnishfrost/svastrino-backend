@@ -30,15 +30,15 @@ const mentoringProgramSchema = new mongoose.Schema(
     // The bookable program SKU (mentoring catalog) this page's "Book" CTA opens.
     bookingSku: { type: String, default: '' },
 
-    // How this programme is bought. Most are 'self-serve' — pick a slot, pay,
+    // How this program is bought. Most are 'self-serve' — pick a slot, pay,
     // done. Breakthrough is 'expert-call': a two-year commitment is not sold
     // from a checkout page, so the visitor asks for a call and the team sends a
     // payment link afterwards.
     buyMode: { type: String, enum: ['self-serve', 'expert-call'], default: 'self-serve' },
     tagline: { type: String, default: '' },
-    // One line of reassurance under the hero buttons. Per programme, because
+    // One line of reassurance under the hero buttons. Per program, because
     // "500+ students mentored" is true of the practice but not of every
-    // programme on its own. Blank falls back to a neutral line on the page.
+    // program on its own. Blank falls back to a neutral line on the page.
     trustLine: { type: String, default: '' },
     summary: { type: String, default: '' },
 
@@ -50,8 +50,8 @@ const mentoringProgramSchema = new mongoose.Schema(
     journey: { type: [stageSchema], default: [] },
     benefits: { type: [String], default: [] },
 
-    // Questions specific to THIS programme. The global FAQ list is grouped by
-    // topic, not by programme, so a programme page needs its own.
+    // Questions specific to THIS program. The global FAQ list is grouped by
+    // topic, not by program, so a program page needs its own.
     faqs: {
       type: [{
         _id: false,
