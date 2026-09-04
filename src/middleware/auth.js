@@ -20,6 +20,28 @@ export function requireUserAuth(req, res, next) {
 }
 
 /**
+ * Attaches req.user when a valid user token happens to be present, and does
+ * nothing at all when it is not.
+ *
+ * For public routes that behave better knowing who is asking but must keep
+ * working for someone who is not signed in — the enquiry forms, which link a
+ * request to the account that sent it so the team does not have to match them
+ * up by email afterwards. A bad or expired token is treated as no token: the
+ * visitor came to fill in a form, and refusing it over a stale session would
+ * lose the enquiry to make a point about authentication.
+ */
+export function optionalUserAuth(req, _res, next) {
+  const token = extractToken(req)
+  if (token) {
+    try {
+      const decoded = verifyToken(token)
+      if (decoded.role === 'user') req.user = { id: decoded.id, role: decoded.urole || 'student' }
+    } catch { /* not signed in, as far as this route is concerned */ }
+  }
+  next()
+}
+
+/**
  * Guards admin routes. There's ONE login now: the same session token powers the
  * site and the panel. So this accepts the unified token and resolves panel
  * identity from the DB — the account must exist, be active, and have panel

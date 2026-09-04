@@ -7,6 +7,8 @@ const fail = (message, field) => {
 
 const clean = (v, max) => String(v ?? '').trim().slice(0, max)
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 /** Validate and normalise an incoming enquiry. Never trust the body. */
 export function validateEnquiry(body = {}) {
   const name = clean(body.name, 80)
@@ -22,19 +24,30 @@ export function validateEnquiry(body = {}) {
 
   if (name.length < 2) throw fail('Please tell us your name', 'name')
 
-  // We need ONE way to reach them back. The contact form asks for an email; the
-  // home-page form asks for a phone number instead and has no email field at
-  // all, so each form is validated against what it actually collects.
-  if (source === 'contact') {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email does not look right', 'email')
-  } else if (!phone) {
-    throw fail('Please leave a phone number so we can reach you', 'phone')
+  // The home banner and the expert-call panel share one set of fields and ask
+  // for all of them, so they are checked the same way here. An enquiry missing
+  // a city or a way to reach the sender is one the team cannot act on, and the
+  // browser is the last place to enforce that — anything can post to this route.
+  //
+  // The contact page is a different form with a different shape (no city, no
+  // phone) and keeps the rules it always had.
+  const FULL = source === 'home' || source === 'expert-call'
+
+  if (!email) throw fail('Please add your email address', 'email')
+  if (!EMAIL_RE.test(email)) throw fail('That email does not look right', 'email')
+
+  if (FULL) {
+    if (!phone) throw fail('Please leave a phone number so we can reach you', 'phone')
+    if (!city) throw fail('Please tell us where you are based', 'city')
+    if (message.length < 3) throw fail('Please tell us how we can help', 'message')
+    if (source === 'expert-call' && !preferredTime) {
+      throw fail('Please tell us when we should call', 'preferredTime')
+    }
+  } else if (message.length < 3) {
+    throw fail('Please tell us how we can help', 'message')
   }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('That email does not look right', 'email')
+
   if (phone && !/^[+\d][\d\s-]{6,19}$/.test(phone)) throw fail('That phone number does not look right', 'phone')
-  // The contact form asks for a message; the home form asks what you need help
-  // with, which may legitimately be left blank once class and city are given.
-  if (source === 'contact' && message.length < 3) throw fail('Please tell us how we can help', 'message')
 
   return { name, email, phone, message, studentClass, city, program, preferredTime, source }
 }

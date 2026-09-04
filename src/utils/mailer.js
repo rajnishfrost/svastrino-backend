@@ -83,15 +83,33 @@ const esc = (s) =>
     .replace(/"/g, '&quot;')
 
 /**
- * Fill the HTML layout's {{placeholders}}. `preheader`, `heading`, `intro`,
- * `cta` and `link` are required; `note` is optional (rendered as a paragraph).
+ * Fill the HTML layout's {{placeholders}}. `preheader`, `heading` and `intro`
+ * are required; `note` is optional (rendered as a paragraph), and so is the
+ * call to action — an email whose next move belongs to US rather than to the
+ * reader has no button to offer, and rendering an empty one plus a dangling
+ * "or paste this link into your browser" is worse than rendering nothing.
  */
+function actionBlock(cta, link) {
+  if (!cta || !link) return ''
+  const href = esc(link)
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px">
+                  <tr>
+                    <td align="center" style="border-radius:10px;background:#2f7ae5">
+                      <a href="${href}" style="display:inline-block;padding:13px 30px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px">${esc(cta)}</a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 6px;font-size:12.5px;color:#5b6677">Or paste this link into your browser:</p>
+                <p style="margin:0;font-size:12.5px;word-break:break-all"><a href="${href}" style="color:#2f7ae5;text-decoration:none">${href}</a></p>`
+}
+
 function template({ heading, preheader, intro, cta, link, note }) {
   const noteHtml = note ? `<p style="${NOTE_STYLE}">${esc(note)}</p>` : ''
-  const values = { preheader, heading, intro, cta, link, note: noteHtml }
+  const values = { preheader, heading, intro, note: noteHtml, action: actionBlock(cta, link) }
   return layout().replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
-    // `note` is pre-built HTML; everything else is escaped user/plain text.
-    key === 'note' ? values.note : esc(values[key] ?? '')
+    // `note` and `action` are pre-built HTML; the rest is escaped plain text.
+    key === 'note' || key === 'action' ? values[key] : esc(values[key] ?? '')
   )
 }
 
@@ -305,6 +323,49 @@ export async function sendExpertApprovalEmail(to, details) {
 
 export async function sendEnquiryEmail(to, details) {
   await sendMail({ to, ...buildEnquiryEmail(details) })
+}
+
+/**
+ * The receipt the person who enquired gets — a different letter from the one the
+ * team gets, and for a different reason. Theirs is a to-do; this one only has to
+ * say "it arrived, a person will call you", so that a visitor who filled in a
+ * form on a page they may never return to has something in their inbox proving
+ * it went somewhere.
+ *
+ * A call-back request already carries a promise about timing, so it repeats it
+ * here; a general enquiry does not, and inventing one would be worse than
+ * saying nothing. There is no call to action: the next move is ours, and a
+ * button would suggest otherwise.
+ */
+export function buildEnquiryAckEmail({ name, source, program, preferredTime }) {
+  const first = String(name || '').trim().split(/\s+/)[0] || 'there'
+  const isCall = source === 'expert-call'
+
+  const intro = isCall
+    ? `Hi ${first}, thank you for asking to speak to us${program ? ` about ${program}` : ''}. `
+      + 'We have your request, and one of our mentors will call you within one working day'
+      + `${preferredTime ? `, around the time you asked for (${preferredTime})` : ''}. `
+      + 'There is nothing to pay and nothing more to do — we will come to you.'
+    : `Hi ${first}, thank you for getting in touch. We have your enquiry, and someone from our `
+      + 'team will connect with you shortly to understand where you are and help you work out '
+      + 'the right next step. There is nothing more you need to do for now.'
+
+  return {
+    subject: isCall ? `We have your call-back request — ${BRAND}` : `We have your enquiry — ${BRAND}`,
+    text: `${intro}\n\nIf anything changes in the meantime, just reply to this email.\n\n— The ${BRAND} team`,
+    html: template({
+      heading: isCall ? 'Your call is booked in 📞' : 'We have your enquiry ✅',
+      preheader: isCall
+        ? 'One of our mentors will call you within one working day.'
+        : 'Our team will connect with you shortly.',
+      intro,
+      note: 'If anything changes in the meantime, just reply to this email — it reaches the same team.',
+    }),
+  }
+}
+
+export async function sendEnquiryAckEmail(to, details) {
+  await sendMail({ to, ...buildEnquiryAckEmail(details) })
 }
 
 export function buildLearningReminderEmail({ name, courseName, taskLabel, slug }) {

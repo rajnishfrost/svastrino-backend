@@ -11,6 +11,26 @@ export const submitEnquiry = asyncHandler(async (req, res) => {
   res.status(201).json({ ok: true, message: 'Thanks! We have your details and will be in touch.' })
 })
 
+// GET /api/user/enquiry/mine?source=&program=  (requireUserAuth)
+// Where this person's last request stands, so a form that has already been
+// answered can show that instead of sitting there blank.
+export const getMyEnquiry = asyncHandler(async (req, res) => {
+  const e = await service.myLatestEnquiry({
+    userId: req.user.id,
+    source: req.query.source,
+    program: req.query.program,
+  })
+  res.json({
+    enquiry: e && {
+      id: e._id,
+      status: e.status,
+      source: e.source,
+      program: e.program,
+      createdAt: e.createdAt,
+    },
+  })
+})
+
 // GET /api/admin/enquiries
 export const getEnquiries = asyncHandler(async (req, res) => {
   const list = await service.listEnquiries({ status: req.query.status, source: req.query.source })
