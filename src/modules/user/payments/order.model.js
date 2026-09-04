@@ -3,8 +3,14 @@ import mongoose from 'mongoose'
 /**
  * An Order is one purchase attempt for a package. It moves:
  *   created → paid            (successful payment, enrollment granted)
- *           → failed          (payment failed/abandoned)
+ *           → failed          (the gateway refused the payment)
+ *           → cancelled       (the customer closed the checkout)
  *   paid    → refunded        (admin refund)
+ *
+ * 'failed' and 'cancelled' both stay claimable: the gateway reports a failure
+ * per ATTEMPT and lets the same gateway order be paid on the next try, and a
+ * customer who closes the widget may still have a payment in flight. Money
+ * arriving always outranks either.
  *
  * All monetary fields are in PAISE. `gateway` records which provider handled it
  * ('mock' now; 'razorpay' once real keys are wired) so the flow is swappable.
@@ -36,7 +42,13 @@ const orderSchema = new mongoose.Schema(
     creditApplied: { type: Number, default: 0 },      // paise credited from prior payments
     previousPackageId: { type: String, default: null }, // sku being upgraded from
 
-    status: { type: String, enum: ['created', 'paid', 'failed', 'refunded'], default: 'created', index: true },
+    status: {
+      type: String,
+      enum: ['created', 'paid', 'failed', 'cancelled', 'refunded'],
+      default: 'created',
+      index: true,
+    },
+    cancelledAt: { type: Date },
 
     // Gateway details
     gateway: { type: String, default: 'mock' },

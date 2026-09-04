@@ -17,6 +17,12 @@ const progressSchema = new mongoose.Schema(
     // the server so clearing browser storage does not reset it.
     plays: { type: Number, default: 0 },
 
+    // Where the student left the video (seconds), so the next visit can offer
+    // to pick up from there. Kept here as well as in the browser so the offer
+    // follows them to another device. 0 = nothing to resume.
+    resumeAt: { type: Number, default: 0 },
+    resumeUpdatedAt: { type: Date },
+
     completed: { type: Boolean, default: false }, // all questions answered
     completedAt: { type: Date }, // when the last question was answered
   },

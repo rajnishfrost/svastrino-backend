@@ -35,6 +35,13 @@ export const registerPlay = asyncHandler(async (req, res) => {
   res.json(out)
 })
 
+// POST /api/user/learn/sessions/:id/position  { seconds }  → where the student
+// is in the video, so the next visit can offer "Resume from".
+export const savePosition = asyncHandler(async (req, res) => {
+  const out = await service.savePosition(req.user.id, req.params.id, req.body?.seconds)
+  res.json(out)
+})
+
 // POST /api/user/learn/sessions/:id/video-done  → first 90% watch
 export const videoDone = asyncHandler(async (req, res) => {
   const out = await service.markVideoDone(req.user.id, req.params.id)

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { requireUserAuth } from '../../../middleware/auth.js'
-import { getCourse, startCourse, videoDone, registerPlay, answerQuestion, getReport, getRecord, getTrial, postTrial } from './learn.controller.js'
+import { getCourse, startCourse, videoDone, registerPlay, savePosition, answerQuestion, getReport, getRecord, getTrial, postTrial } from './learn.controller.js'
 
 // Mounted at /api/user/learn — all routes require a signed-in student.
 const router = Router()
@@ -15,6 +15,7 @@ router.get('/:slug/report', getReport)
 router.get('/:slug/record', getRecord)
 router.post('/:slug/start', startCourse)
 router.post('/sessions/:id/play', registerPlay)
+router.post('/sessions/:id/position', savePosition)
 router.post('/sessions/:id/video-done', videoDone)
 router.post('/questions/:id/answer', answerQuestion)
 

@@ -25,6 +25,15 @@ export async function getSkillBuildBySlug(slug) {
  * All active packages of a product (by skill-build slug), normalised for the
  * payments/upgrade flow and ordered cheapest → dearest. Returns [] if unknown.
  */
+/** "Nirmaan" + "Nirmaan + Psychometric Testing" → the package name alone. */
+export const productLabel = (productName, packageName) => {
+  const product = (productName || '').trim()
+  const name = (packageName || '').trim()
+  if (!product) return name
+  if (!name) return product
+  return name.startsWith(product) ? name : `${product} — ${name}`
+}
+
 export async function listPackagesByProduct(productSlug) {
   const sb = await SkillBuild.findOne({ slug: productSlug, active: true })
   if (!sb) return []
@@ -56,7 +65,11 @@ export async function getPackageBySku(sku) {
     // "Mentoring" parent — product = own SKU so payments never treats buying a
     // second program as an upgrade of the first.
     product: isMentoring ? pkg.sku : pkg.skillBuild?.slug || null,
-    label: `${pkg.skillBuild?.name || ''} — ${pkg.name}`.trim().replace(/^—\s*/, ''),
+    // "Nirmaan — Nirmaan + Psychometric Testing" names the course twice. A tier
+    // whose own name already opens with the product stands on its own; anything
+    // else — a mentoring program under the "Mentoring" parent — still needs the
+    // parent in front of it to read right on an order or a receipt.
+    label: productLabel(pkg.skillBuild?.name, pkg.name),
     price: pkg.price,
     earlyBird: pkg.earlyBird,
     durationDays: pkg.durationDays,

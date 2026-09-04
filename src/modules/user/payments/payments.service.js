@@ -12,10 +12,22 @@ import * as gateway from './gateway.js'
 
 // The charged price before coupons: early-bird if the package has one, else list.
 const basePrice = (pkg) => (pkg.earlyBird != null ? pkg.earlyBird : pkg.price)
+
+/**
+ * What an upgrade credits against the new tier: the price the tier they own is
+ * CHARGED at, not the rupees that actually changed hands. A coupon or offer won
+ * on that tier is theirs to keep, so moving up costs the difference between the
+ * two plans instead of quietly clawing the discount back at the till.
+ *
+ * A student who paid MORE than that — they bought before an early-bird landed —
+ * is credited what they paid instead, so an upgrade can never cost more than
+ * the new package sells for on its own.
+ */
+const upgradeCredit = (currentPkg, totalPaid) => Math.max(totalPaid, basePrice(currentPkg))
 import { sendReceiptEmail } from '../../../utils/mailer.js'
 
 // Upgrade rules: only within this many days of the day the student STARTS the
-// course, and only upward in price. Credit = everything paid for the product.
+// course, and only upward in price. Credit = the tier they already own.
 const UPGRADE_WINDOW_DAYS = 7
 const DAY_MS = 86400000
 
@@ -27,7 +39,9 @@ const DAY_MS = 86400000
  * The 7-day window is anchored to the LearnState `startedAt` (the day the
  * student clicked Start), counted in IST calendar days so it lines up with the
  * course report's "on day N". Bought but not started yet → the window hasn't
- * begun, so the upgrade stays open.
+ * begun, so the upgrade stays open. The team can also reopen the window for one
+ * student (`LearnState.upgradeWindowUntil`); that deadline wins whenever it
+ * runs later than the standard one — including after the standard one closed.
  */
 async function activeContext(userId, product) {
   const enrollment = await Enrollment.findOne({ user: userId, product, status: 'active' }).sort({
@@ -45,6 +59,8 @@ async function activeContext(userId, product) {
   const learnState = await LearnState.findOne({ user: userId, slug: product })
   const courseStartedAt = learnState?.startedAt || null
 
+  const reopenUntil = learnState?.upgradeWindowUntil || null
+
   let daysLeft = UPGRADE_WINDOW_DAYS
   let withinWindow = true
   let windowEndsAt = null
@@ -56,12 +72,25 @@ async function activeContext(userId, product) {
     windowEndsAt = new Date(new Date(courseStartedAt).getTime() + UPGRADE_WINDOW_DAYS * DAY_MS)
   }
 
+  // A reopen only ever extends: whole IST days from today up to the deadline,
+  // taken only when that beats what the standard window still has. A deadline
+  // already past leaves 0 and is ignored, so a spent grant changes nothing.
+  if (reopenUntil) {
+    const reopenDaysLeft = Math.max(0, istDaysBetween(new Date(), reopenUntil))
+    if (reopenDaysLeft > daysLeft) {
+      daysLeft = reopenDaysLeft
+      windowEndsAt = reopenUntil
+      withinWindow = true
+    }
+  }
+
   return {
     enrollment,
     currentPkg,
     totalPaid,
     courseStartedAt,
     courseStarted: !!courseStartedAt,
+    reopenUntil,
     daysLeft,
     windowEndsAt,
     withinWindow,
@@ -133,7 +162,7 @@ export async function quote({ userId, packageId, couponCode }) {
         isUpgrade: true,
         fromPackageId: ctx.currentPkg.sku,
         fromPackageName: ctx.currentPkg.name,
-        credit: ctx.totalPaid,
+        credit: upgradeCredit(ctx.currentPkg, ctx.totalPaid),
         withinWindow: ctx.withinWindow,
         windowEndsAt: ctx.windowEndsAt,
       }
@@ -147,6 +176,9 @@ export async function quote({ userId, packageId, couponCode }) {
     name: pkg.label,
     listPrice: pkg.price,
     basePrice: base,
+    // The checkout asks for the student's class up front when the plan bundles
+    // the test, rather than letting createOrder refuse the sale for it.
+    includesPsychometric: !!pkg.includesPsychometric,
     earlyBirdApplied: pkg.earlyBird != null,
     couponCode: code,
     discount,
@@ -240,7 +272,7 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
 
   // One package at a time. If the user already owns a tier of this product it
   // must be an UPGRADE: strictly higher price, and inside the 7-day window. The
-  // amount already paid is credited against the new price.
+  // tier they already own is credited against the new price.
   let creditApplied = 0
   let isUpgrade = false
   let previousPackageId = null
@@ -275,7 +307,7 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
       throw httpError('You can only upgrade to a higher package, not downgrade', 400, 'DOWNGRADE_BLOCKED')
     if (!ctx.withinWindow)
       throw httpError('The 7-day upgrade window for your package has closed', 400, 'UPGRADE_WINDOW_CLOSED')
-    creditApplied = ctx.totalPaid
+    creditApplied = upgradeCredit(current, ctx.totalPaid)
     isUpgrade = true
     previousPackageId = current.sku
   }
@@ -341,7 +373,8 @@ async function completePaidOrder(order, { paymentId } = {}) {
   // the customer has already been sent. A 'failed' order is claimable too: the
   // gateway reports a failure per ATTEMPT and lets the buyer pay the same
   // gateway order on the next try, so real money arriving must always be able
-  // to overtake an earlier failed attempt.
+  // to overtake an earlier failed attempt — or one the customer closed the
+  // widget on while their payment was still in flight.
   const claim = {
     status: 'paid',
     paidAt: order.paidAt || new Date(),
@@ -351,7 +384,7 @@ async function completePaidOrder(order, { paymentId } = {}) {
   if (order.referralCode) claim.referralCommission = REFERRAL_COMMISSION
 
   const claimed = await Order.findOneAndUpdate(
-    { _id: order._id, status: { $in: ['created', 'failed'] } },
+    { _id: order._id, status: { $in: ['created', 'failed', 'cancelled'] } },
     { $set: claim },
     { new: true }
   )
@@ -488,11 +521,11 @@ export async function verifyAndComplete({ userId, orderId, paymentId, signature 
   if (order.status === 'paid') {
     return await completePaidOrder(order, { paymentId: order.gatewayPaymentId })
   }
-  // A failed attempt does not close the order. The gateway records a failure per
-  // attempt and the checkout offers to reopen the widget on the same gateway
-  // order, so the second attempt succeeding must still be able to land here.
-  // Only a refunded order is genuinely done with.
-  if (order.status !== 'created' && order.status !== 'failed')
+  // Neither a failed attempt nor a closed widget shuts the order. The gateway
+  // records a failure per attempt and the checkout offers to reopen the widget
+  // on the same gateway order, so a later attempt succeeding must still be able
+  // to land here. Only a refunded order is genuinely done with.
+  if (!['created', 'failed', 'cancelled'].includes(order.status))
     throw httpError('This order can no longer be paid', 400)
 
   // MOCK: synthesize the payment the widget would have returned.
@@ -508,13 +541,31 @@ export async function verifyAndComplete({ userId, orderId, paymentId, signature 
     // order while the browser was posting a bad signature, and money that has
     // arrived outranks a confirm that did not verify.
     await Order.updateOne(
-      { _id: order._id, status: { $in: ['created', 'failed'] } },
+      { _id: order._id, status: { $in: ['created', 'failed', 'cancelled'] } },
       { $set: { status: 'failed' } }
     )
     throw httpError('Payment verification failed', 400)
   }
 
   return await completePaidOrder(order, { paymentId })
+}
+
+/**
+ * The customer closed the checkout. Park the order so it stops reading as a
+ * payment we are still waiting on — an abandoned basket is not "pending".
+ *
+ * Only an order still sitting at 'created' moves: one already paid, failed or
+ * refunded has an outcome of its own, and a dismissed widget must never
+ * overwrite it. Silent by design, since the browser fires this on its way out
+ * and nothing is waiting to read the answer.
+ */
+export async function cancelOrder({ userId, orderId }) {
+  const order = await Order.findOneAndUpdate(
+    { _id: orderId, user: userId, status: 'created' },
+    { $set: { status: 'cancelled', cancelledAt: new Date() } },
+    { new: true }
+  )
+  return { ok: true, status: order?.status || null }
 }
 
 async function hydrate(order) {
@@ -548,18 +599,29 @@ export async function upgradeStatus(userId, product) {
   if (!ctx?.currentPkg) return { hasEnrollment: false, canUpgrade: false, options: [] }
 
   const current = ctx.currentPkg
+  const credit = upgradeCredit(current, ctx.totalPaid)
   const options = (await listPackagesByProduct(product))
     .filter((p) => p.price > current.price)
     .map((p) => {
       const base = basePrice(p)
-      const amount = Math.max(0, base - ctx.totalPaid)
+      const amount = Math.max(0, base - credit)
+      // The same step at list prices — what the move up would cost with no
+      // offer running. Shown beside `amount` as the "instead of" price, so it
+      // is only worth printing while it is the bigger of the two.
+      const listAmount = Math.max(0, p.price - current.price)
       return {
         packageId: p.sku,
         name: p.name,
         basePrice: base,
-        credit: ctx.totalPaid,
+        credit,
         amount,
-        rupees: { basePrice: rupees(base), credit: rupees(ctx.totalPaid), amount: rupees(amount) },
+        listAmount,
+        rupees: {
+          basePrice: rupees(base),
+          credit: rupees(credit),
+          amount: rupees(amount),
+          listAmount: rupees(listAmount),
+        },
       }
     })
     .sort((a, b) => a.basePrice - b.basePrice)
@@ -591,6 +653,7 @@ export async function upgradeStatus(userId, product) {
     phase,
     totalPaid: ctx.totalPaid,
     windowDays: UPGRADE_WINDOW_DAYS,
+    reopenUntil: ctx.reopenUntil,
     courseStarted: ctx.courseStarted,
     courseStartedAt: ctx.courseStartedAt,
     withinWindow: ctx.withinWindow,
@@ -684,7 +747,7 @@ export async function handleWebhookEvent(event) {
   // we answer 2xx, so a retry has to be able to finish a grant that died halfway.
   if (type === 'payment.captured' && entity.order_id) {
     const order = await Order.findOne({ gatewayOrderId: entity.order_id })
-    if (order && ['created', 'failed', 'paid'].includes(order.status)) {
+    if (order && ['created', 'failed', 'cancelled', 'paid'].includes(order.status)) {
       await completePaidOrder(order, { paymentId: entity.id })
     }
   }

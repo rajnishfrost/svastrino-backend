@@ -4,6 +4,7 @@ import {
   getQuote,
   upgradeStatus,
   createOrder,
+  cancelOrder,
   verify,
   listOrders,
   getOrder,
@@ -25,6 +26,7 @@ router.post('/order', createOrder)
 router.post('/verify', verify)
 router.get('/orders', listOrders)
 router.get('/orders/:id', getOrder)
+router.post('/orders/:id/cancel', cancelOrder)
 router.get('/enrollments', listEnrollments)
 
 export default router

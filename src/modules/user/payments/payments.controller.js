@@ -45,6 +45,12 @@ export const verify = asyncHandler(async (req, res) => {
   res.json({ order: toOrderDTO(order), enrollment: enrollment ? toEnrollmentDTO(enrollment) : null })
 })
 
+// POST /api/user/payments/orders/:id/cancel — the customer closed the checkout
+export const cancelOrder = asyncHandler(async (req, res) => {
+  const result = await service.cancelOrder({ userId: req.user.id, orderId: req.params.id })
+  res.json(result)
+})
+
 // GET /api/user/payments/orders
 export const listOrders = asyncHandler(async (req, res) => {
   const orders = await service.listOrders(req.user.id)

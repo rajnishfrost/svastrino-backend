@@ -328,6 +328,9 @@ export async function getCourse(userId, slug) {
       playsLeft: Math.max(0, PLAY_LIMIT - plays),
       playLimitReached: plays >= PLAY_LIMIT,
       videoDone: !!prog?.videoDoneAt, // controls seek-unlock on the client
+      // Where they left the video last time, for the player's "Resume from".
+      resumeAt: prog?.resumeAt || 0,
+      resumeUpdatedAt: prog?.resumeUpdatedAt || null,
       completed: !!prog?.completed,   // session fully done (all questions answered)
       completedAt: prog?.completedAt || null,
       questions: qs,
@@ -379,6 +382,31 @@ export async function startCourse(userId, slug) {
  * Record that the video passed 90% (first watch only — the first time is the
  * schedule anchor for Q1 and permanently unlocks seeking on this video).
  */
+/**
+ * Remember where the student is in a video, so the next visit can offer to
+ * pick up from there. The player sends this every few seconds while it plays
+ * and once more as the page is left. A finished video is stored as 0 - there
+ * is nothing to resume, and "Resume from 14:58" would be a silly offer.
+ * Guarded like a play: a phase that has not been paid for takes no positions.
+ */
+export async function savePosition(userId, sessionId, seconds) {
+  const at = Number(seconds)
+  if (!Number.isFinite(at) || at < 0) throw httpError('Position must be a number of seconds', 400)
+  const st = await loadStateForSession(userId, sessionId)
+  await assertActiveCourse(userId, st.sb.slug)
+  const phase = phaseOfSession(st.session.order, weekCount(st.sessions), st.phases.total)
+  if (phase > st.phases.unlocked) throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
+
+  const resumeAt = Math.floor(at)
+  const now = new Date()
+  await Progress.findOneAndUpdate(
+    { user: userId, session: sessionId },
+    { $set: { resumeAt, resumeUpdatedAt: now }, $setOnInsert: { skillBuild: st.sb._id } },
+    { upsert: true },
+  )
+  return { ok: true, resumeAt, resumeUpdatedAt: now }
+}
+
 /**
  * Count one play of a video and say how many are left. Called by the player the
  * moment playback actually starts, NOT on page load — otherwise simply opening

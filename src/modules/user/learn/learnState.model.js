@@ -12,6 +12,13 @@ const learnStateSchema = new mongoose.Schema(
     skillBuild: { type: mongoose.Schema.Types.ObjectId, ref: 'SkillBuild', required: true },
     slug: { type: String, required: true }, // convenience for lookups (e.g. 'nirmaan')
     startedAt: { type: Date, required: true, default: () => new Date() },
+    // A team-granted reopen of the package-upgrade window: the instant it
+    // closes for this student, whatever the standard window worked out to.
+    // Always an IST midnight, so the last day counts in full. It lives here
+    // because the window is anchored to `startedAt`, and this doc — unlike the
+    // enrollment — survives an upgrade untouched, so the grant keeps its effect
+    // if the student moves up a tier. null = the standard window applies.
+    upgradeWindowUntil: { type: Date, default: null },
     // IST day index of the last MORNING reminder — caps it at one per day.
     lastNotifiedDay: { type: Number },
     // IST day index of the last EVENING "still pending" nudge — same cap.
