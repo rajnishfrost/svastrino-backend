@@ -24,6 +24,7 @@
     "seed:mentoring": "node src/modules/user/mentoring/seedMentoring.js",
     "reopen:upgrade-window": "node src/modules/user/payments/reopenUpgradeWindow.js",
     "fix:phone-index": "node src/modules/user/credentials/dropPhoneIndex.js",
+    "delete:user": "node src/modules/user/credentials/deleteUser.js",
     "build:sitemap": "node src/modules/user/content/buildSitemap.js",
     "build:redirects": "node src/modules/user/content/buildRedirects.js"
   },
