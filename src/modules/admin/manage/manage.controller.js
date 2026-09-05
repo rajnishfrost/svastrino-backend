@@ -6,6 +6,9 @@ const userDTO = (u) => ({
   id: u._id, name: u.name, email: u.email, phone: u.phone || null,
   role: u.role || 'student', emailVerified: u.emailVerified, createdAt: u.createdAt,
   active: u.active !== false,
+  // Whether the student portal is open to this account. Meaningless for a
+  // student (it always is), so the Users page only offers it on other roles.
+  siteAccess: u.siteAccess !== false,
   lastLoginAt: u.lastLoginAt || null,
 })
 const pkgDTO = (p) => ({
@@ -46,6 +49,13 @@ export const getUsers = asyncHandler(async (req, res) => {
 })
 export const patchUserRole = asyncHandler(async (req, res) => {
   const user = await service.setUserRole(req.admin, req.params.id, String(req.body.role || ''))
+  res.json({ user: userDTO(user) })
+})
+
+// PATCH /api/admin/users/:id/site-access  { siteAccess }
+// Whether this non-student account may use the student portal at all.
+export const patchUserSiteAccess = asyncHandler(async (req, res) => {
+  const user = await service.setUserSiteAccess(req.admin, req.params.id, !!req.body.siteAccess)
   res.json({ user: userDTO(user) })
 })
 

@@ -70,6 +70,28 @@ export async function listUsers({ q } = {}) {
  * (admin/superadmin) is superadmin-only; the last active superadmin can't be
  * demoted, and you can't demote yourself out of superadmin.
  */
+/**
+ * Open or close the student portal for one account.
+ *
+ * Only a superadmin decides this — it is an access grant, and the same rule
+ * already guards handing out panel access. A student is refused outright rather
+ * than silently ignored: their account IS the portal, so a switch that appeared
+ * to turn it off would be lying about what it did.
+ */
+export async function setUserSiteAccess(actor, userId, siteAccess) {
+  if (actor?.role !== 'superadmin') throw httpError('Only a superadmin can change portal access', 403)
+
+  const user = await User.findById(userId)
+  if (!user) throw httpError('User not found', 404)
+  if ((user.role || 'student') === 'student') {
+    throw httpError('A student account always has the student portal. Change its role first.', 400)
+  }
+
+  user.siteAccess = siteAccess
+  await user.save()
+  return user
+}
+
 export async function setUserRole(actor, userId, role) {
   if (!(await roleExists(role))) throw httpError('Invalid role', 400)
   const user = await User.findById(userId)

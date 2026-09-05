@@ -161,6 +161,10 @@ export function toUserDTO(user, extra = {}) {
     studentClass: user.studentClass || '',
     avatar: user.avatar || '',
     role: user.role || 'student',
+    // Whether the student portal is open to this account. Always true for a
+    // student; the client uses it to keep a panel-only account out of the
+    // portal's pages rather than letting them load and fail one request at a time.
+    siteAccess: user.siteAccess !== false,
     emailVerified: user.emailVerified,
     phoneVerified: user.phoneVerified,
     // Whether a password is set — the client shows "Change" vs "Set" password.

@@ -3,6 +3,7 @@ import { requireAdminAuth, requirePermission } from '../../../middleware/auth.js
 import {
   getStats,
   getUsers, patchUserRole,
+  patchUserSiteAccess,
   getPackages, patchPackage, postPackage,
   getSkillBuilds, postSkillBuild, patchSkillBuild,
   getSessions, postSession, patchSession, deleteSessionH,
@@ -38,6 +39,7 @@ router.post('/upload/image', requirePermission('content', 'blogs', 'career-libra
 
 router.get('/users', requirePermission('users'), getUsers)
 router.patch('/users/:id/role', requirePermission('users'), patchUserRole)
+router.patch('/users/:id/site-access', requirePermission('users'), patchUserSiteAccess)
 
 // Packages sit inside the Skill Builds page; Mentoring→Programs uses them too.
 router.get('/packages', requirePermission('skill-builds', 'mentoring'), getPackages)

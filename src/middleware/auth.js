@@ -20,6 +20,35 @@ export function requireUserAuth(req, res, next) {
 }
 
 /**
+ * Refuses a signed-in account that is not allowed in the STUDENT portal.
+ * Use AFTER requireUserAuth, on the routes that serve the portal itself.
+ *
+ * Students skip the check entirely — a student account is the portal, and the
+ * role is already on the token, so the common case costs nothing. Only an
+ * account with some other role is looked up, and it IS looked up rather than
+ * trusted from the token: this is an access decision, and one taken away in the
+ * admin panel has to bite on the next request, not whenever the holder next
+ * signs in.
+ */
+export async function requireSiteAccess(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' })
+  if ((req.user.role || 'student') === 'student') return next()
+  try {
+    const { User } = await import('../modules/user/credentials/credentials.model.js')
+    const account = await User.findById(req.user.id).select('siteAccess')
+    if (account && account.siteAccess === false) {
+      return res.status(403).json({
+        error: 'This account cannot do that. Sign in with your student account, or talk to the Svastrino team.',
+        code: 'NO_SITE_ACCESS',
+      })
+    }
+    return next()
+  } catch (err) {
+    return next(err)
+  }
+}
+
+/**
  * Attaches req.user when a valid user token happens to be present, and does
  * nothing at all when it is not.
  *

@@ -48,6 +48,17 @@ const userSchema = new mongoose.Schema(
     // keyed by this `role` string — see modules/admin/roles.
     active: { type: Boolean, default: true },
 
+    // May this account use the STUDENT portal — the dashboard, a course, a
+    // checkout — as opposed to only the admin panel?
+    //
+    // One account, one login: the site and the panel share a token, so an admin
+    // pressing "View site" has always landed inside the student portal signed
+    // in. That is right for a mentor who is also learning and wrong for a
+    // content editor, and until now there was no way to say which. Students are
+    // never judged by this — a student account IS the portal — so it is only
+    // ever read for someone whose role is something else.
+    siteAccess: { type: Boolean, default: true },
+
     // Which organisation this account came from (see modules/user/organisation).
     //   null      → a plain public signup, nobody added them
     //   ObjectId  → the organisation that bulk-added / registered them
