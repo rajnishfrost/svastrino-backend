@@ -728,6 +728,20 @@ export async function listCoupons() {
   return Coupon.find().sort({ createdAt: -1 })
 }
 
+/**
+ * Switch a coupon on or off by hand.
+ *
+ * Turning it off rather than deleting it: the code may already be printed on a
+ * flyer or sitting in somebody's inbox, and the orders that used it still refer
+ * to it. validateCoupon already refuses an inactive coupon, so this is the only
+ * flag that has to move — and it can be moved back.
+ */
+export async function setCouponActive(id, active) {
+  const coupon = await Coupon.findByIdAndUpdate(id, { $set: { active: !!active } }, { new: true })
+  if (!coupon) throw httpError('Coupon not found', 404)
+  return coupon
+}
+
 // --- Webhook -----------------------------------------------------------------
 
 /**

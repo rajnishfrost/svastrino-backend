@@ -152,3 +152,14 @@ export const adminCreateCoupon = asyncHandler(async (req, res) => {
 export const adminListCoupons = asyncHandler(async (req, res) => {
   res.json({ coupons: await service.listCoupons() })
 })
+
+// PATCH /api/admin/payments/coupons/:id  { active }
+export const adminSetCouponActive = asyncHandler(async (req, res) => {
+  if (typeof req.body?.active !== 'boolean') {
+    const err = new Error('active must be true or false')
+    err.status = 400
+    throw err
+  }
+  const coupon = await service.setCouponActive(req.params.id, req.body.active)
+  res.json({ coupon })
+})

@@ -6,6 +6,7 @@ import {
   adminRefund,
   adminCreateCoupon,
   adminListCoupons,
+  adminSetCouponActive,
 } from './payments.controller.js'
 
 // Mounted at /api/admin/payments
@@ -17,5 +18,6 @@ router.get('/revenue', requirePermission('orders'), adminRevenue)
 router.post('/refund', requirePermission('orders'), adminRefund)    // { orderId, reason? }
 router.get('/coupons', requirePermission('coupons'), adminListCoupons)
 router.post('/coupons', requirePermission('coupons'), adminCreateCoupon)
+router.patch('/coupons/:id', requirePermission('coupons'), adminSetCouponActive) // { active }
 
 export default router
