@@ -7,6 +7,7 @@ import { Question } from './question.model.js'
 import { Answer } from './answer.model.js'
 import { LearnState } from './learnState.model.js'
 import { courseAccess } from './courseAccess.js'
+import { Assessment } from '../assessment/assessment.model.js'
 import { nextIstMidnight, istDaysBetween } from '../../../utils/schedule.js'
 import { mediaUrl } from '../../../config/uploads.js'
 
@@ -126,10 +127,38 @@ async function userRank(userId, skillBuildSlug) {
   const packages = await Package.find({ sku: { $in: skus } })
   let rank = 0
   let packageName = null
+  // Any active plan that bundles the psychometric test makes it a step of this
+  // course, not an extra — so an upgrade brings the requirement with it.
+  const includesPsychometric = packages.some((p) => p.includesPsychometric)
   for (const p of packages) {
     if (p.order > rank) { rank = p.order; packageName = p.name }
   }
-  return { rank, packageName }
+  return { rank, packageName, includesPsychometric }
+}
+
+/**
+ * The psychometric gate.
+ *
+ * A student whose plan includes the test does the test first: the report is
+ * what the weeks are meant to be read against, so watching them before it is
+ * done is doing the course backwards. It applies from whenever the plan starts
+ * including it — someone who upgrades mid-course meets the same gate.
+ *
+ * "Done" means the student has finished taking it (`submitted`), not that an
+ * admin has verified it and attached the report (`completed`). Verification is
+ * our queue, not theirs, and a paid student should not sit locked out waiting
+ * on staff.
+ *
+ * The introduction is never gated: it has no tasks, and it is the video that
+ * explains how to read the report they are about to go and get.
+ */
+const PSYCHOMETRIC_DONE = ['submitted', 'completed']
+
+function psychometricGate({ includesPsychometric, assessment }) {
+  const status = assessment?.status || 'not_started'
+  const required = !!includesPsychometric
+  const done = !required || PSYCHOMETRIC_DONE.includes(status)
+  return { required, done, status, blocks: required && !done }
 }
 
 /**
@@ -182,7 +211,7 @@ async function loadState(userId, slug) {
   const sb = await SkillBuild.findOne({ slug, active: true })
   if (!sb) throw httpError('Course not found', 404)
 
-  const { rank, packageName } = await userRank(userId, slug)
+  const { rank, packageName, includesPsychometric } = await userRank(userId, slug)
   if (rank === 0) throw httpError('You need to enrol in this course first.', 403, 'NOT_ENROLLED')
 
   const sessions = await Session.find({ skillBuild: sb._id, active: true, tier: { $lte: rank } }).sort({ order: 1 })
@@ -205,8 +234,12 @@ async function loadState(userId, slug) {
   const answersByQid = new Map(answers.map((a) => [String(a.question), a]))
 
   const phases = await phaseAccess(userId, slug)
+  const assessment = includesPsychometric ? await Assessment.findOne({ user: userId, product: slug }) : null
 
-  return { sb, rank, packageName, sessions, learnState, progressMap, questionsBySession, answersByQid, phases }
+  return {
+    sb, rank, packageName, sessions, learnState, progressMap, questionsBySession, answersByQid, phases,
+    includesPsychometric, assessment,
+  }
 }
 
 /** loadState + locate a specific session (with its index) for the given user. */
@@ -290,6 +323,8 @@ export async function getCourse(userId, slug) {
   const startedAt = st.learnState?.startedAt || null
   const closed = access.state !== 'active'
 
+  const gate = psychometricGate(st)
+
   const shaped = st.sessions.map((s, i) => {
     const prog = st.progressMap.get(String(s._id))
     // Two separate gates. The drip clock decides WHEN a session opens; the phase
@@ -300,9 +335,13 @@ export async function getCourse(userId, slug) {
     if (closed) return closedSession(s, prog, phase, phaseLocked, st)
     const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt, st.questionsBySession)
     const plays = prog?.plays || 0
-    const videoLocked = phaseLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
-    const qs = phaseLocked
-      ? { current: null, nextUnlockAt: null, answered: [], total: (st.questionsBySession.get(String(s._id)) || []).length }
+    // A week with tasks stays shut until the psychometric test is done. The
+    // introduction has none, so it stays open — it is what explains the report.
+    const taskCount = st.questionsBySession.get(String(s._id))?.length || 0
+    const psychometricLocked = gate.blocks && taskCount > 0
+    const videoLocked = phaseLocked || psychometricLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
+    const qs = phaseLocked || psychometricLocked
+      ? { current: null, nextUnlockAt: null, answered: [], total: taskCount }
       : computeQuestions(st.questionsBySession.get(String(s._id)) || [], st.answersByQid, prog?.videoDoneAt, now)
 
     return {
@@ -322,8 +361,9 @@ export async function getCourse(userId, slug) {
       notes: s.notes || [],
       phase,
       phaseLocked,          // true = this phase has not been paid for yet
+      psychometricLocked,   // true = shut until the psychometric test is done
       videoLocked,
-      videoUnlockAt: phaseLocked ? null : videoUnlockAt,
+      videoUnlockAt: phaseLocked || psychometricLocked ? null : videoUnlockAt,
       plays,
       playsLeft: Math.max(0, PLAY_LIMIT - plays),
       playLimitReached: plays >= PLAY_LIMIT,
@@ -351,6 +391,9 @@ export async function getCourse(userId, slug) {
       // What the student must buy next, if anything.
       nextPhase: st.phases.unlocked < st.phases.total ? st.phases.unlocked + 1 : null,
     },
+    // The psychometric step, so the page can say why the weeks are shut and
+    // point at the one thing that opens them.
+    psychometric: gate,
     playLimit: PLAY_LIMIT,
     // Told to the client so it can drop the first-watch seek lock and show the
     // "test mode" banner. It is never true unless the server was started with
@@ -413,12 +456,67 @@ export async function savePosition(userId, sessionId, seconds) {
  * the page would burn a play. Refuses once the limit is spent, and refuses for
  * a phase the student has not paid for.
  */
+/**
+ * Everything that has to be true before a video may be played — the course is
+ * live, the phase is paid for, the psychometric test is done, and there are
+ * plays left — WITHOUT spending one.
+ *
+ * Spending and permission used to be the same call, made the moment playback
+ * started. That charged a student for a video they had opened by mistake, or
+ * clicked from a link, or watched four seconds of. A play is now counted when
+ * the video has actually been watched (see registerPlay, called at the 90%
+ * mark), so the two had to come apart: this one is the doorman, that one is
+ * the till.
+ */
+export async function assertPlayable(userId, sessionId) {
+  const st = await loadStateForSession(userId, sessionId)
+  await assertActiveCourse(userId, st.sb.slug)
+  const phase = phaseOfSession(st.session.order, weekCount(st.sessions), st.phases.total)
+  if (phase > st.phases.unlocked) {
+    throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
+  }
+
+  const gate = psychometricGate(st)
+  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+    throw httpError(
+      'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
+      403,
+      'PSYCHOMETRIC_PENDING',
+    )
+  }
+
+  const plays = (await Progress.findOne({ user: userId, session: sessionId }))?.plays || 0
+  if (plays >= PLAY_LIMIT) {
+    throw httpError(
+      `You have watched this video the maximum of ${PLAY_LIMIT} times.`,
+      403,
+      'PLAY_LIMIT_REACHED',
+    )
+  }
+  return { plays, playsLeft: Math.max(0, PLAY_LIMIT - plays), playLimit: PLAY_LIMIT }
+}
+
+/**
+ * Spend one play. Called when the student has watched the video through — the
+ * same 90% mark that counts as having watched it — not when playback starts.
+ */
 export async function registerPlay(userId, sessionId) {
   const st = await loadStateForSession(userId, sessionId)
   await assertActiveCourse(userId, st.sb.slug)
   const phase = phaseOfSession(st.session.order, weekCount(st.sessions), st.phases.total)
   if (phase > st.phases.unlocked) {
     throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
+  }
+
+  // The test comes first for a plan that includes it — but the introduction,
+  // which carries no tasks, stays open.
+  const gate = psychometricGate(st)
+  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+    throw httpError(
+      'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
+      403,
+      'PSYCHOMETRIC_PENDING',
+    )
   }
 
   const existing = await Progress.findOne({ user: userId, session: sessionId })
@@ -452,6 +550,18 @@ export async function markVideoDone(userId, sessionId) {
     throw httpError('This video is not open yet', 403, 'LOCKED')
   }
 
+  // The test comes first for a plan that includes it — but the introduction,
+  // which carries no tasks, stays open.
+  const gate = psychometricGate(st)
+  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+    throw httpError(
+      'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
+      403,
+      'PSYCHOMETRIC_PENDING',
+    )
+  }
+
+
   const prog = st.progressMap.get(String(session._id))
   if (prog?.videoDoneAt) return { ok: true } // already anchored — keep the first watch
 
@@ -482,6 +592,15 @@ export async function submitAnswer(userId, questionId, text) {
   const st = await loadStateForSession(userId, String(question.session))
   await assertActiveCourse(userId, st.sb.slug)
   const { session } = st
+
+  const gate = psychometricGate(st)
+  if (gate.blocks) {
+    throw httpError(
+      'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
+      403,
+      'PSYCHOMETRIC_PENDING',
+    )
+  }
 
   const prog = st.progressMap.get(String(session._id))
   const qs = computeQuestions(st.questionsBySession.get(String(session._id)) || [], st.answersByQid, prog?.videoDoneAt, new Date())

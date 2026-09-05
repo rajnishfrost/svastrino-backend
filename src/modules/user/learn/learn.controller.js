@@ -30,6 +30,14 @@ export const startCourse = asyncHandler(async (req, res) => {
 // The player calls this when playback STARTS. Each video may be played a fixed
 // number of times; the server keeps the count so clearing the browser cannot
 // reset it.
+// POST /api/user/learn/sessions/:id/play-check
+// May this video be played at all? Everything registerPlay checks, minus the
+// spending — the player asks before it starts, and pays at the 90% mark.
+export const checkPlay = asyncHandler(async (req, res) => {
+  const out = await service.assertPlayable(req.user.id, req.params.id)
+  res.json(out)
+})
+
 export const registerPlay = asyncHandler(async (req, res) => {
   const out = await service.registerPlay(req.user.id, req.params.id)
   res.json(out)
