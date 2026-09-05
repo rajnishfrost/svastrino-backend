@@ -79,16 +79,16 @@ export const guest = asyncHandler(async (req, res) => {
 // POST /api/user/auth/google
 export const google = asyncHandler(async (req, res) => {
   const dto = validateGoogle(req.body)
-  const { token, user } = await service.googleAuth(dto)
-  res.json({ token, user: toUserDTO(user, await accountFlags(user)) })
+  const { token, user, firstSignIn } = await service.googleAuth(dto)
+  res.json({ token, firstSignIn, user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // POST /api/user/auth/verify-email  { token }
 // Called by the frontend /verify-email page with the token from the email link.
 export const verifyEmail = asyncHandler(async (req, res) => {
   const token = String(req.body?.token || req.query.token || '')
-  const { email } = await service.verifyEmail(token)
-  res.json({ ok: true, email })
+  const { email, token: session, user } = await service.verifyEmail(token)
+  res.json({ ok: true, email, token: session, user: toUserDTO(user, await accountFlags(user)) })
 })
 
 // POST /api/user/auth/resend-verification

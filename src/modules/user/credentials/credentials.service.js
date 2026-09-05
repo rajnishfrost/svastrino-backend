@@ -276,7 +276,14 @@ export async function googleAuth({ accessToken }) {
   let user = await User.findOne({ googleId: g.googleId }).select('+googleId')
   if (!user) user = await User.findOne({ email: g.email }).select('+googleId')
 
+  // Whether this is the account's FIRST way in — a new account, or one that had
+  // signed up by email and never verified, which login refuses, so nobody has
+  // ever been inside it. Either way the student has just finished signing up,
+  // and the caller offers them the free week the verification page offers.
+  let firstSignIn = false
+
   if (!user) {
+    firstSignIn = true
     user = await User.create({
       googleId: g.googleId,
       email: g.email,
@@ -285,6 +292,7 @@ export async function googleAuth({ accessToken }) {
       emailVerified: true, // Google already vouches for the address.
     })
   } else {
+    firstSignIn = !user.emailVerified
     if (!user.googleId) user.googleId = g.googleId
     if (!user.avatar && g.avatar) user.avatar = g.avatar
     if (!user.name && g.name) user.name = g.name
@@ -297,7 +305,7 @@ export async function googleAuth({ accessToken }) {
   user.lastLoginAt = new Date()
   await user.save()
 
-  return { token: issueSession(user), user }
+  return { token: issueSession(user), user, firstSignIn }
 }
 
 // --- Email verification -----------------------------------------------------
@@ -315,8 +323,12 @@ export async function verifyEmail(rawToken) {
   user.emailVerifyTokenHash = undefined
   user.emailVerifyExpires = undefined
   user.purgeAt = undefined // verified — never auto-delete this account
+  user.lastLoginAt = new Date()
   await user.save()
-  return { email: user.email }
+  // A session comes back with the result. Clicking the link IS proof of the
+  // address, so asking for the password again right afterwards adds nothing but
+  // a step — and it is the step where a new student drifts off.
+  return { email: user.email, token: issueSession(user), user }
 }
 
 export async function resendVerification({ email }) {
