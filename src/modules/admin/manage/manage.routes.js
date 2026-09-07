@@ -35,7 +35,7 @@ router.post('/upload/s3/part-url', requirePermission('content'), partUrl)
 router.post('/upload/s3/complete', requirePermission('content'), completeUpload)
 router.post('/upload/s3/abort', requirePermission('content'), abortUpload)
 // Editorial images (blog covers) — shared by every module that stores artwork.
-router.post('/upload/image', requirePermission('content', 'blogs', 'career-library'), uploadImageMw, uploadImage)
+router.post('/upload/image', requirePermission('content', 'blogs', 'career-library', 'testimonials'), uploadImageMw, uploadImage)
 
 router.get('/users', requirePermission('users'), getUsers)
 router.patch('/users/:id/role', requirePermission('users'), patchUserRole)

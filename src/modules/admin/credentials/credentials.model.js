@@ -14,6 +14,7 @@ export const ADMIN_MODULES = [
   'orders',
   'scholarship',
   'skill-builds',
+  'testimonials',
   'users',
 ]
 
