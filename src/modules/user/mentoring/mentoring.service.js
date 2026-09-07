@@ -66,6 +66,13 @@ const programDTO = ({ pkg, parent }) => ({
   earlyBird: pkg.earlyBird,
   sessions: pkg.sessionsCount || 1,
   sessionMins: pkg.sessionMins || SLOT_MINS,
+  // The card copy on /services. `sessionsLabel` is the sentence a visitor
+  // reads; `sessions` above stays the number the booking calendar counts.
+  summary: pkg.summary || '',
+  trustLine: pkg.trustLine || '',
+  durationLabel: pkg.durationLabel || '',
+  sessionsLabel: pkg.sessionsLabel || '',
+  deliveryMode: pkg.deliveryMode || '',
   buyMode: pkg.buyMode || 'self-serve',
   features: pkg.features,
   featured: pkg.featured,

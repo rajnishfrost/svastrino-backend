@@ -133,13 +133,19 @@ export async function listPackages() {
   return Package.find().populate('skillBuild', 'name slug kind').sort({ order: 1 })
 }
 
-const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'cta', 'variant', 'featured', 'badge', 'order', 'active']
+const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'benefits', 'modeLabel', 'priceNote', 'summary', 'trustLine', 'durationLabel', 'sessionsLabel', 'deliveryMode', 'buyMode', 'paymentMode', 'phases', 'includesPsychometric', 'cta', 'variant', 'featured', 'badge', 'order', 'active', 'listed']
 // '' / null → null, otherwise Number — for the optional numeric fields.
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v))
 export async function updatePackage(id, body) {
   const update = {}
   for (const f of PKG_FIELDS) if (body[f] !== undefined) update[f] = body[f]
   if (update.price != null) update.price = Number(update.price)
+  if (update.phases !== undefined) update.phases = Math.max(1, Number(update.phases) || 1)
+  if (update.includesPsychometric !== undefined) update.includesPsychometric = !!update.includesPsychometric
+  if (update.listed !== undefined) update.listed = update.listed !== false
+  for (const f of ['features', 'benefits']) {
+    if (update[f] !== undefined) update[f] = (Array.isArray(update[f]) ? update[f] : []).filter(Boolean)
+  }
   for (const f of ['earlyBird', 'durationDays', 'sessionsCount', 'sessionMins']) {
     if (update[f] !== undefined) update[f] = numOrNull(update[f])
   }
@@ -173,11 +179,24 @@ export async function createPackage(body) {
     sessionsCount: numOrNull(body.sessionsCount),
     sessionMins: numOrNull(body.sessionMins),
     features: Array.isArray(body.features) ? body.features.filter(Boolean) : [],
+    benefits: Array.isArray(body.benefits) ? body.benefits.filter(Boolean) : [],
+    modeLabel: String(body.modeLabel || '').trim(),
+    priceNote: String(body.priceNote || '').trim(),
+    summary: String(body.summary || '').trim(),
+    trustLine: String(body.trustLine || '').trim(),
+    durationLabel: String(body.durationLabel || '').trim(),
+    sessionsLabel: String(body.sessionsLabel || '').trim(),
+    deliveryMode: String(body.deliveryMode || '').trim(),
+    buyMode: body.buyMode === 'expert-call' ? 'expert-call' : 'self-serve',
+    paymentMode: body.paymentMode === 'per-phase' ? 'per-phase' : 'one-time',
+    phases: Math.max(1, Number(body.phases) || 1),
+    includesPsychometric: !!body.includesPsychometric,
     cta: String(body.cta || '').trim() || 'Buy now',
     featured: !!body.featured,
     badge: String(body.badge || '').trim() || null,
     order: Number(body.order) || 0,
     active: body.active !== false,
+    listed: body.listed !== false,
   })
   return pkg.populate('skillBuild', 'name slug kind')
 }

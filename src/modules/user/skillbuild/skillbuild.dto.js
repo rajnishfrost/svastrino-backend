@@ -26,6 +26,9 @@ export function toPackageDTO(pkg) {
     earlyBird: pkg.earlyBird != null ? formatInr(pkg.earlyBird) : null,
     earlyBirdValue: pkg.earlyBird, // paise or null
     features: pkg.features,
+    benefits: pkg.benefits || [],
+    modeLabel: pkg.modeLabel || '',
+    priceNote: pkg.priceNote || '',
     cta: pkg.cta,
     variant: pkg.variant,
     featured: pkg.featured,

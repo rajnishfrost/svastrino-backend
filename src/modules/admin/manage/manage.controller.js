@@ -21,8 +21,15 @@ const pkgDTO = (p) => ({
   earlyBird: p.earlyBird, earlyBirdInr: p.earlyBird != null ? rupees(p.earlyBird) : null,
   period: p.period, durationDays: p.durationDays,
   sessionsCount: p.sessionsCount, sessionMins: p.sessionMins,
-  features: p.features, cta: p.cta, variant: p.variant, featured: p.featured, badge: p.badge,
-  order: p.order, active: p.active,
+  features: p.features, benefits: p.benefits || [],
+  modeLabel: p.modeLabel || '', priceNote: p.priceNote || '',
+  summary: p.summary || '', trustLine: p.trustLine || '',
+  durationLabel: p.durationLabel || '', sessionsLabel: p.sessionsLabel || '',
+  deliveryMode: p.deliveryMode || '', buyMode: p.buyMode || 'self-serve',
+  paymentMode: p.paymentMode || 'one-time', phases: p.phases || 1,
+  includesPsychometric: !!p.includesPsychometric,
+  cta: p.cta, variant: p.variant, featured: p.featured, badge: p.badge,
+  order: p.order, active: p.active, listed: p.listed !== false,
 })
 const sessionDTO = (s) => ({
   id: s._id, order: s.order, tier: s.tier, title: s.title, description: s.description,

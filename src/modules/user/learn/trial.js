@@ -52,6 +52,7 @@ async function trialPackage() {
         paymentMode: 'per-phase',
         phases: 24, // one phase per week — see the note at the top of this file
         active: false, // never offered for sale
+        listed: false, // and never a card on the pricing page
       },
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }

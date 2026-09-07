@@ -17,7 +17,10 @@ export async function listSkillBuilds() {
 export async function getSkillBuildBySlug(slug) {
   const sb = await SkillBuild.findOne({ slug, active: true })
   if (!sb) throw httpError('Skill-Build not found', 404)
-  const packages = await Package.find({ skillBuild: sb._id, active: true }).sort({ order: 1 })
+  // listed:false is a retired plan — still sellable by sku for anyone who owns
+  // it (and still countable for upgrade credit), but off the pricing page.
+  const packages = await Package.find({ skillBuild: sb._id, active: true, listed: { $ne: false } })
+    .sort({ order: 1 })
   return { skillBuild: sb, packages }
 }
 
@@ -69,7 +72,12 @@ export async function getPackageBySku(sku) {
     // whose own name already opens with the product stands on its own; anything
     // else — a mentoring program under the "Mentoring" parent — still needs the
     // parent in front of it to read right on an order or a receipt.
-    label: productLabel(pkg.skillBuild?.name, pkg.name),
+    // The two payment plans of one course now share a name — the card tells
+    // them apart with its own label, but an order or a receipt has only this
+    // line, so the terms go in it: "Nirmaan Course - Pay As You Use".
+    label: pkg.modeLabel
+      ? `${productLabel(pkg.skillBuild?.name, pkg.name)} - ${pkg.modeLabel}`
+      : productLabel(pkg.skillBuild?.name, pkg.name),
     price: pkg.price,
     earlyBird: pkg.earlyBird,
     durationDays: pkg.durationDays,
