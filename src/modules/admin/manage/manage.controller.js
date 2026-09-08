@@ -2,6 +2,7 @@ import { asyncHandler } from '../../../utils/asyncHandler.js'
 import { mediaUrl } from '../../../config/uploads.js'
 import { rupees } from '../../../utils/money.js'
 import * as service from './manage.service.js'
+import { accountStatus } from '../../user/credentials/accountStatus.js'
 
 const userDTO = (u) => ({
   id: u._id, name: u.name, email: u.email, phone: u.phone || null,
@@ -10,6 +11,20 @@ const userDTO = (u) => ({
   // Whether the student portal is open to this account. Meaningless for a
   // student (it always is), so the Users page only offers it on other roles.
   siteAccess: u.siteAccess !== false,
+  // 'active' | 'invited' | 'disabled' — the same rule the organisation's own
+  // roster shows, so one person cannot read two ways on two screens.
+  status: accountStatus(u),
+  // Who this account belongs to. A public signup belongs to nobody, and that
+  // is an answer ("Self"), not a gap — the client says so rather than "—".
+  organisation: u.organisation ? { id: u.organisation._id, name: u.organisation.name } : null,
+  // Set only after an organisation removed them — what the Restore button undoes.
+  removedFrom: u.removedFromOrganisation
+    ? { id: u.removedFromOrganisation._id, name: u.removedFromOrganisation.name, at: u.removedFromOrganisationAt || null }
+    : null,
+  // How it was made, and by whom. `createdBy: null` means they made it
+  // themselves, which is the ordinary case and reads as "Self".
+  signupMethod: u.signupMethod || 'password',
+  createdBy: u.createdBy ? { id: u.createdBy._id, name: u.createdBy.name, email: u.createdBy.email } : null,
   lastLoginAt: u.lastLoginAt || null,
 })
 const pkgDTO = (p) => ({
@@ -52,8 +67,12 @@ export const getStats = asyncHandler(async (req, res) => {
 
 // Users
 export const getUsers = asyncHandler(async (req, res) => {
-  const users = await service.listUsers({ q: req.query.q })
-  res.json({ users: users.map(userDTO) })
+  const [list, signups] = await Promise.all([
+    service.listUsers({ q: req.query.q, page: req.query.page, limit: req.query.limit }),
+    service.signupBreakdown(),
+  ])
+  // The rows are this page's, the counts are everyone's — see signupBreakdown.
+  res.json({ ...list, users: list.items.map(userDTO), signups })
 })
 export const patchUserRole = asyncHandler(async (req, res) => {
   const user = await service.setUserRole(req.admin, req.params.id, String(req.body.role || ''))

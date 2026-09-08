@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * An Organisation is any body we tie up with to run the Nirmaan scholarship —
+ * An Organisation is any body we tie up with — a school, a college, an NGO —
  * a school, a college, a village panchayat, an NGO, a coaching centre, a
  * company. It supersedes the old `Institution` (which was school/college only
  * and had no login).
@@ -11,8 +11,7 @@ import mongoose from 'mongoose'
  *   2. An admin approves it                     → status 'approved', an owner
  *      User account is created (role 'organisation') and emailed a
  *      set-password link
- *   3. The owner signs into /organisation and bulk-adds students, configures
- *      their scholarship cycle, and sees their own results
+ *   3. The owner signs into /organisation and bulk-adds and manages students
  *
  * `modules` is what the admin lets this organisation reach in its portal —
  * the org portal reads it on every request, so revoking access is immediate.
@@ -34,7 +33,7 @@ export const ORG_TYPE_LABELS = {
 
 // Sections of the organisation portal an admin can grant. Kept deliberately
 // small — an organisation never reaches the admin panel or anyone else's data.
-export const ORG_MODULES = ['students', 'scholarship', 'profile']
+export const ORG_MODULES = ['students', 'profile']
 
 // What a freshly approved organisation gets. Admin can trim it afterwards.
 export const DEFAULT_ORG_MODULES = [...ORG_MODULES]
@@ -72,6 +71,12 @@ const organisationSchema = new mongoose.Schema(
 
     // Portal sections this organisation may use — see ORG_MODULES.
     modules: { type: [String], enum: ORG_MODULES, default: DEFAULT_ORG_MODULES },
+
+    // Skill-Build package SKUs the organisation sponsors for every student it
+    // adds. Granted as ordinary enrollments the moment a student claims their
+    // account (sets the invite password, or first signs in with Google) — see
+    // sponsorship.js. Empty = the organisation runs its scholarship only.
+    packages: { type: [String], default: [] },
 
     // Shown in the public /organisations directory. The organisation can opt
     // out from its own profile page; admin can override.

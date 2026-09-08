@@ -8,7 +8,7 @@ import mongoose from 'mongoose'
  *                  went through. It is addressed, it can be read, and it is
  *                  worthless to anybody else.
  *   Offer        : a broadcast the team publishes — a discount, a new batch, a
- *                  scholarship window. It belongs to nobody, it is live for a
+ *                  signup window. It belongs to nobody, it is live for a
  *                  period, and the same row is shown to every visitor.
  *
  * Keeping them apart avoids writing one row per student every time marketing

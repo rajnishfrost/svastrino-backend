@@ -51,6 +51,11 @@ const enrollmentSchema = new mongoose.Schema(
     // Retired the moment the student actually buys the course (payments.service).
     trial: { type: Boolean, default: false, index: true },
 
+    // Set when an organisation paid for this seat rather than the student — a
+    // sponsored course (organisation/sponsorship.js). Like a trial it has no
+    // order; unlike a trial it is a full, paid-for enrollment.
+    sponsoredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
+
     startsAt: { type: Date, default: () => new Date() },
     expiresAt: { type: Date, default: null }, // null = lifetime / one-time
   },

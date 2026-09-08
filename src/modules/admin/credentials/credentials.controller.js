@@ -27,7 +27,7 @@ export const getAdmins = asyncHandler(async (req, res) => {
 })
 
 export const postAdmin = asyncHandler(async (req, res) => {
-  const admin = await service.createManagedAdmin(req.body || {})
+  const admin = await service.createManagedAdmin({ ...(req.body || {}), createdBy: req.admin?.id })
   res.status(201).json({ admin: toAdminDTO(admin, await rolePermissions(admin.role)) })
 })
 

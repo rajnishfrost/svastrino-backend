@@ -69,7 +69,7 @@ export async function signup({ name, email, password, phone }) {
   // Phone is deliberately NOT unique — the same number may be reused across
   // accounts. Only the email identifies an account.
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
-  const user = await User.create({ name, email, phone, passwordHash })
+  const user = await User.create({ name, email, phone, passwordHash, signupMethod: 'password' })
 
   await dispatchVerification(user)
 
@@ -124,7 +124,7 @@ export async function guestAccount({ name, email, phone }) {
   // Verified straight away: the address is actively in use for this booking and
   // the payment receipt + calendar emails all land there. This also keeps the
   // paid account out of the unverified auto-purge.
-  const user = await User.create({ name, email, phone, emailVerified: true })
+  const user = await User.create({ name, email, phone, emailVerified: true, signupMethod: 'guest' })
 
   const { raw, hash } = makeToken()
   user.passwordResetTokenHash = hash
@@ -180,9 +180,11 @@ export async function issueSetPasswordLink(user, ttlMs = INVITE_SETPW_TTL_MS) {
  *          when an invite email is actually useful.
  */
 export async function provisionAccount({
+  createdBy = null,
   email,
   name = '',
   phone,
+  studentClass,
   role,
   organisation = null,
   organisationRole = null,
@@ -196,6 +198,9 @@ export async function provisionAccount({
 
     if (!existing.name && name) { existing.name = name; touched = true }
     if (!existing.phone && phone) { existing.phone = phone; touched = true }
+    // Fill an empty slot only — a student who has told us their own class
+    // outranks whatever a roster says.
+    if (!existing.studentClass && studentClass) { existing.studentClass = studentClass; touched = true }
 
     // Only fill an EMPTY organisation slot, unless we're explicitly upgrading —
     // an import must never yank a student out of another organisation.
@@ -223,10 +228,15 @@ export async function provisionAccount({
     name,
     email,
     phone,
+    studentClass: studentClass || '',
     role: role || 'student',
     organisation,
     organisationRole,
     emailVerified: true, // provisioned by a vouching organisation
+    signupMethod: 'invite',
+    // Whoever ran the import or pressed "New account". Null when the caller did
+    // not say — better an honest blank than a guess at who was responsible.
+    createdBy: createdBy || null,
   })
   const link = await issueSetPasswordLink(user)
   return { user, created: true, link, attached: !!organisation }
@@ -273,8 +283,12 @@ export async function googleAuth({ accessToken }) {
 
   // Prefer matching by googleId, then fall back to email so an existing
   // password account links Google instead of creating a duplicate.
-  let user = await User.findOne({ googleId: g.googleId }).select('+googleId')
-  if (!user) user = await User.findOne({ email: g.email }).select('+googleId')
+  // +passwordHash as well as +googleId: an invited student's first Google
+  // sign-in is the claim of their account, and telling it apart from a
+  // returning one needs both auth fields.
+  let user = await User.findOne({ googleId: g.googleId }).select('+googleId +passwordHash')
+  if (!user) user = await User.findOne({ email: g.email }).select('+googleId +passwordHash')
+  let claimed = false
 
   // Whether this is the account's FIRST way in — a new account, or one that had
   // signed up by email and never verified, which login refuses, so nobody has
@@ -290,9 +304,11 @@ export async function googleAuth({ accessToken }) {
       name: g.name,
       avatar: g.avatar,
       emailVerified: true, // Google already vouches for the address.
+      signupMethod: 'google',
     })
   } else {
     firstSignIn = !user.emailVerified
+    claimed = !user.passwordHash && !user.googleId
     if (!user.googleId) user.googleId = g.googleId
     if (!user.avatar && g.avatar) user.avatar = g.avatar
     if (!user.name && g.name) user.name = g.name
@@ -304,6 +320,8 @@ export async function googleAuth({ accessToken }) {
 
   user.lastLoginAt = new Date()
   await user.save()
+
+  if (claimed) await afterFirstClaim(user)
 
   return { token: issueSession(user), user, firstSignIn }
 }
@@ -370,13 +388,34 @@ export async function getResetInfo(token) {
   return { email: user.email, name: user.name }
 }
 
+/**
+ * A student added by an organisation has just claimed the account we made for
+ * them. Anything their organisation sponsors lands now — never before, so a
+ * roster row nobody ever opened costs nothing. Best-effort by design: the
+ * password (or the Google link) is already saved, and a hiccup here must not
+ * turn a successful claim into an error screen; the roster shows the seat as
+ * still pending and the next claim-like moment tries again.
+ */
+async function afterFirstClaim(user) {
+  try {
+    const { grantSponsoredPackages } = await import('../organisation/sponsorship.js')
+    await grantSponsoredPackages(user)
+  } catch (err) {
+    console.error(`✗ sponsored course grant for ${user.email} failed:`, err.message)
+  }
+}
+
 export async function resetPassword({ token, password }) {
+  // Both auth fields as well: whether this is the FIRST claim of a provisioned
+  // account (no password, no Google yet) decides whether a sponsored course
+  // is handed over below. Neither is selected by default.
   const user = await User.findOne({
     passwordResetTokenHash: hashToken(token),
     passwordResetExpires: { $gt: new Date() },
-  }).select('+passwordResetTokenHash +passwordResetExpires')
+  }).select('+passwordResetTokenHash +passwordResetExpires +passwordHash +googleId')
 
   if (!user) throw httpError('Reset link is invalid or has expired', 400)
+  const firstClaim = !user.passwordHash && !user.googleId
 
   // Block passwords built around the account's name or email (the client can't
   // see these until it fetches getResetInfo, so enforce here regardless).
@@ -392,6 +431,8 @@ export async function resetPassword({ token, password }) {
   user.emailVerified = true
   user.purgeAt = undefined // now verified — exempt from auto-purge
   await user.save()
+
+  if (firstClaim) await afterFirstClaim(user)
 
   // Issue a fresh session so the user is logged straight in after resetting.
   return { token: issueSession(user), user }

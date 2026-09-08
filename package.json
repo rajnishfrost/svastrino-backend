@@ -7,8 +7,6 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "seed:scholarship": "node src/modules/user/scholarship/seedScholarship.js",
-    "migrate:organisations": "node src/modules/user/organisation/migrateInstitutions.js",
     "seed:admin": "node src/modules/admin/credentials/seedAdmin.js",
     "migrate:admins": "node src/modules/admin/credentials/migrateAdminsToUsers.js",
     "seed:skillbuild": "node src/modules/user/skillbuild/seedSkillBuild.js",

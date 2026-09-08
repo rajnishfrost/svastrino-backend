@@ -3,7 +3,7 @@ import multer from 'multer'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 import { requireOrgModule } from '../../middleware/auth.js'
 import * as orgService from '../user/organisation/organisation.service.js'
-import * as scholarship from '../user/scholarship/scholarship.service.js'
+import { sponsoredCourses } from '../user/organisation/sponsorship.js'
 import { ORG_MODULES, ORG_TYPE_LABELS } from '../user/organisation/organisation.model.js'
 
 // Mounted at /api/org — every route below already passed requireOrgAuth, so
@@ -37,20 +37,18 @@ function csvUploadMw(req, res, next) {
 
 // ---- Identity & profile ------------------------------------------------------
 
-// GET /api/org/me — who am I, what can I reach, and where is my scholarship at
+// GET /api/org/me — who am I and what can I reach
 router.get('/me', asyncHandler(async (req, res) => {
-  const [stats, current] = await Promise.all([
-    orgService.organisationStats(req.org.id),
-    scholarship.currentCycleFor(req.org.id),
-  ])
+  const stats = await orgService.organisationStats(req.org.id)
   res.json({
     organisation: orgService.fullOrgDTO(req.org.doc),
     typeLabel: ORG_TYPE_LABELS[req.org.doc.type] || req.org.doc.type,
     user: req.orgUser,
     modules: req.org.modules,
     allModules: ORG_MODULES,
+    // What every added student receives once they claim their account.
+    sponsoredCourses: (await sponsoredCourses(req.org.doc)).map((c) => ({ sku: c.sku, name: c.name })),
     stats,
-    currentCycle: current ? scholarship.cycleDTO(current) : null,
   })
 }))
 
@@ -80,15 +78,13 @@ students.get('/', asyncHandler(async (req, res) => {
   })
 }))
 
-// POST /api/org/students — add one student (and enrol them in the live cycle)
+// POST /api/org/students — add one student
 students.post('/', asyncHandler(async (req, res) => {
-  const cycle = await scholarship.currentCycleFor(req.org.id)
-  const result = await orgService.addOrgStudent(req.org.id, req.body || {}, cycle)
+  const result = await orgService.addOrgStudent(req.org.id, req.body || {})
   res.status(201).json({
     ok: true,
     status: result.status,
     message: result.message,
-    enrolled: !!result.enrolled,
     invited: !!result.link,
   })
 }))
@@ -102,8 +98,7 @@ students.post('/bulk', csvUploadMw, asyncHandler(async (req, res) => {
     throw err
   }
   const dryRun = req.query.dryRun === '1' || req.query.dryRun === 'true'
-  const cycle = await scholarship.currentCycleFor(req.org.id)
-  res.json(await orgService.bulkImportStudents(req.org.id, csvText, { dryRun, cycle }))
+  res.json(await orgService.bulkImportStudents(req.org.id, csvText, { dryRun }))
 }))
 
 // DELETE /api/org/students/:id — detach from the organisation (account survives)

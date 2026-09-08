@@ -4,8 +4,8 @@ import rolesRoutes from './roles/roles.routes.js'
 import paymentsAdminRoutes from '../user/payments/payments.admin.routes.js'
 import assessmentAdminRoutes from '../user/assessment/assessment.admin.routes.js'
 import mentoringAdminRoutes from '../user/mentoring/mentoring.admin.routes.js'
-import scholarshipAdminRoutes from '../user/scholarship/scholarship.admin.routes.js'
 import blogsAdminRoutes from './blogs/blogs.admin.routes.js'
+import organisationsAdminRoutes from './organisations/organisations.admin.routes.js'
 import testimonialsAdminRoutes from './testimonials/testimonials.admin.routes.js'
 import careerLibraryAdminRoutes from './careerlibrary/careerLibrary.admin.routes.js'
 import enquiryAdminRoutes from '../user/enquiry/enquiry.admin.routes.js'
@@ -24,8 +24,8 @@ router.use('/roles', rolesRoutes)   // manage reusable role presets (superadmin)
 router.use('/payments', paymentsAdminRoutes) // orders, revenue, refunds, coupons
 router.use('/assessments', assessmentAdminRoutes) // psychometric: verify + attach report
 router.use('/mentoring', mentoringAdminRoutes) // bookings + session updates/tasks
-router.use('/scholarship', scholarshipAdminRoutes) // Nirmaan scholarship: institutions, test, results
 router.use('/blogs', blogsAdminRoutes)             // blog posts (drafts + published)
+router.use('/organisations', organisationsAdminRoutes) // partner bodies: review, modules, their students
 router.use('/testimonials', testimonialsAdminRoutes) // reviews shown across the site
 router.use('/career-library', careerLibraryAdminRoutes) // streams, course pages, quick news
 router.use('/enquiries', enquiryAdminRoutes)     // public enquiry form submissions

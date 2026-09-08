@@ -68,6 +68,35 @@ const userSchema = new mongoose.Schema(
     //   'owner'  → this account IS the organisation ("self")
     organisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
     organisationRole: { type: String, enum: ['member', 'owner', null], default: null },
+    // Set when an organisation removes a student from its roster, so a removal
+    // made by mistake can be put back by an admin (Users → Restore) — after
+    // removal `organisation` is null and nothing else says where they were.
+    // Cleared the moment they are restored or re-added.
+    removedFromOrganisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null },
+    removedFromOrganisationAt: { type: Date, default: null },
+
+    /**
+     * How this account came into being. Written once, at creation, and never
+     * rewritten — linking Google to an account that started with a password
+     * does not change how it started, and the whole point of keeping it is to
+     * be able to count where accounts actually come from.
+     *
+     *   'password' → someone signed themselves up with an email and a password
+     *   'google'   → someone signed themselves up with Google
+     *   'invite'   → an organisation or an admin created it for them
+     *   'guest'    → created mid-checkout from a name and an email
+     */
+    signupMethod: {
+      type: String,
+      enum: ['password', 'google', 'invite', 'guest'],
+      default: 'password',
+      index: true,
+    },
+
+    // Who made this account. null means they made it themselves — which is why
+    // it is not defaulted to anything: "nobody created it" is the real answer
+    // for a public signup, and the panel shows it as "Self".
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
     // Absent for Google-only accounts that never set a password.
     passwordHash: { type: String, select: false },

@@ -70,7 +70,7 @@ const ORG_ROLE = 'organisation'
 /** Create any account with a chosen role. Admin-created accounts are trusted
  *  (email pre-verified) so they can sign in right away. Picking the
  *  `organisation` role also creates the organisation itself — see ORG_ROLE. */
-export async function createManagedAdmin({ name, email, password, role, organisation }) {
+export async function createManagedAdmin({ name, email, password, role, organisation, createdBy = null }) {
   const cleanName = String(name || '').trim()
   const cleanEmail = String(email || '').trim().toLowerCase()
   if (!cleanName) throw httpError('Name is required', 400)
@@ -96,6 +96,11 @@ export async function createManagedAdmin({ name, email, password, role, organisa
     role: finalRole,
     active: true,
     emailVerified: true,
+    // Made FOR someone, not BY them: an account created here has never seen a
+    // signup form, and recording it as an ordinary email signup would put it in
+    // the same count as people who found the site and joined on their own.
+    signupMethod: 'invite',
+    createdBy: createdBy || null,
   })
 
   if (!isOrg) return user
@@ -122,7 +127,7 @@ export async function createManagedAdmin({ name, email, password, role, organisa
  *   ← organisation : refuse. Their organisation owns students, cycles and
  *     results; silently orphaning all of it behind a dropdown would be the
  *     worst possible outcome, so the admin is told to remove the organisation
- *     from the Scholarship page first (or just suspend it).
+ *     from the Organisations page first (or just suspend it).
  */
 async function assertOrgRoleSwap(user, newRole, organisationDraft) {
   const { assertOrganisationDraft, createOrganisationForOwner, organisationOwnedBy } = await import(
@@ -146,7 +151,7 @@ async function assertOrgRoleSwap(user, newRole, organisationDraft) {
 
   if (owned) {
     throw httpError(
-      `This account owns “${owned.name}”. Delete or suspend that organisation on the Scholarship page before changing its role.`,
+      `This account owns “${owned.name}”. Delete or suspend that organisation on the Organisations page before changing its role.`,
       400
     )
   }
@@ -187,6 +192,7 @@ export async function updateManagedAdmin(actorId, id, body) {
     user.name = n
   }
   if (newRole) user.role = newRole
+  const reactivating = body.active === true && user.active === false
   if (body.active !== undefined) user.active = !!body.active
   if (body.password) {
     if (String(body.password).length < 8) throw httpError('Password must be at least 8 characters', 400)
@@ -194,6 +200,16 @@ export async function updateManagedAdmin(actorId, id, body) {
   }
 
   await user.save()
+
+  // Switching on a student an organisation had removed — the only reason such
+  // an account is off — is the admin undoing that removal, so it goes all the
+  // way back: onto the roster, with the sponsored course. Without this the
+  // login came back but the student stayed invisible to their organisation,
+  // which read as "I activated them and nothing happened".
+  if (reactivating && user.removedFromOrganisation && !user.organisation) {
+    const { restoreOrgStudent } = await import('../../user/organisation/organisation.service.js')
+    return (await restoreOrgStudent(user._id)).user
+  }
   return user
 }
 
@@ -214,8 +230,6 @@ async function cascadeDeleteUserData(userId) {
     ['../../user/learn/answer.model.js', 'Answer'],
     ['../../user/mentoring/booking.model.js', 'MentoringBooking'],
     ['../../user/assessment/assessment.model.js', 'Assessment'],
-    ['../../user/scholarship/scholarship.model.js', 'ScholarshipEnrollment'],
-    ['../../user/scholarship/scholarship.model.js', 'ScholarshipAttempt'],
   ]
   for (const [path, name] of owned) {
     try {
@@ -229,7 +243,6 @@ async function cascadeDeleteUserData(userId) {
 
   // Back-references that should just be cleared (not deleted).
   const backrefs = [
-    ['../../user/scholarship/scholarship.model.js', 'ScholarshipCycle', { declaredWinner: userId }, { declaredWinner: null, winnerDeclaredAt: null }],
     ['../../user/organisation/organisation.model.js', 'Organisation', { reviewedBy: userId }, { reviewedBy: null }],
   ]
   for (const [path, name, filter, update] of backrefs) {
@@ -245,7 +258,7 @@ async function cascadeDeleteUserData(userId) {
 
 /**
  * Permanently delete an account AND everything it owns (orders, enrolments,
- * learn progress, mentoring bookings, assessments, scholarship entries, its
+ * learn progress, mentoring bookings, assessments, its
  * uploaded avatar). Guard-rails mirror the edit rules: you can't delete
  * yourself, and the last active superadmin can't be deleted (so the panel can
  * never lock everyone out).
@@ -260,13 +273,13 @@ export async function deleteManagedAccount(actorId, id) {
   }
 
   // Deleting an organisation's owner would leave the organisation with nobody
-  // able to sign in, but its students, cycles and results all still live. That's
-  // a decision for the Scholarship page, not a side effect of deleting a user.
+  // able to sign in, while its students all still live. That's a decision for
+  // the Organisations page, not a side effect of deleting a user.
   const { organisationOwnedBy } = await import('../../user/organisation/organisation.service.js')
   const owned = await organisationOwnedBy(user._id)
   if (owned) {
     throw httpError(
-      `This account owns “${owned.name}”. Delete or suspend that organisation on the Scholarship page first.`,
+      `This account owns “${owned.name}”. Delete or suspend that organisation on the Organisations page first.`,
       400
     )
   }

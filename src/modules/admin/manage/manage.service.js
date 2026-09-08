@@ -1,5 +1,11 @@
 // Admin management logic (SRS §4.9): dashboard stats, users, packages, content.
 import { User } from '../../user/credentials/credentials.model.js'
+import { accountStatus, AUTH_STATUS_FIELDS } from '../../user/credentials/accountStatus.js'
+// Imported for its side effect as much as its value: listUsers populates
+// `organisation`, and populate resolves the model by NAME — so a code path that
+// reaches this file without the organisation module having been loaded throws
+// MissingSchemaError instead of returning users.
+import '../../user/organisation/organisation.model.js'
 import { Order } from '../../user/payments/order.model.js'
 import { Enrollment } from '../../user/payments/enrollment.model.js'
 import { SkillBuild } from '../../user/skillbuild/skillbuild.model.js'
@@ -10,6 +16,7 @@ import { Answer } from '../../user/learn/answer.model.js'
 import { MentoringBooking } from '../../user/mentoring/booking.model.js'
 
 import { roleExists, rolePermissions, hasPanelAccess } from '../roles/roles.service.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -57,13 +64,45 @@ export async function stats() {
 }
 
 // --- Accounts (unified: site users + panel admins live in one collection) ----
-export async function listUsers({ q } = {}) {
+export async function listUsers({ q, page, limit } = {}) {
   const filter = q
     ? { $or: [{ name: new RegExp(q, 'i') }, { email: new RegExp(q, 'i') }] }
     : {}
-  const users = await User.find(filter).sort({ createdAt: -1 }).limit(200)
-  return users
+  const p = pageOf({ page, limit })
+  // The auth fields are select:false, and accountStatus needs them — without
+  // them every account in this list would read as "Invited".
+  const [items, total] = await Promise.all([
+    User.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(p.skip)
+      .limit(p.limit)
+      .select(AUTH_STATUS_FIELDS)
+      .populate('organisation', 'name')
+      .populate('removedFromOrganisation', 'name')
+      .populate('createdBy', 'name email'),
+    User.countDocuments(filter),
+  ])
+  return pageResult(items, total, p)
 }
+
+/**
+ * How many accounts came from where, across the WHOLE table rather than the 200
+ * rows on screen — a count that only described the current page would be a
+ * different number every time somebody searched.
+ */
+export async function signupBreakdown() {
+  const rows = await User.aggregate([{ $group: { _id: '$signupMethod', n: { $sum: 1 } } }])
+  const by = { password: 0, google: 0, invite: 0, guest: 0 }
+  for (const r of rows) {
+    // Accounts that predate the field have no value; they were all made the one
+    // way that existed then, so counting them as email keeps the total honest.
+    const key = r._id && key_in(by, r._id) ? r._id : 'password'
+    by[key] += r.n
+  }
+  return { ...by, total: Object.values(by).reduce((a, b) => a + b, 0) }
+}
+
+const key_in = (obj, k) => Object.prototype.hasOwnProperty.call(obj, k)
 
 /**
  * Change an account's role from the list. Assigning an elevated role
@@ -99,7 +138,7 @@ export async function setUserRole(actor, userId, role) {
 
   // The `organisation` role needs an Organisation record alongside it, and this
   // inline dropdown has nowhere to collect one — so both directions are pushed
-  // to the full Edit form (or the Scholarship page), which can.
+  // to the full Edit form, which can.
   if (role !== user.role && (role === 'organisation' || user.role === 'organisation')) {
     throw httpError(
       role === 'organisation'

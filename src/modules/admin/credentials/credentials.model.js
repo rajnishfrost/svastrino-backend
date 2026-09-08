@@ -12,7 +12,7 @@ export const ADMIN_MODULES = [
   'coupons',
   'mentoring',
   'orders',
-  'scholarship',
+  'organisations',
   'skill-builds',
   'testimonials',
   'users',

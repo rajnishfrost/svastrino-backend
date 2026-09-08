@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { requireOrgAuth } from '../../middleware/auth.js'
 import orgRoutes from './org.routes.js'
-import orgScholarshipRoutes from './org.scholarship.routes.js'
 
 /**
  * ---- Organisation portal router (/api/org/*) ----
@@ -18,7 +17,6 @@ import orgScholarshipRoutes from './org.scholarship.routes.js'
 const router = Router()
 router.use(requireOrgAuth)
 
-router.use('/scholarship', orgScholarshipRoutes)
 router.use('/', orgRoutes)
 
 export default router

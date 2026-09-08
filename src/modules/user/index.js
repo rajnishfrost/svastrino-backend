@@ -5,7 +5,6 @@ import learnRoutes from './learn/learn.routes.js'
 import paymentsRoutes from './payments/payments.routes.js'
 import mentoringRoutes from './mentoring/mentoring.routes.js'
 import assessmentRoutes from './assessment/assessment.routes.js'
-import scholarshipRoutes from './scholarship/scholarship.routes.js'
 import organisationRoutes from './organisation/organisation.routes.js'
 import blogsRoutes from './blogs/blogs.routes.js'
 import contentRoutes from './content/content.routes.js'
@@ -48,8 +47,6 @@ router.use('/assessment', assessmentRoutes)
 // Partner organisations — public directory + the "partner with us" application
 router.use('/organisations', organisationRoutes)
 
-// Nirmaan Scholarship — student enrolment, timed test and public winners
-router.use('/scholarship', scholarshipRoutes)
 
 // Blog archive (public — migrated from the legacy svastrino.com site)
 router.use('/blogs', blogsRoutes)

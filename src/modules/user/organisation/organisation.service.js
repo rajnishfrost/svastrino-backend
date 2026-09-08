@@ -1,14 +1,13 @@
 import crypto from 'node:crypto'
 import { Organisation, ORG_TYPES, ORG_MODULES, DEFAULT_ORG_MODULES } from './organisation.model.js'
 import { User } from '../credentials/credentials.model.js'
+import { accountStatus, AUTH_STATUS_FIELDS } from '../credentials/accountStatus.js'
 import { provisionAccount } from '../credentials/credentials.service.js'
-import { ScholarshipCycle, ScholarshipEnrollment, ScholarshipAttempt } from '../scholarship/scholarship.model.js'
 import { parseCsvRecords, buildCsv } from '../../../utils/csv.js'
-import {
-  sendScholarshipStatusEmail,
-  sendOrgApprovedEmail,
-  sendStudentInviteEmail,
-} from '../../../utils/mailer.js'
+import { sendOrgApprovedEmail, sendStudentInviteEmail } from '../../../utils/mailer.js'
+import { Enrollment } from '../payments/enrollment.model.js'
+import { normalisePackageSkus, sponsoredCourses, grantSponsoredPackages, rosterCourseProgress } from './sponsorship.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -72,6 +71,7 @@ export const fullOrgDTO = (o) => ({
   rejectionReason: o.rejectionReason || '',
   owner: o.owner || null,
   modules: o.modules || [],
+  packages: o.packages || [],
   publicListed: !!o.publicListed,
   active: o.active !== false,
   reviewedAt: o.reviewedAt || null,
@@ -116,7 +116,7 @@ export async function submitApplication(body, ip) {
 
 // ---- Admin: listing & review -------------------------------------------------
 
-export async function listOrganisations({ status, type, q } = {}) {
+export async function listOrganisations({ status, type, q, page, limit } = {}) {
   const filter = {}
   if (status && ['pending', 'approved', 'rejected'].includes(status)) filter.status = status
   if (type && ORG_TYPES.includes(type)) filter.type = type
@@ -124,10 +124,16 @@ export async function listOrganisations({ status, type, q } = {}) {
     const rx = new RegExp(escapeRegExp(q), 'i')
     filter.$or = [{ name: rx }, { email: rx }, { city: rx }, { state: rx }, { code: rx }]
   }
-  return Organisation.find(filter)
-    .collation({ locale: 'en', strength: 2 })
-    .sort({ name: 1, branch: 1 })
-    .limit(500)
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Organisation.find(filter)
+      .collation({ locale: 'en', strength: 2 })
+      .sort({ name: 1, branch: 1 })
+      .skip(p.skip)
+      .limit(p.limit),
+    Organisation.countDocuments(filter),
+  ])
+  return pageResult(items, total, p)
 }
 
 export async function getOrganisation(id) {
@@ -153,6 +159,9 @@ export function assertOrganisationDraft(draft, ownerEmail) {
   if (d.type && !ORG_TYPES.includes(d.type)) throw httpError('Pick a valid organisation type', 400)
   const email = String(d.email || ownerEmail || '').trim().toLowerCase()
   if (!isEmail(email)) throw httpError('The organisation needs a valid contact email', 400)
+  if (d.packages !== undefined && !Array.isArray(d.packages)) {
+    throw httpError('Sponsored courses must be a list of package SKUs', 400)
+  }
 }
 
 /**
@@ -185,6 +194,7 @@ export async function createOrganisationForOwner(owner, draft = {}) {
     reviewedAt: new Date(),
     owner: owner._id,
     modules: [...DEFAULT_ORG_MODULES],
+    packages: await normalisePackageSkus(draft.packages),
     publicListed: draft.publicListed !== false,
     active: true,
   })
@@ -215,13 +225,6 @@ export async function reviewOrganisation(adminId, id, { status, reason } = {}) {
 
   if (status !== 'approved') {
     await org.save()
-    // Fire-and-forget — a mail failure must never fail the review.
-    sendScholarshipStatusEmail(org.email, {
-      name: org.contactPerson || org.name,
-      institution: org.name,
-      status,
-      reason: org.rejectionReason,
-    }).catch((e) => console.error('✗ organisation status email failed:', e.message))
     return org
   }
 
@@ -277,6 +280,9 @@ export async function updateOrganisationByAdmin(id, body = {}) {
     if (!Array.isArray(body.modules)) throw httpError('Modules must be a list', 400)
     org.modules = [...new Set(body.modules.filter((m) => ORG_MODULES.includes(m)))]
   }
+  // A change here reaches only students who claim their account from now on;
+  // seats already granted are enrollments in their own right and stay.
+  if (body.packages !== undefined) org.packages = await normalisePackageSkus(body.packages)
   if (body.publicListed !== undefined) org.publicListed = !!body.publicListed
   if (body.active !== undefined) org.active = !!body.active
 
@@ -353,74 +359,77 @@ export async function enrollableOrganisations() {
 // ---- Students ----------------------------------------------------------------
 
 // The columns an organisation fills in. `email` is the identity; the rest is
-// roster detail carried onto the scholarship enrolment.
-const CSV_COLUMNS = ['name', 'email', 'phone', 'class', 'section', 'rollno']
-const CSV_HEADERS = ['name', 'email', 'phone', 'class', 'section', 'rollNo']
+// roster detail. Section and roll number are deliberately NOT asked for: they
+// are the school's own filing, they change every year, and nothing on the
+// student's side of the site ever shows them. A shorter template is a template
+// people fill in correctly.
+const CSV_HEADERS = ['name', 'email', 'phone', 'class']
 
 /** The downloadable template, with two filled example rows to copy. */
 export function sampleCsv() {
   return buildCsv(CSV_HEADERS, [
-    ['Aarav Sharma', 'aarav.sharma@example.com', '9876543210', '10', 'A', '23'],
-    ['Diya Verma', 'diya.verma@example.com', '9812345678', '12', 'B', '07'],
+    ['Aarav Sharma', 'aarav.sharma@example.com', '9876543210', '10'],
+    ['Diya Verma', 'diya.verma@example.com', '9812345678', '12'],
   ])
 }
 
-/**
- * Every account attached to this organisation, with its scholarship status for
- * the given cycle (or the organisation's latest cycle when none is passed).
- */
-export async function listOrgStudents(orgId, { q, cycleId } = {}) {
+/** Every account attached to this organisation. */
+export async function listOrgStudents(orgId, { q } = {}) {
   const filter = { organisation: orgId, organisationRole: 'member' }
   if (q) {
     const rx = new RegExp(escapeRegExp(q), 'i')
     filter.$or = [{ name: rx }, { email: rx }]
   }
-  const users = await User.find(filter).sort({ createdAt: -1 }).limit(2000).select('+passwordHash')
-  const ids = users.map((u) => u._id)
+  // Both auth fields, not just the password: accountStatus needs googleId too,
+  // and a projection that leaves it out reports a live Google account as invited.
+  const users = await User.find(filter).sort({ createdAt: -1 }).limit(2000).select(AUTH_STATUS_FIELDS)
 
-  const enrolFilter = { organisation: orgId, user: { $in: ids } }
-  if (cycleId) enrolFilter.cycle = cycleId
-  const enrollments = await ScholarshipEnrollment.find(enrolFilter).sort({ createdAt: -1 })
-  const attempts = await ScholarshipAttempt.find({
-    user: { $in: ids },
-    ...(cycleId ? { cycle: cycleId } : { organisation: orgId }),
-  })
-
-  // Latest enrolment/attempt wins when no cycle was specified.
-  const enrolByUser = new Map()
-  for (const e of enrollments) if (!enrolByUser.has(String(e.user))) enrolByUser.set(String(e.user), e)
-  const attemptByUser = new Map()
-  for (const a of attempts) if (!attemptByUser.has(String(a.user))) attemptByUser.set(String(a.user), a)
+  // The sponsored course, per student: granted (the row exists), or still
+  // waiting on them to claim the account. Null when nothing is sponsored, so
+  // a scholarship-only roster shows no course column at all.
+  const org = await Organisation.findById(orgId).select('packages')
+  const sponsored = await sponsoredCourses(org)
+  const grantedTo = new Set(
+    sponsored.length
+      ? (await Enrollment.find({ user: { $in: users.map((u) => u._id) }, sponsoredBy: orgId })
+          .select('user')).map((e) => String(e.user))
+      : []
+  )
+  const progressOf = await rosterCourseProgress(org, users.map((u) => u._id))
+  const courseOf = (u) => sponsored.length
+    ? {
+        names: sponsored.map((c) => c.name),
+        status: grantedTo.has(String(u._id)) ? 'granted' : 'pending',
+        // How far along, and whether they are keeping the one-step-a-day pace.
+        progress: progressOf.get(String(u._id)) || null,
+      }
+    : null
 
   return users.map((u) => {
-    const e = enrolByUser.get(String(u._id))
-    const a = attemptByUser.get(String(u._id))
     return {
       id: u._id,
       name: u.name || '—',
       email: u.email,
       phone: u.phone || '',
-      studentClass: e?.studentClass || '',
-      section: e?.section || '',
-      rollNo: e?.rollNo || '',
-      enrolled: !!e,
-      source: e?.source || null,
-      // Has the student claimed the account we created for them?
-      activated: !!u.passwordHash,
-      attempt: a ? a.status : 'not_started',
-      score: a?.status === 'submitted' ? a.score : null,
-      total: a?.total ?? null,
+      studentClass: u.studentClass || '',
+      // Has the student claimed the account we created for them? Answered by the
+      // one shared rule, so this roster and the admin panel cannot describe the
+      // same person differently — and so a student who claimed their invite with
+      // GOOGLE stops reading as "Invite sent" for ever, which is what asking
+      // about a password alone used to do to them.
+      status: accountStatus(u),
+      activated: accountStatus(u) === 'active',
+      course: courseOf(u),
       addedAt: u.createdAt,
     }
   })
 }
 
 /**
- * Add one student: provision the account, attach it to the organisation, and
- * (when a cycle is open) enrol them into it. Shared by the single-add form and
- * the CSV importer so both behave identically.
+ * Add one student: provision the account and attach it to the organisation.
+ * Shared by the single-add form and the CSV importer so both behave identically.
  */
-async function addStudent(org, row, cycle) {
+async function addStudent(org, row) {
   const email = String(row.email || '').trim().toLowerCase()
   if (!isEmail(email)) throw httpError('Enter a valid email', 400)
 
@@ -428,8 +437,14 @@ async function addStudent(org, row, cycle) {
     email,
     name: str(row.name, 80),
     phone: str(row.phone, 20) || undefined,
+    // The class belongs on the ACCOUNT: it is what the student sees in
+    // Settings, and what the psychometric plan checks their year against.
+    studentClass: str(row.class, 20) || undefined,
     organisation: org._id,
     organisationRole: 'member',
+    // The organisation's own login is who added them — that is the answer the
+    // admin panel shows under "Created by", and "Self" would be a lie here.
+    createdBy: org.owner || null,
   })
 
   // Belongs to someone else already — never steal them, just report it.
@@ -437,56 +452,56 @@ async function addStudent(org, row, cycle) {
     return { user, status: 'conflict', message: 'Already belongs to another organisation' }
   }
 
-  let enrolled = false
-  if (cycle) {
-    const existing = await ScholarshipEnrollment.findOne({ user: user._id, cycle: cycle._id })
-    if (existing) {
-      // Refresh roster detail from the newer import.
-      if (row.class) existing.studentClass = str(row.class, 20)
-      if (row.section) existing.section = str(row.section, 20)
-      if (row.rollno ?? row.rollNo) existing.rollNo = str(row.rollno ?? row.rollNo, 30)
-      await existing.save()
-    } else {
-      await ScholarshipEnrollment.create({
-        user: user._id,
-        cycle: cycle._id,
-        organisation: org._id,
-        studentClass: str(row.class, 20),
-        section: str(row.section, 20),
-        rollNo: str(row.rollno ?? row.rollNo, 30),
-        source: row.__source || 'org',
-      })
-      enrolled = true
-    }
+  // Adding back a student this organisation had removed. The removal switched
+  // off an account the organisation had made; asking for them again is the
+  // organisation's own undo, so the login comes back with the roster place.
+  if (user.removedFromOrganisation) {
+    if (user.signupMethod === 'invite' && user.active === false) user.active = true
+    user.removedFromOrganisation = null
+    user.removedFromOrganisationAt = null
+    await user.save()
+  }
+
+  // A roster import may carry a newer class than the account was created with.
+  if (row.class && user.studentClass !== str(row.class, 20)) {
+    user.studentClass = str(row.class, 20)
+    await user.save()
+  }
+
+  // The sponsored course lands when the student claims the account. One who
+  // already had a live account — a password, or Google — has nothing left to
+  // claim, so for them that moment is now. Re-read with both auth fields:
+  // provisionAccount selects the password but not googleId, and judging on
+  // the password alone would leave a Google student waiting for ever.
+  if (org.packages?.length) {
+    const live = await User.findById(user._id).select(AUTH_STATUS_FIELDS)
+    if (accountStatus(live) === 'active') await grantSponsoredPackages(live)
   }
 
   return {
     user,
     link,
     status: created ? 'created' : attached ? 'linked' : 'existing',
-    enrolled,
     message: created
       ? 'Account created'
       : attached
         ? 'Existing account linked to your organisation'
-        : enrolled
-          ? 'Already a member — enrolled in this cycle'
-          : 'Already a member',
+        : 'Already a member',
   }
 }
 
 /** Single manual add from the portal. Sends the invite when it's a new account. */
-export async function addOrgStudent(orgId, body, cycle) {
+export async function addOrgStudent(orgId, body) {
   const org = await Organisation.findById(orgId)
   if (!org) throw httpError('Organisation not found', 404)
-  const res = await addStudent(org, { ...body, __source: 'org' }, cycle)
+  const res = await addStudent(org, { ...body, __source: 'org' })
   if (res.status === 'conflict') throw httpError(res.message, 409, 'OTHER_ORGANISATION')
   if (res.link) {
     sendStudentInviteEmail(res.user.email, {
       name: res.user.name,
       organisation: org.name,
       link: res.link,
-      cycleTitle: cycle?.title || '',
+      courses: (await sponsoredCourses(org)).map((c) => c.name),
     }).catch((e) => console.error(`✗ student invite to ${res.user.email} failed:`, e.message))
   }
   return res
@@ -504,7 +519,7 @@ const MAX_IMPORT_ROWS = 1000
  * Invite emails are sent sequentially AFTER the writes, so a flaky SMTP server
  * can't leave the import half-applied.
  */
-export async function bulkImportStudents(orgId, csvText, { dryRun = false, cycle = null } = {}) {
+export async function bulkImportStudents(orgId, csvText, { dryRun = false } = {}) {
   const org = await Organisation.findById(orgId)
   if (!org) throw httpError('Organisation not found', 404)
 
@@ -541,15 +556,15 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false, cycle
         message: otherOrg
           ? 'Already belongs to another organisation — will be skipped'
           : existing
-            ? 'Account exists — will be linked and enrolled'
+            ? 'Account exists — will be linked'
             : 'New account will be created and invited',
       })
       continue
     }
 
     try {
-      const r = await addStudent(org, { ...rec, __source: 'bulk' }, cycle)
-      results.push({ ...base, status: r.status, message: r.message, enrolled: r.enrolled })
+      const r = await addStudent(org, { ...rec, __source: 'bulk' })
+      results.push({ ...base, status: r.status, message: r.message })
       if (r.link) invites.push({ email: r.user.email, name: r.user.name, link: r.link })
     } catch (e) {
       results.push({ ...base, status: 'error', message: e.message })
@@ -558,6 +573,7 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false, cycle
 
   // Gentle on SMTP: one at a time, and a failure only affects that student.
   if (!dryRun && invites.length) {
+    const courses = (await sponsoredCourses(org)).map((c) => c.name)
     ;(async () => {
       for (const inv of invites) {
         try {
@@ -565,7 +581,7 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false, cycle
             name: inv.name,
             organisation: org.name,
             link: inv.link,
-            cycleTitle: cycle?.title || '',
+            courses,
           })
         } catch (e) {
           console.error(`✗ student invite to ${inv.email} failed:`, e.message)
@@ -585,44 +601,94 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false, cycle
     skipped: count('skipped'),
     errors: count('error'),
     invitesQueued: dryRun ? 0 : invites.length,
-    cycle: cycle ? { id: cycle._id, year: cycle.year, title: cycle.title } : null,
     results,
   }
 }
 
 /**
  * Detach a student from the organisation. Their account and history survive —
- * we only clear the organisation link and their enrolments/attempts in THIS
- * organisation's cycles, so the roster and leaderboards stay consistent.
+ * only the organisation link is cleared.
  */
 export async function removeOrgStudent(orgId, userId) {
   const user = await User.findOne({ _id: userId, organisation: orgId, organisationRole: 'member' })
   if (!user) throw httpError('Student not found in your organisation', 404)
 
-  await ScholarshipAttempt.deleteMany({ user: user._id, organisation: orgId })
-  await ScholarshipEnrollment.deleteMany({ user: user._id, organisation: orgId })
-
+  // Remembered so an admin can undo a removal made by mistake (restoreOrgStudent).
+  user.removedFromOrganisation = user.organisation
+  user.removedFromOrganisationAt = new Date()
   user.organisation = null
   user.organisationRole = null
+
+  // Switch the account off — but ONLY when this organisation is what brought it
+  // into existence. A roster can also pick up somebody who had already signed
+  // themselves up, and disabling THAT account would take away a login the
+  // person made for themselves and still owns; the organisation is only letting
+  // go of a student, not closing their account. An admin can switch a disabled
+  // one back on from Users.
+  if (user.signupMethod === 'invite') user.active = false
+
   await user.save()
+}
+
+/**
+ * Undo a removal: put the student back on the roster of the organisation that
+ * let them go. Admin-only — the organisation's own way back is simply to add
+ * the student again, and both paths end in the same state. The login is
+ * switched back on only where the removal switched it off (an invite-made
+ * account); a self-made account was never touched. A sponsored course they
+ * did not yet hold lands now, since there is nothing left for them to claim.
+ */
+export async function restoreOrgStudent(userId) {
+  const user = await User.findById(userId).select(AUTH_STATUS_FIELDS)
+  if (!user) throw httpError('Student not found', 404)
+  // Checked first: after a restore the marker is gone too, and "already
+  // belongs" is the answer that tells a second click what actually happened.
+  if (user.organisation) throw httpError('This student already belongs to an organisation', 409)
+  if (!user.removedFromOrganisation) throw httpError('This student was not removed from an organisation', 400)
+  const org = await Organisation.findById(user.removedFromOrganisation)
+  if (!org) throw httpError('That organisation no longer exists', 404)
+
+  user.organisation = org._id
+  user.organisationRole = 'member'
+  user.removedFromOrganisation = null
+  user.removedFromOrganisationAt = null
+  if (user.signupMethod === 'invite') user.active = true
+  await user.save()
+
+  if (org.packages?.length && accountStatus(user) === 'active') await grantSponsoredPackages(user)
+  return { user, organisation: org }
 }
 
 // ---- Stats -------------------------------------------------------------------
 
 /** Headline numbers for the organisation dashboard (and the admin drill-down). */
 export async function organisationStats(orgId) {
-  const [students, cycles, enrolments, submitted, latest] = await Promise.all([
-    User.countDocuments({ organisation: orgId, organisationRole: 'member' }),
-    ScholarshipCycle.countDocuments({ organisation: orgId }),
-    ScholarshipEnrollment.countDocuments({ organisation: orgId }),
-    ScholarshipAttempt.countDocuments({ organisation: orgId, status: 'submitted' }),
-    ScholarshipCycle.findOne({ organisation: orgId }).sort({ year: -1 }),
-  ])
+  const members = await User.find({ organisation: orgId, organisationRole: 'member' }).select('_id')
+  const students = members.length
+
+  // The sponsored course at a glance: how many seats have landed, and how the
+  // class is pacing. Null when the organisation sponsors nothing.
+  const org = await Organisation.findById(orgId).select('packages')
+  const [course] = await sponsoredCourses(org)
+  if (!course) return { students, course: null }
+  const ids = members.map((m) => m._id)
+  const enrolled = await Enrollment.countDocuments({ user: { $in: ids }, sponsoredBy: orgId })
+  const rows = [...(await rosterCourseProgress(org, ids)).values()]
+  const count = (pace) => rows.filter((r) => r.pace === pace).length
+  const started = rows.filter((r) => r.pace !== 'not-started')
   return {
     students,
-    cycles,
-    enrolments,
-    submitted,
-    latestCycle: latest ? { id: latest._id, year: latest.year, title: latest.title, status: latest.status } : null,
+    course: {
+      name: course.name,
+      enrolled,
+      pending: Math.max(0, students - enrolled),
+      started: started.length,
+      done: count('done'),
+      onTrack: count('on-track') + count('ahead'),
+      behind: count('behind'),
+      avgPercent: started.length
+        ? Math.round(started.reduce((a, r) => a + r.percent, 0) / started.length)
+        : 0,
+    },
   }
 }

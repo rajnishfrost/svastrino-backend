@@ -441,69 +441,6 @@ export async function sendEveningNudgeEmail(to, details) {
   await sendMail({ to, ...buildEveningNudgeEmail(details) })
 }
 
-// --- Nirmaan Scholarship: institution partner approve / reject --------------
-export function buildScholarshipStatusEmail({ name, institution, status, reason }) {
-  const approved = status === 'approved'
-  const link = `${clientUrl()}/nirmaan-scholarship`
-  const who = name ? `, ${name}` : ''
-  return {
-    subject: approved
-      ? `${institution} is approved for the Nirmaan Scholarship`
-      : 'Update on your Nirmaan Scholarship partner request',
-    text: approved
-      ? `Good news${who}! ${institution} has been approved as a Nirmaan Scholarship partner. Your students can now enrol: ${link}`
-      : `Thank you for your interest${who}. ${institution}'s Nirmaan Scholarship partner request was not approved.${reason ? ' Reason: ' + reason : ''}`,
-    html: template({
-      heading: approved ? 'Your institution is approved 🎉' : 'Partner request update',
-      preheader: approved
-        ? 'Your students can now enrol for the Nirmaan Scholarship.'
-        : 'An update on your Nirmaan Scholarship partner request.',
-      intro: approved
-        ? `Good news${who}! ${institution} has been approved as a Nirmaan Scholarship partner. Your students can now enrol and take the scholarship test.`
-        : `Thank you for your interest${who}. After review, ${institution}'s request to partner for the Nirmaan Scholarship was not approved at this time.${reason ? ' Reason: ' + reason : ''}`,
-      cta: approved ? 'View the scholarship' : 'Learn more',
-      link,
-    }),
-  }
-}
-export async function sendScholarshipStatusEmail(to, details) {
-  await sendMail({ to, ...buildScholarshipStatusEmail(details) })
-}
-
-// --- Nirmaan Scholarship: result announced (winner + participants) ----------
-export function buildScholarshipResultEmail({ name, won, winnerName, institution }) {
-  const link = `${clientUrl()}/nirmaan-scholarship`
-  const who = name ? `, ${name}` : ''
-  const from = institution ? ` from ${institution}` : ''
-  if (won) {
-    return {
-      subject: 'You won the Nirmaan Scholarship 🎉',
-      text: `Congratulations${who}! You topped the Nirmaan Scholarship test and won your entire Nirmaan package — free. We’ll reach out with the next steps. ${link}`,
-      html: template({
-        heading: 'You won! 🎉',
-        preheader: 'Congratulations — you won the Nirmaan Scholarship.',
-        intro: `Congratulations${who}! You topped the Nirmaan Scholarship test and won your entire Nirmaan package — completely free. We’ll reach out shortly with the next steps.`,
-        cta: 'View the scholarship',
-        link,
-      }),
-    }
-  }
-  return {
-    subject: 'Nirmaan Scholarship — result announced',
-    text: `Thank you for participating${who}! The Nirmaan Scholarship winner is ${winnerName}${from}. See details: ${link}`,
-    html: template({
-      heading: 'Scholarship result announced',
-      preheader: 'The Nirmaan Scholarship winner has been announced.',
-      intro: `Thank you for participating in the Nirmaan Scholarship${who}! The winner is ${winnerName}${from}. We truly appreciate your effort — keep an eye out for future opportunities.`,
-      cta: 'View the scholarship',
-      link,
-    }),
-  }
-}
-export async function sendScholarshipResultEmail(to, details) {
-  await sendMail({ to, ...buildScholarshipResultEmail(details) })
-}
-
 // --- Organisation approved: portal login is ready ---------------------------
 /**
  * Sent the moment an admin approves a partner organisation. The organisation's
@@ -515,11 +452,11 @@ export function buildOrgApprovedEmail({ name, organisation, link, code }) {
   const who = name ? `, ${name}` : ''
   return {
     subject: `${organisation} is approved — set up your ${BRAND} organisation account`,
-    text: `Good news${who}! ${organisation} has been approved as a Nirmaan Scholarship partner. Set your password to open your organisation portal, where you can add students and run your scholarship: ${link}${code ? ` (Organisation code: ${code})` : ''}`,
+    text: `Good news${who}! ${organisation} has been approved as a partner. Set your password to open your organisation portal, where you can add and manage your students: ${link}${code ? ` (Organisation code: ${code})` : ''}`,
     html: template({
       heading: 'Your organisation is approved 🎉',
       preheader: `Set your password to open the ${organisation} portal.`,
-      intro: `Good news${who}! ${organisation} has been approved as a Nirmaan Scholarship partner. Set a password below to open your organisation portal — from there you can bulk-add your students, set up your scholarship test and see your results.`,
+      intro: `Good news${who}! ${organisation} has been approved as a partner. Set a password below to open your organisation portal — from there you can bulk-add your students and manage them.`,
       cta: 'Set my password',
       link,
       note: `${code ? `Your organisation code is ${code}. ` : ''}This link is valid for 7 days — after that use “Forgot password” on the login page.`,
@@ -533,19 +470,22 @@ export async function sendOrgApprovedEmail(to, details) {
 // --- Student added by their organisation ------------------------------------
 /**
  * Sent to each student an organisation imports. The account already exists (the
- * organisation vouched for the address), so this is a set-password invite plus
- * a note about the scholarship they've been entered into.
+ * organisation vouched for the address), so this is a set-password invite.
  */
-export function buildStudentInviteEmail({ name, organisation, link, cycleTitle }) {
+export function buildStudentInviteEmail({ name, organisation, link, courses = [] }) {
   const first = String(name || '').trim().split(/\s+/)[0] || 'there'
-  const what = cycleTitle ? ` and entered you into the ${cycleTitle}` : ''
+  // A sponsored course is the reason most of these accounts exist, so the
+  // invite says so: the seat opens the moment the password is set.
+  const course = courses.length
+    ? ` ${organisation} has also enrolled you in ${courses.join(' and ')} — it opens the moment your password is set.`
+    : ''
   return {
     subject: `${organisation} created your ${BRAND} account`,
-    text: `Hi ${first}, ${organisation} created a ${BRAND} account for you${what}. Set your password to log in and take the scholarship test: ${link}`,
+    text: `Hi ${first}, ${organisation} created a ${BRAND} account for you.${course} Set your password to log in: ${link}`,
     html: template({
       heading: 'Your account is ready',
       preheader: `${organisation} created a ${BRAND} account for you.`,
-      intro: `Hi ${first}! ${organisation} created a ${BRAND} account for you${what}. Set a password below — then log in to see your scholarship details and take the test when it opens.`,
+      intro: `Hi ${first}! ${organisation} created a ${BRAND} account for you.${course} Set a password below — then log in to pick up from there.`,
       cta: 'Set my password',
       link,
       note: 'This link is valid for 7 days. You can also use “Forgot password” on the login page later.',
