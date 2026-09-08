@@ -1,4 +1,5 @@
 import { Blog } from '../../user/blogs/blog.model.js'
+import { ROWS_PER_PAGE } from '../../../utils/paginate.js'
 
 /**
  * Blog management for the admin panel. Deliberately separate from the public
@@ -32,9 +33,9 @@ const asList = (v) =>
  * of long markdown bodies would be megabytes).
  * @param {object} opts { page, limit, q, category, owner, status }
  */
-export async function listPosts({ page = 1, limit = 20, q, category, owner, status } = {}) {
+export async function listPosts({ page = 1, limit = ROWS_PER_PAGE, q, category, owner, status } = {}) {
   const safePage = Math.max(1, Number(page) || 1)
-  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || 20))
+  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || ROWS_PER_PAGE))
 
   const filter = {}
   if (category) filter.categories = category

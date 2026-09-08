@@ -124,9 +124,12 @@ export const webhook = asyncHandler(async (req, res) => {
 // ---- Admin (requireAdminAuth) ----
 
 export const adminListOrders = asyncHandler(async (req, res) => {
-  const orders = await service.adminListOrders({ status: req.query.status })
+  const list = await service.adminListOrders({
+    status: req.query.status, page: req.query.page, limit: req.query.limit,
+  })
   res.json({
-    orders: orders.map((o) => ({
+    ...list,
+    orders: list.items.map((o) => ({
       ...toOrderDTO(o),
       user: o.user ? { id: o.user._id, name: o.user.name, email: o.user.email } : null,
     })),
@@ -150,7 +153,8 @@ export const adminCreateCoupon = asyncHandler(async (req, res) => {
 })
 
 export const adminListCoupons = asyncHandler(async (req, res) => {
-  res.json({ coupons: await service.listCoupons() })
+  const list = await service.listCoupons({ page: req.query.page, limit: req.query.limit })
+  res.json({ ...list, coupons: list.items })
 })
 
 // PATCH /api/admin/payments/coupons/:id  { active }

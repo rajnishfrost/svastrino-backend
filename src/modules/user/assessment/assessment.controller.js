@@ -28,9 +28,12 @@ export const adminList = asyncHandler(async (req, res) => {
   const list = await service.adminList({
     status: req.query.status ? clean(req.query.status) : undefined,
     product: req.query.product ? clean(req.query.product) : undefined,
+    page: req.query.page,
+    limit: req.query.limit,
   })
   res.json({
-    assessments: list.map((a) => ({
+    ...list,
+    assessments: list.items.map((a) => ({
       id: a._id,
       user: a.user ? { id: a.user._id, name: a.user.name, email: a.user.email } : null,
       product: a.product,

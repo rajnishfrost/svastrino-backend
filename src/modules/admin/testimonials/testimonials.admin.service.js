@@ -1,4 +1,5 @@
 import { Testimonial } from '../../user/content/testimonial.model.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 // Local, the way every other module here does it — there is no shared helper.
 const httpError = (message, status) => Object.assign(new Error(message), { status })
@@ -8,8 +9,13 @@ const httpError = (message, status) => Object.assign(new Error(message), { statu
  * ones; this list is everything, so a review taken down is still here to put
  * back rather than gone for good.
  */
-export async function listAll() {
-  return Testimonial.find({}).sort({ order: 1, name: 1 })
+export async function listAll({ page, limit } = {}) {
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Testimonial.find({}).sort({ order: 1, name: 1 }).skip(p.skip).limit(p.limit),
+    Testimonial.countDocuments({}),
+  ])
+  return pageResult(items, total, p)
 }
 
 /** Fields a person may set. Anything else in the body is ignored. */

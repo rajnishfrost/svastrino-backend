@@ -1,6 +1,7 @@
 import { Enquiry } from './enquiry.model.js'
 import { sendEnquiryEmail, sendEnquiryAckEmail, sendExpertApprovalEmail } from '../../../utils/mailer.js'
 import { enquiryRecipients } from '../../admin/settings/settings.service.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 /**
  * Save an enquiry, then write to both the people it concerns: the team, who have
@@ -41,11 +42,16 @@ export async function createEnquiry(data, { userId = null, ip = '' } = {}) {
 }
 
 /** Admin list, newest first. */
-export async function listEnquiries({ status, source } = {}) {
+export async function listEnquiries({ status, source, page, limit } = {}) {
   const q = {}
   if (status) q.status = status
   if (source) q.source = source
-  return Enquiry.find(q).sort({ createdAt: -1 }).limit(500)
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Enquiry.find(q).sort({ createdAt: -1 }).skip(p.skip).limit(p.limit),
+    Enquiry.countDocuments(q),
+  ])
+  return pageResult(items, total, p)
 }
 
 const STATUSES = ['new', 'contacted', 'approved', 'closed']

@@ -33,8 +33,11 @@ export const getMyEnquiry = asyncHandler(async (req, res) => {
 
 // GET /api/admin/enquiries
 export const getEnquiries = asyncHandler(async (req, res) => {
-  const list = await service.listEnquiries({ status: req.query.status, source: req.query.source })
-  res.json({ enquiries: list.map(toEnquiryDTO) })
+  const list = await service.listEnquiries({
+    status: req.query.status, source: req.query.source,
+    page: req.query.page, limit: req.query.limit,
+  })
+  res.json({ ...list, enquiries: list.items.map(toEnquiryDTO) })
 })
 
 // PATCH /api/admin/enquiries/:id

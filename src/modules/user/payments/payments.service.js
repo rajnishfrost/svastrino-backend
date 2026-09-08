@@ -25,6 +25,7 @@ const basePrice = (pkg) => (pkg.earlyBird != null ? pkg.earlyBird : pkg.price)
  */
 const upgradeCredit = (currentPkg, totalPaid) => Math.max(totalPaid, basePrice(currentPkg))
 import { sendReceiptEmail } from '../../../utils/mailer.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 // Upgrade rules: only within this many days of the day the student STARTS the
 // course, and only upward in price. Credit = the tier they already own.
@@ -666,9 +667,14 @@ export async function upgradeStatus(userId, product) {
 
 // --- Admin -------------------------------------------------------------------
 
-export async function adminListOrders({ status } = {}) {
+export async function adminListOrders({ status, page, limit } = {}) {
   const q = status ? { status } : {}
-  return Order.find(q).sort({ createdAt: -1 }).limit(500).populate('user', 'name email')
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Order.find(q).sort({ createdAt: -1 }).skip(p.skip).limit(p.limit).populate('user', 'name email'),
+    Order.countDocuments(q),
+  ])
+  return pageResult(items, total, p)
 }
 
 export async function adminRevenue() {
@@ -724,8 +730,13 @@ export async function createCoupon(data) {
   }
 }
 
-export async function listCoupons() {
-  return Coupon.find().sort({ createdAt: -1 })
+export async function listCoupons({ page, limit } = {}) {
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Coupon.find().sort({ createdAt: -1 }).skip(p.skip).limit(p.limit),
+    Coupon.countDocuments({}),
+  ])
+  return pageResult(items, total, p)
 }
 
 /**

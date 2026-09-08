@@ -5,6 +5,7 @@ import { Enrollment } from '../payments/enrollment.model.js'
 import { courseAccess, effectiveExpiry } from '../learn/courseAccess.js'
 import { User } from '../credentials/credentials.model.js'
 import { notify } from '../notifications/notifications.service.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -164,7 +165,7 @@ export async function replyAsStudent(userId, id, text) {
  * rather than the ticket, so those are resolved to ids first and folded into the
  * same query — two round trips, but one sorted, limited result set.
  */
-export async function adminList({ status, q } = {}) {
+export async function adminList({ status, q, page, limit } = {}) {
   const filter = {}
   if (status && TICKET_STATUSES.includes(status)) filter.status = status
 
@@ -182,10 +183,16 @@ export async function adminList({ status, q } = {}) {
     ]
   }
 
-  return Ticket.find(filter)
-    .sort({ lastMessageAt: -1 })
-    .limit(MAX_LIST)
-    .populate('user', 'name email')
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Ticket.find(filter)
+      .sort({ lastMessageAt: -1 })
+      .skip(p.skip)
+      .limit(p.limit)
+      .populate('user', 'name email'),
+    Ticket.countDocuments(filter),
+  ])
+  return pageResult(items, total, p)
 }
 
 export async function adminGet(id) {

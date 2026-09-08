@@ -21,7 +21,8 @@ const dto = (t) => ({
 })
 
 router.get('/', asyncHandler(async (req, res) => {
-  res.json({ testimonials: (await service.listAll()).map(dto) })
+  const list = await service.listAll({ page: req.query.page, limit: req.query.limit })
+  res.json({ ...list, testimonials: list.items.map(dto) })
 }))
 
 router.post('/', asyncHandler(async (req, res) => {

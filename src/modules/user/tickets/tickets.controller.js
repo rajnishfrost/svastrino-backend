@@ -47,8 +47,11 @@ export const postMyReply = asyncHandler(async (req, res) => {
 
 // GET /api/admin/tickets?status=open&q=name
 export const adminGetTickets = asyncHandler(async (req, res) => {
-  const list = await service.adminList({ status: req.query.status, q: req.query.q })
-  res.json({ tickets: list.map(toTicketAdminDTO) })
+  const list = await service.adminList({
+    status: req.query.status, q: req.query.q,
+    page: req.query.page, limit: req.query.limit,
+  })
+  res.json({ ...list, tickets: list.items.map(toTicketAdminDTO) })
 })
 
 // GET /api/admin/tickets/:id

@@ -1,6 +1,7 @@
 import { Assessment } from './assessment.model.js'
 import { Enrollment } from '../payments/enrollment.model.js'
 import * as mindler from './mindler.js'
+import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -96,11 +97,16 @@ export async function markSubmitted(userId, product, externalRef) {
 
 // ---- Admin ----------------------------------------------------------------
 
-export async function adminList({ status, product } = {}) {
+export async function adminList({ status, product, page, limit } = {}) {
   const q = {}
   if (status) q.status = status
   if (product) q.product = product
-  return Assessment.find(q).sort({ updatedAt: -1 }).limit(500).populate('user', 'name email')
+  const p = pageOf({ page, limit })
+  const [items, total] = await Promise.all([
+    Assessment.find(q).sort({ updatedAt: -1 }).skip(p.skip).limit(p.limit).populate('user', 'name email'),
+    Assessment.countDocuments(q),
+  ])
+  return pageResult(items, total, p)
 }
 
 /**

@@ -1,5 +1,6 @@
 import { CareerField } from '../../user/content/careerField.model.js'
 import { Course } from '../../user/content/course.model.js'
+import { ROWS_PER_PAGE } from '../../../utils/paginate.js'
 
 /**
  * Career Library management — streams (CareerField) and the course detail pages
@@ -112,9 +113,9 @@ export async function deleteField(id) {
 const MAX_LIMIT = 100
 
 /** Paginated course list with search + stream filter. Long text stripped. */
-export async function listCourses({ page = 1, limit = 20, q, field, status } = {}) {
+export async function listCourses({ page = 1, limit = ROWS_PER_PAGE, q, field, status } = {}) {
   const safePage = Math.max(1, Number(page) || 1)
-  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || 20))
+  const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || ROWS_PER_PAGE))
 
   const filter = {}
   if (field) filter['fields.slug'] = field
