@@ -73,6 +73,7 @@ export async function saveVideo(tmpPath, originalName) {
   }
 
   // local: move the staged file into the served videos dir
+  assertLocalWriteAllowed()
   renameSync(tmpPath, join(VIDEOS_DIR, name))
   return { url: `/uploads/videos/${name}`, key } // relative URL (Vite-proxied in dev)
 }
@@ -106,16 +107,46 @@ export async function saveHlsDir(localDir, id) {
  * Persist a cropped avatar image (the client sends a square JPEG) and return
  * its URL + storage key. `ext` includes the dot, e.g. '.jpg'.
  */
+/**
+ * Refuse to write media to this disk while the database being written to lives
+ * somewhere else.
+ *
+ * The two settings are independent — STORAGE says where files go, MONGODB_URI
+ * says which database learns about them — and the combination "files here,
+ * database there" is how 73 caption tracks came to be recorded in production
+ * as paths to a laptop. Production answers an unknown /uploads/... with the
+ * app's index.html, so the browser was handed HTML where it expected a subtitle
+ * and simply showed nothing. Nothing failed loudly; the captions were just gone.
+ *
+ * Local development against a local database is untouched. Pointing at a shared
+ * database on purpose (to repair data) is still possible with the override, and
+ * then it is a deliberate act rather than an accident.
+ */
+const LOCAL_DB = /^mongodb:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/i
+function assertLocalWriteAllowed() {
+  if (STORAGE === 's3') return
+  const uri = process.env.MONGODB_URI || ''
+  if (LOCAL_DB.test(uri)) return
+  if (process.env.ALLOW_LOCAL_MEDIA_WITH_REMOTE_DB === '1') return
+  const host = (uri.match(/@([^/?]+)/) || [])[1] || 'a remote host'
+  throw new Error(
+    `Refusing to save media to this disk: STORAGE is 'local' but MONGODB_URI points at ${host}. ` +
+    'The file would exist only here while that database recorded a path to it. ' +
+    'Set STORAGE=s3 (with S3_BUCKET, AWS_REGION and CDN_URL), or ALLOW_LOCAL_MEDIA_WITH_REMOTE_DB=1 if you mean it.',
+  )
+}
+
 export async function saveAvatar(tmpPath, ext = '.jpg') {
   const name = crypto.randomBytes(12).toString('hex') + ext
   const key = `avatars/${name}`
 
   if (STORAGE === 's3') {
-    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    const res = await putFile(tmpPath, key, contentTypeFor(name))
     try { unlinkSync(tmpPath) } catch { /* already gone */ }
     return res
   }
 
+  assertLocalWriteAllowed()
   renameSync(tmpPath, join(AVATARS_DIR, name))
   return { url: `/uploads/avatars/${name}`, key }
 }
@@ -130,11 +161,12 @@ export async function saveReport(tmpPath, ext = '.pdf') {
   const key = `reports/${name}`
 
   if (STORAGE === 's3') {
-    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    const res = await putFile(tmpPath, key, contentTypeFor(name))
     try { unlinkSync(tmpPath) } catch { /* already gone */ }
     return res
   }
 
+  assertLocalWriteAllowed()
   renameSync(tmpPath, join(REPORTS_DIR, name))
   return { url: `/uploads/reports/${name}`, key }
 }
@@ -148,11 +180,12 @@ export async function saveImage(tmpPath, ext = '.jpg') {
   const key = `images/${name}`
 
   if (STORAGE === 's3') {
-    const res = await putFile(tmpPath, key, contentTypeFor(ext))
+    const res = await putFile(tmpPath, key, contentTypeFor(name))
     try { unlinkSync(tmpPath) } catch { /* already gone */ }
     return res
   }
 
+  assertLocalWriteAllowed()
   renameSync(tmpPath, join(IMAGES_DIR, name))
   return { url: `/uploads/images/${name}`, key }
 }
@@ -169,6 +202,7 @@ export async function saveSubtitle(vttText) {
     return putBuffer(vttText, key, 'text/vtt')
   }
 
+  assertLocalWriteAllowed()
   writeFileSync(join(SUBTITLES_DIR, name), vttText, 'utf8')
   return { url: `/uploads/subtitles/${name}`, key }
 }

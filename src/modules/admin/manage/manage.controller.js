@@ -1,4 +1,5 @@
 import { asyncHandler } from '../../../utils/asyncHandler.js'
+import { mediaUrl } from '../../../config/uploads.js'
 import { rupees } from '../../../utils/money.js'
 import * as service from './manage.service.js'
 
@@ -33,8 +34,8 @@ const pkgDTO = (p) => ({
 })
 const sessionDTO = (s) => ({
   id: s._id, order: s.order, tier: s.tier, title: s.title, description: s.description,
-  videoUrl: s.videoUrl, durationMins: s.durationMins, worksheet: s.worksheet, active: s.active,
-  captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
+  videoUrl: mediaUrl(s.videoUrl), durationMins: s.durationMins, worksheet: s.worksheet, active: s.active,
+  captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: mediaUrl(c.url) })),
 })
 
 // Dashboard

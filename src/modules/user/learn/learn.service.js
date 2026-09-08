@@ -352,7 +352,7 @@ export async function getCourse(userId, slug) {
       description: s.description,
       videoUrl: mediaUrl(s.videoUrl),
       durationMins: s.durationMins,
-      captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url })),
+      captions: (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: mediaUrl(c.url) })),
       // The worksheet is NOT sent. It holds every one of the week's six tasks,
       // and handing that over would undo the drip the line below is careful to
       // keep: computeQuestions deliberately withholds a prompt the student has

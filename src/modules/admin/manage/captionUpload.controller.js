@@ -2,7 +2,7 @@ import multer from 'multer'
 import crypto from 'node:crypto'
 import { readFileSync, unlinkSync } from 'node:fs'
 import { asyncHandler } from '../../../utils/asyncHandler.js'
-import { TMP_DIR, saveSubtitle, deleteByKey } from '../../../config/uploads.js'
+import { TMP_DIR, saveSubtitle, deleteByKey, mediaUrl } from '../../../config/uploads.js'
 import { srtToVtt, parseVttCues, buildVtt, removeOverlaps } from '../../../utils/subtitles.js'
 import { Session } from '../../user/learn/session.model.js'
 
@@ -35,7 +35,7 @@ export function uploadCaptionMw(req, res, next) {
   })
 }
 
-const captionsDTO = (s) => (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: c.url }))
+const captionsDTO = (s) => (s.captions || []).map((c) => ({ lang: c.lang, label: c.label, url: mediaUrl(c.url) }))
 
 // Replace-or-add a track for a language on the session, deleting the old file.
 async function upsertTrack(session, { lang, label, url, key }) {

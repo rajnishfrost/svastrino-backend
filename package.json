@@ -15,6 +15,7 @@
     "seed:blogs": "node src/modules/user/blogs/seedBlogs.js",
     "seed:content": "node src/modules/user/content/seedContent.js",
     "fetch:media": "node src/scripts/fetchMedia.js",
+    "migrate:media": "node src/scripts/migrateLocalMedia.js",
     "reset:progress": "node src/modules/user/learn/resetProgress.js",
     "reset:user": "node src/modules/user/learn/resetUser.js",
     "seed:questions": "node src/modules/user/learn/seedQuestions.js",
