@@ -82,16 +82,9 @@ export function toCourseDTO(c) {
     slug: c.slug,
     name: c.name,
     overview: c.overview,
-    topQualities: c.topQualities,
-    topJobs: c.topJobs.map((j) => ({
-      role: j.role,
-      description: j.description,
-      indiaSalary: j.indiaSalary,
-      globalSalary: j.globalSalary,
-    })),
-    institutesIndia: c.institutesIndia,
-    institutesInternational: c.institutesInternational,
-    careerLadder: c.careerLadder,
+    // The page itself; `overview` above is its plain-text mirror, still used
+    // for the search description and the library card.
+    overviewBlocks: c.overviewBlocks || null,
     fields: c.fields.map((f) => ({ name: f.name, slug: f.slug })),
     // Empty unless an admin has set one; the page then falls back to the
     // wording the old site published for this address.

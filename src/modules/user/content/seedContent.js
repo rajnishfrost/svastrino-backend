@@ -13,6 +13,7 @@ import { Faq } from './faq.model.js'
 import { Testimonial } from './testimonial.model.js'
 import { CareerField } from './careerField.model.js'
 import { Course } from './course.model.js'
+import { sectionsToBlocks } from './legacySections.js'
 import { SitePage } from './sitePage.model.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -607,11 +608,7 @@ const FIELD_ADMIN_OWNED = ['courses', 'order', 'description']
 // `fields` is a course's stream membership, which the admin panel treats as the
 // single source of truth (it rebuilds each stream's course list from it), and
 // `active` is how the panel hides a course — both are editorial decisions.
-const COURSE_ADMIN_OWNED = [
-  'overview', 'topQualities', 'topJobs',
-  'institutesIndia', 'institutesInternational', 'careerLadder',
-  'fields', 'active',
-]
+const COURSE_ADMIN_OWNED = ['overview', 'overviewBlocks', 'fields', 'active']
 
 // Mongo rejects an update that names the same field in both $set and
 // $setOnInsert, so the seed document is split field by field instead of being
@@ -688,7 +685,19 @@ async function run() {
       const c = JSON.parse(fs.readFileSync(join(coursesDir, file), 'utf8'))
       await Course.findOneAndUpdate(
         { slug: c.slug },
-        splitUpdate({ ...c, fields: fieldsBySlug.get(c.slug) || [], active: true }, COURSE_ADMIN_OWNED),
+        splitUpdate(
+          {
+            ...c,
+            // The scrape produces separate lists — qualities, careers,
+            // institutes, the ladder — but a course page is one document now,
+            // so they are folded into it here. Without this a freshly seeded
+            // database would show a bare paragraph where a full page belongs.
+            overviewBlocks: sectionsToBlocks(c),
+            fields: fieldsBySlug.get(c.slug) || [],
+            active: true,
+          },
+          COURSE_ADMIN_OWNED
+        ),
         { upsert: true }
       )
       courseCount++

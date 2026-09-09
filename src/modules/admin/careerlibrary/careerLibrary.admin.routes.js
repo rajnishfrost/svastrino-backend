@@ -33,13 +33,7 @@ const courseRowDTO = (c) => ({
 const courseDTO = (c) => ({
   ...courseRowDTO(c),
   overview: c.overview,
-  topQualities: c.topQualities,
-  topJobs: c.topJobs.map((j) => ({
-    role: j.role, description: j.description, indiaSalary: j.indiaSalary, globalSalary: j.globalSalary,
-  })),
-  institutesIndia: c.institutesIndia,
-  institutesInternational: c.institutesInternational,
-  careerLadder: c.careerLadder,
+  overviewBlocks: c.overviewBlocks || null,
 })
 
 

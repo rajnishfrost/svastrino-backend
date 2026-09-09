@@ -1,6 +1,7 @@
 import { CareerField } from '../../user/content/careerField.model.js'
 import { Course } from '../../user/content/course.model.js'
 import { ROWS_PER_PAGE } from '../../../utils/paginate.js'
+import { blocksToText, sanitizeBlocks, textToBlocks } from '../../user/content/richText.js'
 
 /**
  * Career Library management — streams (CareerField) and the course detail pages
@@ -22,11 +23,6 @@ export const slugify = (s) =>
   String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-const asLines = (v) =>
-  Array.isArray(v)
-    ? v.map((s) => String(s).trim()).filter(Boolean)
-    : String(v || '').split('\n').map((s) => s.trim()).filter(Boolean)
 
 // ---- Streams (CareerField) --------------------------------------------------
 
@@ -112,7 +108,7 @@ export async function deleteField(id) {
 
 const MAX_LIMIT = 100
 
-/** Paginated course list with search + stream filter. Long text stripped. */
+/** Paginated course list with search + stream filter. The document is stripped. */
 export async function listCourses({ page = 1, limit = ROWS_PER_PAGE, q, field, status } = {}) {
   const safePage = Math.max(1, Number(page) || 1)
   const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || ROWS_PER_PAGE))
@@ -127,7 +123,7 @@ export async function listCourses({ page = 1, limit = ROWS_PER_PAGE, q, field, s
   }
 
   const [items, total] = await Promise.all([
-    Course.find(filter).select('-overview -topJobs -careerLadder').sort({ name: 1 }).skip((safePage - 1) * safeLimit).limit(safeLimit),
+    Course.find(filter).select('-overview -overviewBlocks').sort({ name: 1 }).skip((safePage - 1) * safeLimit).limit(safeLimit),
     Course.countDocuments(filter),
   ])
 
@@ -151,26 +147,23 @@ async function resolveFields(slugs) {
 function buildCoursePatch(body = {}) {
   const patch = {}
   if (body.name !== undefined) patch.name = String(body.name).trim()
-  if (body.overview !== undefined) patch.overview = String(body.overview).trim()
-  if (body.topQualities !== undefined) patch.topQualities = asLines(body.topQualities)
-  if (body.institutesIndia !== undefined) patch.institutesIndia = asLines(body.institutesIndia)
-  if (body.institutesInternational !== undefined) patch.institutesInternational = asLines(body.institutesInternational)
-  if (body.careerLadder !== undefined) patch.careerLadder = asLines(body.careerLadder)
+  // The overview travels as editor blocks; the plain string is derived from
+  // them. A save carrying only the old plain field — an older panel, a script,
+  // a seed — still works: the blocks are rebuilt from the text, so the two
+  // can't drift apart whichever way the content arrived.
+  if (body.overviewBlocks !== undefined) {
+    const doc = sanitizeBlocks(body.overviewBlocks)
+    patch.overviewBlocks = doc
+    patch.overview = doc ? blocksToText(doc) : ''
+  } else if (body.overview !== undefined) {
+    patch.overview = String(body.overview).trim()
+    patch.overviewBlocks = textToBlocks(patch.overview)
+  }
   if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
   if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
   if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
   if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(body.canonicalSlug)
   if (body.active !== undefined) patch.active = !!body.active
-  if (body.topJobs !== undefined) {
-    patch.topJobs = (Array.isArray(body.topJobs) ? body.topJobs : [])
-      .map((j) => ({
-        role: String(j?.role || '').trim(),
-        description: String(j?.description || '').trim(),
-        indiaSalary: String(j?.indiaSalary || '').trim(),
-        globalSalary: String(j?.globalSalary || '').trim(),
-      }))
-      .filter((j) => j.role) // a job row with no role is an empty form row
-  }
   return patch
 }
 
@@ -223,6 +216,8 @@ export async function updateCourse(id, body = {}) {
   }
 
   Object.assign(course, patch)
+  // Mongoose doesn't track what happens inside a Mixed path on its own.
+  if (patch.overviewBlocks !== undefined) course.markModified('overviewBlocks')
   await course.save()
   // Name / slug / active changes all alter what a stream should list.
   for (const slug of touched) await resyncField(slug)
