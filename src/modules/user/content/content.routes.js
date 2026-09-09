@@ -5,6 +5,7 @@ import {
   listFaqs,
   listTestimonials,
   listCareerLibrary,
+  listCourses,
   getCourse,
   getSitePage,
   resolveSlug,
@@ -20,6 +21,7 @@ router.get('/programs/:slug', getProgram)
 router.get('/faqs', listFaqs)
 router.get('/testimonials', listTestimonials)
 router.get('/career-library', listCareerLibrary)
+router.get('/courses', listCourses)
 router.get('/courses/:slug', getCourse)
 router.get('/pages/:slug', getSitePage)
 

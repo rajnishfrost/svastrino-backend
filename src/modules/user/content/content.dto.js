@@ -59,6 +59,20 @@ export function toCareerFieldDTO(c) {
   }
 }
 
+/**
+ * Card shape for the Career Library grid — the overview comes along as the
+ * card's blurb, but nothing else from the detail page does, so a page of them
+ * stays small.
+ */
+export function toCourseCardDTO(c) {
+  return {
+    slug: c.slug,
+    name: c.name,
+    overview: c.overview,
+    fields: c.fields.map((f) => ({ name: f.name, slug: f.slug })),
+  }
+}
+
 export function toSitePageDTO(p) {
   return { slug: p.slug, title: p.title, body: p.body, updatedAt: p.updatedAt }
 }

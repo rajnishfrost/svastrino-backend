@@ -1,13 +1,14 @@
 import { asyncHandler } from '../../../utils/asyncHandler.js'
 import * as service from './content.service.js'
 import {
+  toCareerFieldDTO,
+  toCourseCardDTO,
+  toCourseDTO,
+  toFaqDTO,
   toProgramCardDTO,
   toProgramDTO,
-  toFaqDTO,
-  toTestimonialDTO,
-  toCareerFieldDTO,
-  toCourseDTO,
   toSitePageDTO,
+  toTestimonialDTO,
 } from './content.dto.js'
 
 // GET /api/user/content/programs
@@ -41,6 +42,21 @@ export const listTestimonials = asyncHandler(async (req, res) => {
 export const listCareerLibrary = asyncHandler(async (req, res) => {
   const fields = await service.listCareerFields()
   res.json({ fields: fields.map(toCareerFieldDTO) })
+})
+
+// GET /api/user/content/courses?page=&limit=&field=&q=
+export const listCourses = asyncHandler(async (req, res) => {
+  const { page, limit, field, q } = req.query
+  const result = await service.listCourses({ page, limit, field, q })
+  res.json({
+    courses: result.items.map(toCourseCardDTO),
+    pagination: {
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      pages: result.pages,
+    },
+  })
 })
 
 // GET /api/user/content/courses/:slug

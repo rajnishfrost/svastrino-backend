@@ -53,6 +53,47 @@ export async function listCareerFields() {
   return CareerField.find({ active: true }).sort({ order: 1, name: 1 })
 }
 
+const MAX_COURSE_LIMIT = 50
+
+/**
+ * Paginated, filterable list of career-library courses, A→Z.
+ *
+ * The library is browsed by stream, and a course sits in more than one — the
+ * 52 courses make 80 entries across the 13 streams — so the filter matches on
+ * the denormalised `fields.slug` rather than reading CareerField and
+ * de-duplicating what comes back.
+ *
+ * @param {object} opts { page, limit, field, q }
+ */
+export async function listCourses({ page = 1, limit = 12, field, q } = {}) {
+  const safePage = Math.max(1, Number(page) || 1)
+  const safeLimit = Math.min(MAX_COURSE_LIMIT, Math.max(1, Number(limit) || 12))
+
+  const filter = { active: true }
+  if (field) filter['fields.slug'] = field
+  // Regex (not $text) so a partial word matches, the same way the blog searches.
+  // The name only, though — searching the overview as well turns "design" into
+  // thirteen results, most of them only mentioning the word in passing.
+  if (q) filter.name = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+
+  const [items, total] = await Promise.all([
+    Course.find(filter)
+      .select('slug name overview fields')
+      .sort({ name: 1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit),
+    Course.countDocuments(filter),
+  ])
+
+  return {
+    items,
+    page: safePage,
+    limit: safeLimit,
+    total,
+    pages: Math.max(1, Math.ceil(total / safeLimit)),
+  }
+}
+
 /** One course detail page by slug. */
 export async function getCourseBySlug(slug) {
   const course = await Course.findOne({ slug, active: true })
