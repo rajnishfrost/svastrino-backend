@@ -8,10 +8,9 @@ import { Answer } from './answer.model.js'
 import { LearnState } from './learnState.model.js'
 import { courseAccess } from './courseAccess.js'
 import { Assessment } from '../assessment/assessment.model.js'
-import { nextIstMidnight, istDaysBetween } from '../../../utils/schedule.js'
+import { nextIstMidnight, istDaysBetween, istDayIndex } from '../../../utils/schedule.js'
 import { mediaUrl } from '../../../config/uploads.js'
 
-const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions = 7 days per session
 
 /**
  * TEST MODE (`LEARN_TEST_MODE=1` in the server env). Off by default, and only a
@@ -214,7 +213,14 @@ async function loadState(userId, slug) {
   const { rank, packageName, includesPsychometric } = await userRank(userId, slug)
   if (rank === 0) throw httpError('You need to enrol in this course first.', 403, 'NOT_ENROLLED')
 
-  const sessions = await Session.find({ skillBuild: sb._id, active: true, tier: { $lte: rank } }).sort({ order: 1 })
+  // resourceBlocks is deliberately left behind: the week's written resource is
+  // handed out one session at a time, by getSessionResource, and only after the
+  // video has been watched. Not loading it here is what makes that true —
+  // nothing downstream can send what it was never given. resourceSummary is the
+  // small part that IS safe to carry, and it is what the page advertises.
+  const sessions = await Session.find({ skillBuild: sb._id, active: true, tier: { $lte: rank } })
+    .select('-resourceBlocks')
+    .sort({ order: 1 })
   const sessionIds = sessions.map((s) => s._id)
 
   const [learnState, progresses, questions, answers] = await Promise.all([
@@ -278,6 +284,19 @@ function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySe
  * — so the page renders it without needing to learn anything new. What the
  * student already achieved is left in place, because that part is theirs.
  */
+/**
+ * What the page may know about a week's resource. Before the video is watched
+ * the answer is nothing at all — not the headings, not even that there is one —
+ * so a student cannot read ahead through the network tab, which is the same
+ * care computeQuestions takes with a task they have not reached. A week the
+ * document has nothing for (the closing week) simply never offers one.
+ */
+function resourceFor(session, videoDone) {
+  const summary = session.resourceSummary
+  if (!videoDone || !summary?.blocks) return null
+  return { headings: summary.headings || [], sections: summary.headings?.length || 0 }
+}
+
 function closedSession(session, prog, phase, phaseLocked, st) {
   const questions = st.questionsBySession.get(String(session._id)) || []
   const answeredCount = questions.filter((q) => st.answersByQid.has(String(q._id))).length
@@ -299,6 +318,10 @@ function closedSession(session, prog, phase, phaseLocked, st) {
     playsLeft: 0,
     playLimitReached: true,
     videoDone: !!prog?.videoDoneAt,
+    videoDoneAt: prog?.videoDoneAt || null,
+    // A week they watched keeps its resource offer after the year closes; the
+    // reading they earned is theirs, the same way their answers are.
+    resource: resourceFor(session, !!prog?.videoDoneAt),
     completed: !!prog?.completed,
     completedAt: prog?.completedAt || null,
     questions: {
@@ -340,8 +363,18 @@ export async function getCourse(userId, slug) {
     const taskCount = st.questionsBySession.get(String(s._id))?.length || 0
     const psychometricLocked = gate.blocks && taskCount > 0
     const videoLocked = phaseLocked || psychometricLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
+    // A locked week still reports how many of its tasks are already answered.
+    // The prompts stay withheld; only the count goes out, because the progress
+    // bar counts tasks across the whole course and a missing count there reads
+    // as work undone. closedSession() already does the same.
+    const lockedAnswered = (st.questionsBySession.get(String(s._id)) || [])
+      .filter((q) => st.answersByQid.has(String(q._id))).length
     const qs = phaseLocked || psychometricLocked
-      ? { current: null, nextUnlockAt: null, answered: [], total: taskCount }
+      ? {
+          current: null, nextUnlockAt: null, answered: [], total: taskCount,
+          answeredCount: lockedAnswered,
+          sessionCompleted: taskCount > 0 && lockedAnswered === taskCount,
+        }
       : computeQuestions(st.questionsBySession.get(String(s._id)) || [], st.answersByQid, prog?.videoDoneAt, now)
 
     return {
@@ -368,6 +401,11 @@ export async function getCourse(userId, slug) {
       playsLeft: Math.max(0, PLAY_LIMIT - plays),
       playLimitReached: plays >= PLAY_LIMIT,
       videoDone: !!prog?.videoDoneAt, // controls seek-unlock on the client
+      videoDoneAt: prog?.videoDoneAt || null, // one of the streak's step dates
+      // The week's written resource, offered only once the video has been
+      // watched through — the same 90% mark that opens the first task. Before
+      // that the page is told nothing about it, not even that it exists.
+      resource: resourceFor(s, !!prog?.videoDoneAt && !videoLocked),
       // Where they left the video last time, for the player's "Resume from".
       resumeAt: prog?.resumeAt || 0,
       resumeUpdatedAt: prog?.resumeUpdatedAt || null,
@@ -378,6 +416,17 @@ export async function getCourse(userId, slug) {
   })
 
   const completedCount = shaped.filter((s) => s.completed).length
+  // The bar counts steps rather than weeks: one for every video in the course
+  // and one for every task in it. Counting whole sessions left the bar frozen
+  // for six days while a week's tasks were being answered one a day; a step
+  // count moves the moment any of that work lands.
+  const steps = shaped.reduce(
+    (a, s) => ({
+      done: a.done + (s.videoDone ? 1 : 0) + (s.questions.answeredCount || 0),
+      total: a.total + 1 + s.questions.total,
+    }),
+    { done: 0, total: 0 },
+  )
   return {
     skillBuild: { slug: st.sb.slug, name: st.sb.name },
     packageName: st.packageName,
@@ -404,9 +453,14 @@ export async function getCourse(userId, slug) {
     startedAt,
     sessions: shaped,
     progress: {
+      // Whole sessions finished. The completion report counts these, so they
+      // keep their session meaning and are not folded into the step count.
       completed: completedCount,
       total: shaped.length,
-      percent: shaped.length ? Math.round((completedCount / shaped.length) * 100) : 0,
+      // Every video and task in the course, and how many are behind them.
+      steps: steps.done,
+      stepsTotal: steps.total,
+      percent: steps.total ? Math.round((steps.done / steps.total) * 100) : 0,
     },
   }
 }
@@ -675,14 +729,61 @@ export function todayTask(course) {
 }
 
 /**
- * Completion report: auto target = (accessible sessions × 7 days) vs actual
- * days taken. No penalty — just the record of how long the student took.
+ * The student's run of consecutive days. The drip opens exactly one step a day,
+ * so an IST day with any step in it — a video watched or a task answered — is a
+ * day they kept up, and the run is simply how many of those sit back to back.
+ *
+ * Today counts once it has a step; until then YESTERDAY holds the run, because
+ * today is still theirs to spend. A whole empty day between then and now ends
+ * the run at zero, which is the entire point of showing it. `best` is kept so a
+ * reset still has something to show for the days that were earned.
+ *
+ * Caveat worth knowing: a day the student COULD not act on — a phase they have
+ * not bought, or the psychometric gate holding the week shut — looks the same
+ * here as a day they chose to skip, and ends the run too.
+ */
+export function computeStreak(course, now) {
+  const days = new Set()
+  for (const s of course.sessions) {
+    if (s.videoDoneAt) days.add(istDayIndex(new Date(s.videoDoneAt)))
+    for (const a of s.questions?.answered || []) {
+      if (a.submittedAt) days.add(istDayIndex(new Date(a.submittedAt)))
+    }
+  }
+  const today = istDayIndex(now)
+  const todayDone = days.has(today)
+
+  // Longest run anywhere in the course, for the line a reset day still deserves.
+  const sorted = [...days].sort((a, b) => a - b)
+  let best = 0
+  let run = 0
+  for (let i = 0; i < sorted.length; i += 1) {
+    run = i > 0 && sorted[i] === sorted[i - 1] + 1 ? run + 1 : 1
+    if (run > best) best = run
+  }
+
+  // Where the live run ends: today if it has a step, else yesterday's grace.
+  let cursor = todayDone ? today : days.has(today - 1) ? today - 1 : null
+  if (cursor === null) return { days: 0, best, todayDone: false, brokenAfter: sorted.length > 0 }
+  let count = 0
+  while (days.has(cursor)) { count += 1; cursor -= 1 }
+  return { days: count, best, todayDone, brokenAfter: false }
+}
+
+/**
+ * Completion report: the target is one step a day for every step in the course
+ * — a video and each of its tasks — against the days actually taken. No
+ * penalty; just the record of how long the student took, plus their streak.
  */
 export async function getReport(userId, slug) {
   const course = await getCourse(userId, slug)
   const startedAt = course.startedAt
   const totalSessions = course.sessions.length
-  const targetDays = totalSessions * DAYS_PER_SESSION
+  // One step a day, so the ideal length of the course IS its step count. Weeks
+  // differ: the introduction and the closing week have no tasks, and a flat
+  // seven days a session used to bill them for six days of work that does not
+  // exist — 175 days for a course that is 163 steps long.
+  const targetDays = course.progress.stepsTotal
   const completedCount = course.progress.completed
   const allDone = totalSessions > 0 && completedCount === totalSessions
 
@@ -696,18 +797,17 @@ export async function getReport(userId, slug) {
   const daysElapsed = startedAt ? istDaysBetween(new Date(startedAt), allDone ? lastCompletedAt : now) + 1 : 0
   const actualDays = allDone && lastCompletedAt ? istDaysBetween(new Date(startedAt), lastCompletedAt) + 1 : null
 
-  // Day-level pace drift. Ideal = one step per day (day 1 video, day 2 Q1, …,
-  // day 7 Q6 → next session). Steps actually done = 7 per finished session +
-  // video/answers in the current one. If today's step is still OPEN (they can
-  // still do it), today doesn't count against them yet.
+  // Day-level pace drift. Ideal = one step per day (a video, then one task a
+  // day until the week is answered, then the next video). If today's step is
+  // still OPEN (they can still do it), today doesn't count against them yet.
   const task = startedAt ? todayTask(course) : null
-  const current = course.sessions.find((s) => !s.completed)
-  const stepsDone =
-    completedCount * DAYS_PER_SESSION +
-    (current ? (current.videoDone ? 1 : 0) + (current.questions?.answeredCount || 0) : 0)
+  // Exactly what the progress bar counts, so the bar and the badge can never
+  // tell different stories. Crediting a finished session with seven steps used
+  // to hand the student six free days for finishing the task-less intro.
+  const stepsDone = course.progress.steps
   const graceToday = task && (task.type === 'video' || task.type === 'question') ? 1 : 0
   const behindDays = startedAt && !allDone
-    ? Math.max(0, Math.min(daysElapsed, totalSessions * DAYS_PER_SESSION) - stepsDone - graceToday)
+    ? Math.max(0, Math.min(daysElapsed, targetDays) - stepsDone - graceToday)
     : 0
 
   return {
@@ -726,6 +826,8 @@ export async function getReport(userId, slug) {
     // The single source of truth for "what should I do today" — the same value
     // the daily reminder e-mail uses.
     todayTask: task,
+    // { days, best, todayDone, brokenAfter } — the run of consecutive days.
+    streak: startedAt ? computeStreak(course, now) : { days: 0, best: 0, todayDone: false, brokenAfter: false },
   }
 }
 
@@ -853,6 +955,51 @@ export async function courseRecord(userId, slug) {
  * Lightweight progress summary for a user's enrollment (used on the dashboard).
  * Counts sessions accessible at `rank` and how many are fully completed.
  */
+/**
+ * One week's written resource — the companion document to its video.
+ *
+ * Three gates, and each one is here for its own reason. Enrolment, because the
+ * document belongs to the course. The session's tier against the package rank,
+ * because a student on Discover must not be able to read Launch's weeks by
+ * asking for their id. And the video, because that is the promise the page
+ * makes: the resource opens when the week's video has been watched through.
+ *
+ * Access is judged the lenient way `courseRecord` judges it — enrolled, not
+ * still-running. A week they watched is reading they earned, and it stays
+ * theirs after the course year closes, exactly like the answers they wrote.
+ */
+export async function getSessionResource(userId, slug, sessionId) {
+  // Who may have this is decided ONCE, by the same pass that builds the page:
+  // enrolment, the week's tier against the package rank, the phase it sits in,
+  // the psychometric gate, and the video itself. Asking getCourse rather than
+  // re-testing each gate here is what stops the download from ever being more
+  // generous than the section that offers it — the two cannot drift apart
+  // because there is only one of them.
+  const course = await getCourse(userId, slug)
+  const shaped = course.sessions.find((s) => String(s.id) === String(sessionId))
+  if (!shaped) throw httpError('Session not found', 404)
+
+  if (!shaped.resource) {
+    throw shaped.videoDone
+      ? httpError('This week has no resource.', 404, 'NO_RESOURCE')
+      : httpError("Watch this week's video through and the resource opens.", 403, 'VIDEO_NOT_DONE')
+  }
+
+  // Only now is the document itself fetched — loadState left it behind.
+  const session = await Session.findById(sessionId).select('resourceBlocks order title')
+  const blocks = session?.resourceBlocks
+  if (!Array.isArray(blocks) || !blocks.length) {
+    throw httpError('This week has no resource.', 404, 'NO_RESOURCE')
+  }
+
+  return {
+    week: session.order,
+    sessionTitle: session.title,
+    courseName: course.skillBuild.name,
+    blocks,
+  }
+}
+
 export async function courseProgress(userId, skillBuildId, rank) {
   const total = await Session.countDocuments({ skillBuild: skillBuildId, active: true, tier: { $lte: rank } })
   if (!total) return { completed: 0, total: 0, percent: 0 }

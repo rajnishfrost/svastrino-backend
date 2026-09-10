@@ -68,6 +68,14 @@ export const getReport = asyncHandler(async (req, res) => {
   res.json(report)
 })
 
+// GET /api/user/learn/:slug/sessions/:id/resource → one week's written resource
+// (the companion document to its video). The service decides who may have it:
+// enrolled, the week within their package, and the video watched through.
+export const getSessionResource = asyncHandler(async (req, res) => {
+  const doc = await service.getSessionResource(req.user.id, req.params.slug, req.params.id)
+  res.json(doc)
+})
+
 // GET /api/user/learn/:slug/record  → the student's own record of the course:
 // the questions, the answers they wrote, and the dates. The client turns this
 // into the branded PDF. It stays available for three years after the course

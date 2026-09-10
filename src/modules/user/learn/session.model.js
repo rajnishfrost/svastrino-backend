@@ -38,6 +38,22 @@ const sessionSchema = new mongoose.Schema(
       tasks: { type: [String], default: [] },
     },
 
+    // The week's written resource — the companion document to the video. It is
+    // handed over only once the student has watched the video through, so it
+    // never travels with the course payload the way the worksheet never does.
+    // Blocks are { t: 'h' | 'p' | 'li' | 'table', text?, rows? } — Mixed for the
+    // same reason the course overview is: the shape belongs to the document,
+    // not to the database.
+    resourceBlocks: { type: mongoose.Schema.Types.Mixed, default: null },
+
+    // What that resource holds, kept beside it so the course page can say what
+    // is inside the document without carrying the document itself. Written by
+    // the same sync that writes the blocks, and never separately.
+    resourceSummary: {
+      blocks: { type: Number, default: 0 },        // 0 = this week has no resource
+      headings: { type: [String], default: [] },   // its section titles, in order
+    },
+
     // Timestamped notes shown under the video — click a timestamp to jump there.
     notes: {
       type: [{

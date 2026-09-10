@@ -18,7 +18,7 @@ export function nextIstMidnight(after) {
 }
 
 /** IST calendar-day index (days since epoch in IST) — for counting whole days. */
-function istDayIndex(date) {
+export function istDayIndex(date) {
   const ist = new Date(date.getTime() + IST_OFFSET_MS)
   return Math.floor(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate()) / 86_400_000)
 }

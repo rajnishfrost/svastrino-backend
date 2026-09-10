@@ -1,6 +1,6 @@
 import { LearnState } from './learnState.model.js'
 import { User } from '../credentials/credentials.model.js'
-import { getCourse, todayTask } from './learn.service.js'
+import { getCourse, todayTask, computeStreak } from './learn.service.js'
 import { sendLearningReminderEmail, sendEveningNudgeEmail } from '../../../utils/mailer.js'
 import { istDaysBetween } from '../../../utils/schedule.js'
 
@@ -62,6 +62,9 @@ async function sweep({ dedupField, send, log, counterField = null }) {
         courseName: course.skillBuild.name,
         taskLabel,
         slug: st.slug,
+        // The streak belongs in the nudge more than anywhere else: this is the
+        // mail that lands while the day can still be saved.
+        streak: computeStreak(course, new Date()),
         // Which taana template to use (evening only) — rotates 1..20, repeat.
         variant: counterField ? st[counterField] || 0 : 0,
       })

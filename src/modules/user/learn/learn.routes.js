@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { requireUserAuth, requireSiteAccess } from '../../../middleware/auth.js'
-import { getCourse, startCourse, videoDone, registerPlay, checkPlay, savePosition, answerQuestion, getReport, getRecord, getTrial, postTrial } from './learn.controller.js'
+import { getCourse, startCourse, videoDone, registerPlay, checkPlay, savePosition, answerQuestion, getReport, getRecord, getSessionResource, getTrial, postTrial } from './learn.controller.js'
 
 // Mounted at /api/user/learn — all routes require a signed-in student, and an
 // account barred from the student portal is not one (see requireSiteAccess).
@@ -14,6 +14,8 @@ router.post('/trial', postTrial)
 router.get('/:slug', getCourse)
 router.get('/:slug/report', getReport)
 router.get('/:slug/record', getRecord)
+// Before the ':slug' POSTs below, and specific enough not to collide with them.
+router.get('/:slug/sessions/:id/resource', getSessionResource)
 router.post('/:slug/start', startCourse)
 router.post('/sessions/:id/play-check', checkPlay)
 router.post('/sessions/:id/play', registerPlay)

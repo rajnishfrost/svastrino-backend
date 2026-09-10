@@ -368,15 +368,44 @@ export async function sendEnquiryAckEmail(to, details) {
   await sendMail({ to, ...buildEnquiryAckEmail(details) })
 }
 
-export function buildLearningReminderEmail({ name, courseName, taskLabel, slug }) {
+/**
+ * The student's streak, in one line. This mail is the moment it matters most —
+ * it lands while the day can still be saved — so the reset rule is always in
+ * it. What the reward IS stays with the programme; the line only says that
+ * consistency is what earns one.
+ *
+ * `tone` picks the voice: 'en' for the morning reminder, 'hi' for the evening
+ * taana, which is written in Hinglish and would jar in English.
+ */
+function streakLine({ days = 0, best = 0, brokenAfter = false } = {}, tone = 'en') {
+  const hi = tone === 'hi'
+  if (days > 0) {
+    return hi
+      ? `🔥 ${days} din ka streak chal raha hai — aaj ka step ise ${days + 1} kar dega. Ek poora din chhoot gaya to zero. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.`
+      : `🔥 You're on a ${days}-day streak — today's step makes it ${days + 1}. Miss a whole day and it goes back to zero. Rewards are waiting for the students who keep it going.`
+  }
+  if (brokenAfter) {
+    return hi
+      ? `Ek din chhootne se streak zero ho gaya${best > 1 ? ` (sabse lamba: ${best} din)` : ''} — aaj ka step naya shuru kar dega. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.`
+      : `Your streak is back at zero${best > 1 ? ` — your best run was ${best} days` : ''}. Today's step starts a new one. Rewards are waiting for the students who keep it going.`
+  }
+  return hi
+    ? 'Aaj ka step aapka streak shuru kar dega — roz ka roz karo. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.'
+    : 'Today\'s step starts your streak — rewards are waiting for the students who keep it going.'
+}
+
+export function buildLearningReminderEmail({ name, courseName, taskLabel, slug, streak }) {
   const first = String(name || '').trim().split(/\s+/)[0] || 'there'
+  const run = streakLine(streak, 'en')
   return {
     subject: `Today's task is ready — ${courseName}`,
-    text: `Hi ${first}, ${taskLabel}. Open your course: ${clientUrl()}/learn/${slug}`,
+    text: `Hi ${first}, ${taskLabel}. ${run} Open your course: ${clientUrl()}/learn/${slug}`,
     html: template({
       heading: "Today's task is ready 🎯",
-      preheader: `${taskLabel} — keep your ${courseName} streak going.`,
-      intro: `Hi ${first}! ${taskLabel}. Finishing each task on its day keeps you on schedule — and it shows in your completion report.`,
+      preheader: streak?.days > 0
+        ? `${taskLabel} — your ${streak.days}-day streak is on the line.`
+        : `${taskLabel} — keep your ${courseName} streak going.`,
+      intro: `Hi ${first}! ${taskLabel}. ${run}`,
       cta: 'Continue learning',
       link: `${clientUrl()}/learn/${slug}`,
       note: 'You get at most one reminder a day, and only when something new is waiting for you.',
@@ -419,17 +448,20 @@ const TAANAS = [
   { subject: 'Last call! Raat 12 baje naya aa jayega 🌙', heading: 'Aaj ka task, aaj ki tareekh tak 🌙', intro: 'Hi {first}! Raat 12 baje schedule aage badh jayega — "{task}" abhi karoge to kal fresh start milega. Last call! 🎬' },
 ]
 
-export function buildEveningNudgeEmail({ name, courseName, taskLabel, slug, variant = 0 }) {
+export function buildEveningNudgeEmail({ name, courseName, taskLabel, slug, variant = 0, streak }) {
   const first = String(name || '').trim().split(/\s+/)[0] || 'dost'
   const t = TAANAS[((variant % TAANAS.length) + TAANAS.length) % TAANAS.length]
   const fill = (s) => s.replaceAll('{first}', first).replaceAll('{task}', taskLabel)
+  const run = streakLine(streak, 'hi')
   return {
     subject: `${t.subject} — ${courseName}`,
-    text: `${fill(t.intro)} Link: ${clientUrl()}/learn/${slug}`,
+    text: `${fill(t.intro)} ${run} Link: ${clientUrl()}/learn/${slug}`,
     html: template({
       heading: t.heading,
-      preheader: `Still pending: ${taskLabel}`,
-      intro: fill(t.intro),
+      preheader: streak?.days > 0
+        ? `${streak.days} din ka streak daanv par hai — ${taskLabel}`
+        : `Still pending: ${taskLabel}`,
+      intro: `${fill(t.intro)} ${run}`,
       cta: "Finish today's task",
       link: `${clientUrl()}/learn/${slug}`,
       note: 'Already done it by the time this landed? Then ignore us — shabash! 🎉',

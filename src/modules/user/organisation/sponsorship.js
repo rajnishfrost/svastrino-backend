@@ -9,6 +9,7 @@ import { Enrollment } from '../payments/enrollment.model.js'
 import { Session } from '../learn/session.model.js'
 import { Progress } from '../learn/progress.model.js'
 import { Answer } from '../learn/answer.model.js'
+import { Question } from '../learn/question.model.js'
 import { LearnState } from '../learn/learnState.model.js'
 import { istDaysBetween } from '../../../utils/schedule.js'
 
@@ -118,8 +119,6 @@ export async function grantSponsoredPackages(user) {
   return granted
 }
 
-const DAYS_PER_SESSION = 7 // 1 video + 6 daily questions — same clock as the learn report
-
 /**
  * Where every student stands in the sponsored course, for the organisation's
  * roster — one screen, so one pass over the data rather than a report per row.
@@ -142,7 +141,15 @@ export async function rosterCourseProgress(org, userIds) {
   const sbId = pkg?.skillBuild?._id
   if (!sbId) return new Map()
 
-  const total = await Session.countDocuments({ skillBuild: sbId, active: true, tier: { $lte: pkg.order || 1 } })
+  const sessions = await Session.find({ skillBuild: sbId, active: true, tier: { $lte: pkg.order || 1 } }).select('_id')
+  const total = sessions.length
+  // The ceiling on the one-step-a-day clock is the course's step count, not
+  // seven days a session: the introduction and the closing week have no tasks,
+  // and billing them for six each stretched the clock past the real course.
+  // Same rule as the learn report's targetDays, which is where it comes from.
+  const totalSteps = total + await Question.countDocuments({
+    session: { $in: sessions.map((x) => x._id) }, active: true,
+  })
   const [states, progress, answers] = await Promise.all([
     LearnState.find({ user: { $in: userIds }, skillBuild: sbId }).select('user startedAt'),
     Progress.find({ user: { $in: userIds }, skillBuild: sbId }).select('user completed videoDoneAt'),
@@ -169,7 +176,7 @@ export async function rosterCourseProgress(org, userIds) {
     const allDone = total > 0 && completed === total
     const daysElapsed = started ? istDaysBetween(new Date(started), now) + 1 : 0
     const stepsDone = (videos.get(k) || 0) + (answered.get(k) || 0)
-    const expected = Math.min(daysElapsed, total * DAYS_PER_SESSION)
+    const expected = Math.min(daysElapsed, totalSteps)
     // Positive = ahead of the one-step-a-day clock, negative = behind it.
     const drift = started && !allDone ? stepsDone - expected : 0
     const pace = !started ? 'not-started'
