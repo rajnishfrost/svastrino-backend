@@ -288,8 +288,9 @@ function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySe
  * What the page may know about a week's resource. Before the video is watched
  * the answer is nothing at all — not the headings, not even that there is one —
  * so a student cannot read ahead through the network tab, which is the same
- * care computeQuestions takes with a task they have not reached. A week the
- * document has nothing for (the closing week) simply never offers one.
+ * care computeQuestions takes with a task they have not reached. A session the
+ * document has nothing for — only the introduction, now that week 24's section
+ * has been written — simply never offers one.
  */
 function resourceFor(session, videoDone) {
   const summary = session.resourceSummary

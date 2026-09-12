@@ -10,10 +10,10 @@
 // for one session at a time, the same care the worksheet gets.
 //
 // Weeks come from data/nirmaanResources.json, which was lifted out of the
-// course's RESOURCES document. Week 24 is absent on purpose: what that section
-// holds in the document is a note the author wrote to themselves about what to
-// write, not anything a student should be handed. Its video stands on its own,
-// exactly as it already does for tasks.
+// course's RESOURCES document. All 24 weeks are there now: week 24 was only a
+// note the author had written to themselves when this script was first written,
+// so it was held back until the real section arrived. Week 24 still has no
+// tasks — that one is by design, see syncNirmaanTasks.
 //
 // Separate from syncNirmaanTasks so the resources can be corrected without
 // touching the tasks students have already answered.
