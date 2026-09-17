@@ -19,11 +19,12 @@ export function validateCheckout(body) {
 export function validateVerify(body) {
   const orderId = clean(body.orderId)
   if (!orderId) fail('orderId is required')
-  // paymentId/signature are optional in mock mode; required with real Razorpay.
+  // paymentId/signature only mean anything to the mock gateway. Cashfree is
+  // asked directly how the order stands, so the browser sends just the order.
   return {
     orderId,
-    paymentId: body.razorpay_payment_id || body.paymentId || null,
-    signature: body.razorpay_signature || body.signature || null,
+    paymentId: body.paymentId || null,
+    signature: body.signature || null,
   }
 }
 

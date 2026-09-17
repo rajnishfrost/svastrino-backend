@@ -697,7 +697,12 @@ export function todayTask(course) {
   // page honest — and, because the daily reminder reads the same line, it also
   // stops us nudging a student about a video that will never open again.
   if (course.access && course.access.state !== 'active') {
-    return { type: 'closed', label: 'Your one year with this course is over. You can still download your work.' }
+    return {
+      type: 'closed',
+      label: course.access.trial
+        ? 'Your free trial week is over. Pick a package to carry on from Week 2.'
+        : 'Your one year with this course is over. You can still download your work.',
+    }
   }
 
   const s = course.sessions.find((x) => !x.completed)

@@ -36,8 +36,8 @@ export function createApp() {
       credentials: true,
     })
   )
-  // Keep the raw request body around so the Razorpay webhook can verify its
-  // signature against the exact bytes Razorpay signed (JSON re-stringify won't
+  // Keep the raw request body around so the Cashfree webhook can verify its
+  // signature against the exact bytes Cashfree signed (JSON re-stringify won't
   // byte-match). Harmless for every other route.
   app.use(express.json({ limit: '100kb', verify: (req, _res, buf) => { req.rawBody = buf } }))
   app.use(express.urlencoded({ extended: true }))

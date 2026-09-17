@@ -13,7 +13,7 @@ import mongoose from 'mongoose'
  * arriving always outranks either.
  *
  * All monetary fields are in PAISE. `gateway` records which provider handled it
- * ('mock' now; 'razorpay' once real keys are wired) so the flow is swappable.
+ * ('mock' in dev, 'cashfree' with real keys; older orders may say 'razorpay').
  */
 const orderSchema = new mongoose.Schema(
   {
@@ -52,8 +52,8 @@ const orderSchema = new mongoose.Schema(
 
     // Gateway details
     gateway: { type: String, default: 'mock' },
-    gatewayOrderId: { type: String },   // Razorpay order id (or mock)
-    gatewayPaymentId: { type: String }, // Razorpay payment id (or mock)
+    gatewayOrderId: { type: String },   // Cashfree order_id (or mock)
+    gatewayPaymentId: { type: String }, // Cashfree cf_payment_id (or mock)
     receiptNo: { type: String, index: true },
 
     paidAt: { type: Date },

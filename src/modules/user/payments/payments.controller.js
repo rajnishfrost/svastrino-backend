@@ -85,7 +85,7 @@ export const listEnrollments = asyncHandler(async (req, res) => {
       // actually called. Both come from the package, because the enrollment
       // itself only stores the plan name ("Bull's Eye Program") and cannot say
       // whether that plan is a course or a mentoring program.
-      const pkg = await getPackageBySku(e.packageId)
+      const pkg = await getPackageBySku(e.packageId, { includeInactive: true })
       const kind = pkg?.kind === 'mentoring' ? 'mentoring' : 'course'
 
       return {
@@ -109,12 +109,12 @@ export const listEnrollments = asyncHandler(async (req, res) => {
 })
 
 // POST /api/user/payments/webhook  (public — the gateway calls this)
-// Real Razorpay signs the EXACT raw body, captured as req.rawBody in app.js;
-// the mock has no raw body, so we fall back to the JSON re-stringify.
+// Cashfree signs the EXACT raw body (prefixed with x-webhook-timestamp),
+// captured as req.rawBody in app.js; without a raw body we fall back to the
+// JSON re-stringify.
 export const webhook = asyncHandler(async (req, res) => {
-  const signature = req.headers['x-razorpay-signature'] || req.headers['x-webhook-signature']
   const raw = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body || {})
-  if (!gateway.verifyWebhook(raw, signature)) {
+  if (!gateway.verifyWebhook(raw, req.headers['x-webhook-signature'], req.headers['x-webhook-timestamp'])) {
     return res.status(400).json({ error: 'Invalid webhook signature' })
   }
   const result = await service.handleWebhookEvent(req.body)

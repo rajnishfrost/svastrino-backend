@@ -44,9 +44,14 @@ export async function listPackagesByProduct(productSlug) {
   return packages.map((pkg) => ({
     sku: pkg.sku,
     name: pkg.name,
+    product: sb.slug,
     price: pkg.price,
     earlyBird: pkg.earlyBird,
     durationDays: pkg.durationDays,
+    paymentMode: pkg.paymentMode || 'one-time',
+    phases: pkg.phases || 1,
+    includesPsychometric: !!pkg.includesPsychometric,
+    listed: pkg.listed !== false,
   }))
 }
 
@@ -54,9 +59,14 @@ export async function listPackagesByProduct(productSlug) {
  * Look up a package by its SKU for the payments flow. Returns a normalised shape
  * (with the parent product name so orders read "Nirmaan — Clarity"). This is the
  * server-authoritative price source.
+ *
+ * Only active packages are for sale. `includeInactive` is for describing what a
+ * student already OWNS: switching a plan off stops it being sold, but the
+ * students holding it still hold it, and must not read as owning nothing.
  */
-export async function getPackageBySku(sku) {
-  const pkg = await Package.findOne({ sku, active: true }).populate('skillBuild', 'name slug kind')
+export async function getPackageBySku(sku, { includeInactive = false } = {}) {
+  const pkg = await Package.findOne(includeInactive ? { sku } : { sku, active: true })
+    .populate('skillBuild', 'name slug kind')
   if (!pkg) return null
   const isMentoring = pkg.skillBuild?.kind === 'mentoring'
   return {

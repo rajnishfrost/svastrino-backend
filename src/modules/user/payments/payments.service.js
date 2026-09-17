@@ -10,6 +10,9 @@ import { istDaysBetween } from '../../../utils/schedule.js'
 import { rupees } from '../../../utils/money.js'
 import * as gateway from './gateway.js'
 
+const clientUrl = () =>
+  (process.env.CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5174').replace(/\/$/, '')
+
 // The charged price before coupons: early-bird if the package has one, else list.
 const basePrice = (pkg) => (pkg.earlyBird != null ? pkg.earlyBird : pkg.price)
 
@@ -45,12 +48,17 @@ const DAY_MS = 86400000
  * runs later than the standard one — including after the standard one closed.
  */
 async function activeContext(userId, product) {
-  const enrollment = await Enrollment.findOne({ user: userId, product, status: 'active' }).sort({
-    createdAt: -1,
-  })
+  // A free trial is not a plan the student owns, so it never counts here — a
+  // trial student buys like anyone else. The plan they DO own is looked up even
+  // if it has since been switched off in the catalogue: retiring a plan stops it
+  // being sold, not its owners owning it, and reading as "owns nothing" would
+  // let them buy the course a second time at full price.
+  const enrollment = await Enrollment.findOne({
+    user: userId, product, status: 'active', trial: { $ne: true },
+  }).sort({ createdAt: -1 })
   if (!enrollment) return null
 
-  const currentPkg = await getPackageBySku(enrollment.packageId)
+  const currentPkg = await getPackageBySku(enrollment.packageId, { includeInactive: true })
   const paidAgg = await Order.aggregate([
     { $match: { user: enrollment.user, product, status: 'paid' } },
     { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -105,6 +113,63 @@ const httpError = (message, status, code) => {
   return err
 }
 
+/**
+ * Where a buyer stands with one package, by the rules of the checkout: one plan
+ * per course, upward only, inside the upgrade window — except a pay-as-you-use
+ * plan, which is paid for again, phase by phase, on the same plan to the end.
+ *
+ * The pricing cards, the checkout summary, the course page's upgrade offer and
+ * createOrder all read this one answer, so no button offers a purchase the
+ * order would refuse. `ctx` is activeContext() for the package's product.
+ *
+ *   { state: 'buy' }                                 owns nothing in this course
+ *   { state: 'upgrade', credit }                     a dearer plan, window open
+ *   { state: 'next-phase', nextPhase, phasesTotal }  their pay-as-you-use plan
+ *   { state: 'owned', code, message }                the plan they are on
+ *   { state: 'blocked', code, message }              any other refusal
+ */
+async function standingFor(userId, pkg, ctx) {
+  const current = ctx?.currentPkg
+  if (!current) return { state: 'buy' }
+
+  if (pkg.sku === current.sku) {
+    if (current.paymentMode !== 'per-phase') {
+      return { state: 'owned', code: 'ALREADY_OWNED', message: 'You already own this package' }
+    }
+    const active = await Enrollment.findOne({
+      user: userId, product: pkg.product, packageId: pkg.sku, status: 'active',
+    }).sort({ phasesUnlocked: -1 })
+    const unlocked = active?.phasesUnlocked || 0
+    const total = active?.phasesTotal || pkg.phases || 1
+    if (unlocked >= total) {
+      return { state: 'owned', code: 'ALL_PHASES_PAID', message: 'You have already paid for every phase of this course.' }
+    }
+    return { state: 'next-phase', nextPhase: unlocked + 1, phasesTotal: total }
+  }
+
+  if (current.paymentMode === 'per-phase') {
+    return {
+      state: 'blocked',
+      code: 'PAY_AS_YOU_USE_LOCKED',
+      message: 'You are on a pay-as-you-use plan. Keep paying phase by phase to finish this course.',
+    }
+  }
+  if (pkg.paymentMode === 'per-phase') {
+    return {
+      state: 'blocked',
+      code: 'PAID_IN_FULL',
+      message: 'Your plan for this course is already paid in full, so pay-as-you-use is not open to you.',
+    }
+  }
+  if (pkg.price <= current.price) {
+    return { state: 'blocked', code: 'DOWNGRADE_BLOCKED', message: 'You can only upgrade to a higher package, not downgrade' }
+  }
+  if (!ctx.withinWindow) {
+    return { state: 'blocked', code: 'UPGRADE_WINDOW_CLOSED', message: 'The 7-day upgrade window for your package has closed' }
+  }
+  return { state: 'upgrade', credit: upgradeCredit(current, ctx.totalPaid) }
+}
+
 const REFERRAL_COMMISSION = 20000 // ₹200 flat student/parent cashback (SRS §9.4)
 
 // The psychometric test is written for school students, so the 2026 plans sheet
@@ -153,17 +218,21 @@ export async function quote({ userId, packageId, couponCode }) {
   const base = basePrice(pkg)
   const { code, discount } = await validateCoupon(couponCode, packageId, base)
 
-  // If the signed-in user already owns a lower tier of this product, credit
-  // everything they've paid so far against the new price (an upgrade).
+  // Whether this buyer may have the package at all, and on what terms. An
+  // upgrade credits the plan they own against the new price; a plan they cannot
+  // buy is said up front, so the checkout never offers a Pay button the order
+  // would refuse.
   let upgrade = null
+  let standing = { state: 'buy' }
   if (userId) {
     const ctx = await activeContext(userId, pkg.product)
-    if (ctx?.currentPkg && pkg.sku !== ctx.currentPkg.sku && pkg.price > ctx.currentPkg.price) {
+    standing = await standingFor(userId, pkg, ctx)
+    if (standing.state === 'upgrade') {
       upgrade = {
         isUpgrade: true,
         fromPackageId: ctx.currentPkg.sku,
         fromPackageName: ctx.currentPkg.name,
-        credit: upgradeCredit(ctx.currentPkg, ctx.totalPaid),
+        credit: standing.credit,
         withinWindow: ctx.withinWindow,
         windowEndsAt: ctx.windowEndsAt,
       }
@@ -185,6 +254,7 @@ export async function quote({ userId, packageId, couponCode }) {
     discount,
     credit,
     upgrade,
+    standing,
     amount,
     currency: 'INR',
     // convenience for the client
@@ -219,14 +289,14 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
 
   const buyMode = await packageBuyMode(pkg)
 
-  // Both guards below judge the buyer rather than the basket, so read the
-  // profile once and only when a guard actually needs it. The credentials model
-  // stays a lazy import so payments never has to load the auth stack to price a
-  // package.
+  // The guards below judge the buyer rather than the basket, and the gateway
+  // wants to know who is paying, so read the profile once. The credentials
+  // model stays a lazy import so payments never has to load the auth stack to
+  // price a package.
   let buyer = null
-  if (userId && (buyMode === 'expert-call' || pkg.includesPsychometric)) {
+  if (userId) {
     const { User } = await import('../credentials/credentials.model.js')
-    buyer = await User.findById(userId).select('email studentClass')
+    buyer = await User.findById(userId).select('name email phone studentClass')
   }
 
   // Some programs are deliberately not sold straight from the checkout: the
@@ -271,47 +341,16 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
   const base = basePrice(pkg)
   const { code, discount } = await validateCoupon(couponCode, packageId, base)
 
-  // One package at a time. If the user already owns a tier of this product it
-  // must be an UPGRADE: strictly higher price, and inside the 7-day window. The
-  // tier they already own is credited against the new price.
-  let creditApplied = 0
-  let isUpgrade = false
-  let previousPackageId = null
+  // One package at a time: an owner may only move up (inside the window) or,
+  // on pay-as-you-use, pay for the next phase of the same plan. See standingFor.
   const ctx = await activeContext(userId, pkg.product)
-
-  // Pay-as-you-use is the exception to "one package at a time": the student
-  // buys the SAME plan again for each further phase. Each phase is charged in
-  // full, so no upgrade credit applies, and the plan cannot be swapped
-  // mid-course — they carry on paying phase by phase to the end.
-  if (ctx?.currentPkg && (pkg.paymentMode === 'per-phase' || ctx.currentPkg.paymentMode === 'per-phase')) {
-    const current = ctx.currentPkg
-    if (pkg.sku !== current.sku) {
-      throw httpError(
-        'You are on a pay-as-you-use plan. Keep paying phase by phase to finish this course.',
-        400,
-        'PAY_AS_YOU_USE_LOCKED'
-      )
-    }
-    const active = await Enrollment.findOne({
-      user: userId, product: pkg.product, packageId: pkg.sku, status: 'active',
-    }).sort({ phasesUnlocked: -1 })
-    const unlocked = active?.phasesUnlocked || 0
-    const total = active?.phasesTotal || pkg.phases || 1
-    if (unlocked >= total) {
-      throw httpError('You have already paid for every phase of this course.', 400, 'ALL_PHASES_PAID')
-    }
-    // Fall through with no credit and no upgrade flags — a plain next-phase sale.
-  } else if (ctx?.currentPkg) {
-    const current = ctx.currentPkg
-    if (pkg.sku === current.sku) throw httpError('You already own this package', 400, 'ALREADY_OWNED')
-    if (pkg.price <= current.price)
-      throw httpError('You can only upgrade to a higher package, not downgrade', 400, 'DOWNGRADE_BLOCKED')
-    if (!ctx.withinWindow)
-      throw httpError('The 7-day upgrade window for your package has closed', 400, 'UPGRADE_WINDOW_CLOSED')
-    creditApplied = upgradeCredit(current, ctx.totalPaid)
-    isUpgrade = true
-    previousPackageId = current.sku
+  const standing = await standingFor(userId, pkg, ctx)
+  if (standing.state === 'owned' || standing.state === 'blocked') {
+    throw httpError(standing.message, 400, standing.code)
   }
+  const isUpgrade = standing.state === 'upgrade'
+  const creditApplied = isUpgrade ? standing.credit : 0
+  const previousPackageId = isUpgrade ? ctx.currentPkg.sku : null
 
   const amount = Math.max(0, base - discount - creditApplied)
 
@@ -319,6 +358,11 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
     amount,
     currency: 'INR',
     receipt: `rcpt_${crypto.randomBytes(6).toString('hex')}`,
+    customer: { id: userId, name: buyer?.name, email: buyer?.email, phone: buyer?.phone },
+    // Only used when the popup cannot open (an in-app browser) and Cashfree
+    // takes the customer away to pay. The webhook grants access meanwhile, so
+    // send them where their orders are listed.
+    returnUrl: `${clientUrl()}/dashboard/settings?section=orders`,
   })
 
   const order = await Order.create({
@@ -344,7 +388,8 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
   return {
     orderId: order._id.toString(),
     gatewayOrderId: gatewayOrder.id,
-    key: gateway.publicKey(),
+    sessionId: gatewayOrder.sessionId,
+    mode: gateway.checkoutMode(),
     amount,
     currency: 'INR',
     packageLabel: pkg.label,
@@ -414,7 +459,7 @@ async function completePaidOrder(order, { paymentId } = {}) {
   // Grant access. On an upgrade, supersede the old enrollment and PRESERVE its
   // original start — so the 7-day window and access duration anchor to the first
   // purchase, not the upgrade date.
-  const pkg = await getPackageBySku(current.packageId)
+  const pkg = await getPackageBySku(current.packageId, { includeInactive: true })
   let startsAt = new Date()
   // Retire any free trial for this product BEFORE anything else looks at the
   // student's rows. A trial is not something you upgrade from: it carries a
@@ -508,9 +553,10 @@ async function completePaidOrder(order, { paymentId } = {}) {
 }
 
 /**
- * Verify a payment and grant access. In MOCK mode the client can omit
- * paymentId/signature — the server simulates a successful payment. With real
- * Razorpay the client MUST pass the widget's razorpay_payment_id + signature.
+ * Ask the gateway how an order stands and grant access if it is paid. The
+ * browser calls this whenever the checkout window closes, whatever it said,
+ * because only the gateway knows whether money moved. In MOCK mode the client
+ * omits paymentId/signature and the server simulates a successful payment.
  */
 export async function verifyAndComplete({ userId, orderId, paymentId, signature }) {
   const order = await Order.findOne({ _id: orderId, user: userId })
@@ -536,19 +582,42 @@ export async function verifyAndComplete({ userId, orderId, paymentId, signature 
     signature = sim.signature
   }
 
-  const ok = gateway.verifyPayment({ gatewayOrderId: order.gatewayOrderId, paymentId, signature })
-  if (!ok) {
-    // Guarded, because the webhook may have recorded a genuine capture on this
-    // order while the browser was posting a bad signature, and money that has
-    // arrived outranks a confirm that did not verify.
-    await Order.updateOne(
-      { _id: order._id, status: { $in: ['created', 'failed', 'cancelled'] } },
-      { $set: { status: 'failed' } }
-    )
-    throw httpError('Payment verification failed', 400)
+  const outcome = await gateway.checkPayment({
+    gatewayOrderId: order.gatewayOrderId,
+    amount: order.amount,
+    paymentId,
+    signature,
+  })
+
+  if (outcome.status === 'paid') {
+    return await completePaidOrder(order, { paymentId: outcome.paymentId })
   }
 
-  return await completePaidOrder(order, { paymentId })
+  // The bank has the request but has not answered. The order stays open so the
+  // webhook can grant it the moment the answer lands.
+  if (outcome.status === 'pending') {
+    throw httpError(
+      'Your bank has not confirmed this payment yet. If money has left your account, your purchase activates on its own within a few minutes — you can check it under your orders.',
+      409,
+      'PAYMENT_PENDING'
+    )
+  }
+
+  // Closed the window without paying: an abandoned basket, parked the same way
+  // cancelOrder parks one. Nothing is shown for it.
+  if (outcome.status === 'not_attempted') {
+    await Order.updateOne({ _id: order._id, status: 'created' }, { $set: { status: 'cancelled', cancelledAt: new Date() } })
+    throw httpError('The payment was not completed', 409, 'PAYMENT_NOT_COMPLETED')
+  }
+
+  // Guarded, because the webhook may have recorded a genuine capture on this
+  // order while the browser was asking, and money that has arrived outranks an
+  // attempt that did not.
+  await Order.updateOne(
+    { _id: order._id, status: { $in: ['created', 'failed', 'cancelled'] } },
+    { $set: { status: 'failed' } }
+  )
+  throw httpError(outcome.message || 'Payment verification failed', 400, 'PAYMENT_FAILED')
 }
 
 /**
@@ -597,13 +666,30 @@ export async function listEnrollments(userId) {
  */
 export async function upgradeStatus(userId, product) {
   const ctx = await activeContext(userId, product)
-  if (!ctx?.currentPkg) return { hasEnrollment: false, canUpgrade: false, options: [] }
+  if (!ctx?.currentPkg) return { hasEnrollment: false, canUpgrade: false, options: [], packages: {} }
 
   const current = ctx.currentPkg
-  const credit = upgradeCredit(current, ctx.totalPaid)
-  const options = (await listPackagesByProduct(product))
-    .filter((p) => p.price > current.price)
-    .map((p) => {
+  const catalogue = await listPackagesByProduct(product)
+  const standings = await Promise.all(catalogue.map(async (p) => [p, await standingFor(userId, p, ctx)]))
+
+  // Every plan of the course with what this student may do about it, keyed by
+  // sku — the pricing cards label their buttons from this.
+  const packages = Object.fromEntries(
+    standings.map(([p, s]) => {
+      const amount =
+        s.state === 'upgrade' ? Math.max(0, basePrice(p) - s.credit)
+          : s.state === 'next-phase' ? basePrice(p)
+            : null
+      return [p.sku, { ...s, amount, rupees: amount == null ? null : rupees(amount) }]
+    })
+  )
+
+  // The upgrade offer names only plans still on sale that the checkout would
+  // actually sell them.
+  const options = standings
+    .filter(([p, s]) => s.state === 'upgrade' && p.listed)
+    .map(([p, s]) => {
+      const credit = s.credit
       const base = basePrice(p)
       const amount = Math.max(0, base - credit)
       // The same step at list prices — what the move up would cost with no
@@ -662,6 +748,7 @@ export async function upgradeStatus(userId, product) {
     daysLeft: ctx.daysLeft,
     canUpgrade: ctx.withinWindow && options.length > 0,
     options,
+    packages,
   }
 }
 
@@ -698,8 +785,21 @@ export async function adminRefund({ orderId, reason }) {
   const order = await Order.findById(orderId)
   if (!order) throw httpError('Order not found', 404)
   if (order.status !== 'paid') throw httpError('Only paid orders can be refunded', 400)
+  // An order taken by a gateway we no longer run (Razorpay, before Cashfree)
+  // cannot be refunded through the current one.
+  if ((order.gateway || 'mock') !== gateway.GATEWAY) {
+    throw httpError(
+      `This order was paid through ${order.gateway}. Refund it from that gateway's dashboard.`,
+      400,
+      'GATEWAY_MISMATCH'
+    )
+  }
 
-  await gateway.refund({ paymentId: order.gatewayPaymentId, amount: order.amount })
+  await gateway.refund({
+    gatewayOrderId: order.gatewayOrderId,
+    paymentId: order.gatewayPaymentId,
+    amount: order.amount,
+  })
 
   order.status = 'refunded'
   order.refundedAt = new Date()
@@ -756,37 +856,46 @@ export async function setCouponActive(id, active) {
 // --- Webhook -----------------------------------------------------------------
 
 /**
- * Process a gateway webhook (Razorpay events like payment.captured / refund).
- * Signature is verified by the controller. Idempotent by design.
+ * Process a Cashfree payment webhook (PAYMENT_SUCCESS_WEBHOOK and friends).
+ * Signature is verified by the controller. Idempotent by design. Anything else
+ * Cashfree sends — the dashboard's test event, refund updates — is acknowledged
+ * and ignored.
  */
 export async function handleWebhookEvent(event) {
-  const type = event?.event
-  const entity = event?.payload?.payment?.entity || {}
+  const type = event?.type
+  const gatewayOrderId = event?.data?.order?.order_id
+  const payment = event?.data?.payment || {}
 
-  // A captured payment must grant exactly what the browser path grants. The
-  // callback from the widget is not guaranteed — a closed tab or a dropped
-  // network kills it — and this event is then the only word we get that the
-  // money arrived. Every status a payment can still be completed from is passed
+  // A successful payment must grant exactly what the browser path grants. The
+  // browser coming back is not guaranteed — a closed tab or a dropped network
+  // kills it — and this event is then the only word we get that the money
+  // arrived. Every status a payment can still be completed from is passed
   // through: 'failed' because an earlier attempt on the same gateway order lost
   // and this one won, and 'paid' because the gateway retries this delivery until
   // we answer 2xx, so a retry has to be able to finish a grant that died halfway.
-  if (type === 'payment.captured' && entity.order_id) {
-    const order = await Order.findOne({ gatewayOrderId: entity.order_id })
+  if (type === 'PAYMENT_SUCCESS_WEBHOOK' && gatewayOrderId && payment.payment_status === 'SUCCESS') {
+    const order = await Order.findOne({ gatewayOrderId })
     if (order && ['created', 'failed', 'cancelled', 'paid'].includes(order.status)) {
-      await completePaidOrder(order, { paymentId: entity.id })
+      await completePaidOrder(order, { paymentId: String(payment.cf_payment_id) })
     }
   }
 
   // A failed attempt parks an order that is still waiting to be paid, so the
   // checkout stops offering to resume something the gateway has given up on.
   // Parked, not closed: the buyer can pay the same gateway order on the next
-  // attempt, and a later capture takes it back to 'paid' from either path. Only
+  // attempt, and a later success takes it back to 'paid' from either path. Only
   // a 'created' order is touched, so a failed event arriving after a successful
   // attempt cannot undo the paid order.
-  if (type === 'payment.failed' && entity.order_id) {
+  if (type === 'PAYMENT_FAILED_WEBHOOK' && gatewayOrderId) {
+    await Order.updateOne({ gatewayOrderId, status: 'created' }, { $set: { status: 'failed' } })
+  }
+
+  // The customer walked away from the checkout — the same abandoned basket the
+  // browser reports through cancelOrder, for when the browser never got to.
+  if (type === 'PAYMENT_USER_DROPPED_WEBHOOK' && gatewayOrderId) {
     await Order.updateOne(
-      { gatewayOrderId: entity.order_id, status: 'created' },
-      { $set: { status: 'failed' } }
+      { gatewayOrderId, status: 'created' },
+      { $set: { status: 'cancelled', cancelledAt: new Date() } }
     )
   }
 
