@@ -1,9 +1,9 @@
 import crypto from 'node:crypto'
 
 /**
- * Payment gateway abstraction. Set GATEWAY=cashfree + CASHFREE_APP_ID/SECRET_KEY
- * (and CASHFREE_ENV=production for live money; anything else is sandbox) to use
- * real Cashfree; otherwise it's a MOCK so local dev works without keys.
+ * Payment gateway abstraction. Set CASHFREE_APP_ID/SECRET_KEY to use real
+ * Cashfree (sandbox or production, read off the key — see cashfreeMode);
+ * otherwise it's a MOCK so local dev works without keys.
  *
  * Cashfree hands the browser nothing it could sign — a closed popup and a
  * refused card come back looking alike — so a payment is only ever believed
@@ -63,8 +63,15 @@ const safeEqual = (expected, given) => {
  * the live site either one is a free course for anyone who clicks Buy. A
  * production server in that state keeps running, because the rest of the site
  * is fine, but it refuses to sell until production keys are in.
+ *
+ * ALLOW_SANDBOX_PAYMENTS=true lifts that for Cashfree sandbox keys only, for a
+ * production server that is not open to the public yet and is being tried out
+ * end to end. Every test-card purchase is a real enrollment, so take the flag
+ * out before launch. The mock is never allowed: its secret is well known.
  */
-const SELLING_IS_SAFE = !IS_PROD || (GATEWAY === 'cashfree' && CF_MODE === 'production')
+const SANDBOX_ALLOWED =
+  process.env.ALLOW_SANDBOX_PAYMENTS === 'true' && GATEWAY === 'cashfree' && CF_MODE === 'sandbox'
+const SELLING_IS_SAFE = !IS_PROD || (GATEWAY === 'cashfree' && CF_MODE === 'production') || SANDBOX_ALLOWED
 
 function refuseUnlessLive() {
   if (SELLING_IS_SAFE) return
@@ -76,6 +83,8 @@ function refuseUnlessLive() {
 
 if (!SELLING_IS_SAFE) {
   console.error(`💥[payments] Production server on ${GATEWAY === 'mock' ? 'the mock gateway' : 'Cashfree sandbox keys'} — checkout is switched off until production Cashfree keys are set.`)
+} else if (IS_PROD && SANDBOX_ALLOWED) {
+  console.warn('⚠️ [payments] Production server selling on Cashfree SANDBOX keys (ALLOW_SANDBOX_PAYMENTS=true) — test cards buy real enrollments. Remove before launch.')
 } else if (GATEWAY === 'cashfree') {
   console.log(`✅ Payments: Cashfree (${CF_MODE})`)
 }
