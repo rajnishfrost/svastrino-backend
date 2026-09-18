@@ -21,6 +21,11 @@ const PUBLIC_DIR = join(here, '..', '..', '..', '..', '..', 'client', 'public')
 
 const ORIGIN = process.env.SITE_ORIGIN || 'https://svastrino.com'
 
+// How many items a list shows per page. Must match PER_PAGE in the client's
+// Blog.jsx and Resources.jsx — too low and the sitemap lists pages that come
+// back empty, too high and the last few articles are never linked at all.
+const PER_PAGE = 12
+
 /**
  * Pages whose address is fixed. `changefreq` and `priority` are hints only —
  * search engines have long said they largely ignore them — so they are kept
@@ -75,6 +80,21 @@ async function run() {
   const pages = await SitePage.find({ active: true }).select('slug updatedAt').lean()
   for (const p of pages) urls.push(entry(`/legal/${p.slug}`, p.updatedAt))
 
+  // The rest of each list.
+  //
+  // /blog shows twelve articles and the career library twelve careers, so
+  // without these the only articles with a link pointing at them anywhere on
+  // the site were the twelve on page one — and Google, which had found the
+  // other 207 here in the sitemap but nowhere else, left them in "discovered,
+  // currently not indexed" for months.
+  //
+  // Listed as well as linked because this is also what the prerenderer builds
+  // its file list from: an address absent here gets no HTML of its own.
+  // Page one is /blog itself, so the count starts at two.
+  const pagesOf = (count) => Math.ceil(count / PER_PAGE)
+  for (let n = 2; n <= pagesOf(posts.length); n += 1) urls.push(entry(`/blog/page/${n}`))
+  for (let n = 2; n <= pagesOf(courses.length); n += 1) urls.push(entry(`/resources/career-library/page/${n}`))
+
   const xml =
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
@@ -93,6 +113,7 @@ async function run() {
 
   console.log(`✓ sitemap.xml — ${urls.length} URLs`)
   console.log(`    ${STATIC_PATHS.length} fixed pages · ${posts.length} articles · ${courses.length} career pages · ${programs.length} programs · ${pages.length} policies`)
+  console.log(`    ${pagesOf(posts.length) - 1} blog listing pages · ${pagesOf(courses.length) - 1} career library listing pages`)
   console.log('✓ robots.txt')
   await mongoose.disconnect()
 }
