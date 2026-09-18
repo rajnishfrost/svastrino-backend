@@ -34,7 +34,13 @@ export function toProgramDTO(p) {
 }
 
 export function toFaqDTO(f) {
-  return { id: String(f._id), section: f.section, question: f.question, answer: f.answer }
+  return {
+    id: String(f._id),
+    group: f.group,
+    section: f.section,
+    question: f.question,
+    answer: f.answer,
+  }
 }
 
 export function toTestimonialDTO(t) {

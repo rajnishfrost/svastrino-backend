@@ -62,25 +62,6 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/bulls-eye/',
     order: 2,
-    // Questions people ask about this program specifically.
-    faqs: [
-      {
-        q: "How is this different from a full mentoring program?",
-        a: "Bull's Eye is built for an immediate decision — you come with a specific confusion and leave with a recommendation. The longer programs work on you over months; this one works on the choice in front of you.",
-      },
-      {
-        q: "What happens before the session?",
-        a: "You fill in a short form about your background, academics and interests. That is reviewed before you arrive, so the session itself is spent on your questions rather than on gathering facts.",
-      },
-      {
-        q: "Is one session really enough?",
-        a: "For a specific decision — a stream, a course, a college, a second opinion on a plan — yes. There is also a follow-up a week later to reaffirm the choice and answer anything that came up since.",
-      },
-      {
-        q: "Who is it not for?",
-        a: "If you want to build mindset, habits and a long-term plan rather than settle one question, Bloom or Breakthrough will serve you far better.",
-      },
-    ],
   },
   {
     slug: 'bloom',
@@ -120,25 +101,6 @@ const PROGRAMS = [
     brochureUrl: 'https://svastrino.com/wp-content/uploads/2025/04/bloom-new-brochure.pdf',
     sourceUrl: 'https://svastrino.com/bloom/',
     order: 3,
-    // Questions people ask about this program specifically.
-    faqs: [
-      {
-        q: "How much time do I need to give it?",
-        a: "Three sessions of two hours each across about two months, plus the tasks between them and weekly follow-ups — roughly ten hours in total.",
-      },
-      {
-        q: "What do I actually walk away with?",
-        a: "A five-year career plan built around your own personality and strengths, not a template — plus the self-awareness to keep adjusting it as things change.",
-      },
-      {
-        q: "What are the tasks between sessions?",
-        a: "Short self-discovery exercises. They are where most of the change happens; the sessions make sense of what the tasks bring up.",
-      },
-      {
-        q: "Can I do this while preparing for exams?",
-        a: "Yes. The pace is deliberately spread over two months so it sits alongside school rather than competing with it.",
-      },
-    ],
   },
   {
     slug: 'breakthrough',
@@ -185,221 +147,32 @@ const PROGRAMS = [
     ],
     sourceUrl: 'https://svastrino.com/breakthrough/',
     order: 4,
-    // Questions people ask about this program specifically.
-    faqs: [
-      {
-        q: "Why does it run for two years?",
-        a: "Because mindset and character do not change in a weekend. The first months build the plan and the habits; the rest is spent applying them with someone watching your progress.",
-      },
-      {
-        q: "Can I choose the session length?",
-        a: "Yes — twenty sessions of one hour, or ten of two hours, whichever suits your pace. Both add up to the same program.",
-      },
-      {
-        q: "What happens between sessions?",
-        a: "Weekly follow-ups, tasks, and course corrections. You are not left alone for a month at a time.",
-      },
-      {
-        q: "Is this only for students?",
-        a: "It is built for students, freshers and young professionals who want to grow into leaders — not just to pick a career, but to become someone who can handle whatever they pick.",
-      },
-    ],
   },
 ]
 
 // ---------------------------------------------------------------------------
-// FAQs  (source: svastrino.com/faqs)
+// FAQs  (source: the FAQs Google Doc — data/faqs-source.md)
 // ---------------------------------------------------------------------------
-const FAQS = [
-  // ---- About Svastrino ----
-  {
-    section: 'About Svastrino',
-    question: 'How and when did Svastrino start?',
-    answer:
-      'Founder Rohit Gala struggled to find proper career guidance himself and created Svastrino in 2009 ' +
-      'to help students discover their potential and align their goals with their personalities through ' +
-      'personalised mentoring programs.',
-  },
-  {
-    section: 'About Svastrino',
-    question: "What are Svastrino's vision and mission?",
-    answer:
-      'Our vision is to become the leading online career mentoring platform. Our mission is to empower ' +
-      "individuals to explore and discover their life's purpose.",
-  },
+// Parsed out of the doc rather than written here: 143 entries is too many to
+// keep inline, and the wording has to stay exactly as the doc has it. Rebuild
+// data/faqs.json with `npm run build:faqs` after replacing the source export.
+const FAQS = JSON.parse(fs.readFileSync(join(here, 'data', 'faqs.json'), 'utf8'))
 
-  // ---- Process basics ----
-  {
-    section: 'Process Basics',
-    question: 'What is mentoring?',
-    answer:
-      "Mentoring is an ever-evolving process that plays a vital role in shaping one's personal and " +
-      'professional growth, using a personality-driven approach with tailored feedback.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'What is counseling?',
-    answer:
-      'Counseling is a process of meaningful conversation between a licensed counselor and an individual, ' +
-      'exploring challenges and developing the mental and emotional tools to handle them.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'How is counseling different from mentoring?',
-    answer:
-      'Counseling is short-term, problem-focused guidance. Mentoring is longer-term personalised training ' +
-      'that provides a detailed plan for achieving your career goals.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'How is mentoring done?',
-    answer:
-      'In five steps: we listen patiently, find the core issues, help you accept the facts, identify your ' +
-      'potential, and explore all available options with you.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'What attitude or mindset should I have?',
-    answer:
-      'Bring an open and honest attitude. Come as a patient learner who is comfortable sharing their ' +
-      'thoughts and aspirations.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'When should career mentoring be opted for?',
-    answer:
-      'The perfect time to start personalised career mentoring is now. Ideally, begin about a year before ' +
-      'any major education or career decision.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'How frequently should I get mentoring?',
-    answer:
-      'Annual mentoring is recommended so you can check your progress and plan based on the changes each ' +
-      'year brings.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'How should I prepare for sessions?',
-    answer:
-      'Reflect on your goals, list the issues you want to discuss, identify the root causes of your problems, ' +
-      'trust the process, be honest, stay patient and keep a positive attitude.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'What information should I share?',
-    answer:
-      'Share your background, qualifications, interests, passions and any factor relevant to your career plan. ' +
-      'Concealing information only limits the quality of the guidance we can give.',
-  },
-  {
-    section: 'Process Basics',
-    question: 'When should I enroll in a program?',
-    answer:
-      "Deciding to enroll in a program is a personal choice and can be done at any time when you feel it's " +
-      'right for you.',
-  },
+// A program page shows its own questions. They are the same entries the FAQs
+// page lists under that program's section, taken from here rather than written
+// twice — the page and the doc cannot drift, and adding a question to the doc
+// puts it on both.
+const PROGRAM_FAQ_SECTIONS = {
+  'bulls-eye': "Bull's Eye Program",
+  bloom: 'Bloom Program',
+  breakthrough: 'Breakthrough Program',
+}
 
-  // ---- Mentoring programs ----
-  {
-    section: 'Mentoring Programs',
-    question: 'What is neutral mentoring?',
-    answer:
-      'Neutral mentoring is a unique process of personalised training and guidance in which a mentor helps ' +
-      'the mentee achieve a particular outcome that is unbiased.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'How do I know which program to select?',
-    answer:
-      'Each program page has a "choose this program if…" section. Match those points against your own needs — ' +
-      'or tell us where you are on the Contact page and we will recommend one.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'What concerns are addressed?',
-    answer:
-      'Stream selection, course and university decisions, interest exploration, personality analysis, ' +
-      'leadership development, career clarity, aptitude assessment and entrepreneurship.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Is career mentoring a one-time thing?',
-    answer:
-      'It depends on your needs. Immediate queries can be handled in a single session, while detailed ' +
-      'personality and aptitude analysis requires a longer program.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'What documents should I prepare?',
-    answer:
-      'Academic records, extracurricular achievements, work experience letters, and any other documents ' +
-      'that help us understand your academic and professional background.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Will this program work online?',
-    answer:
-      'Yes. We have been successfully conducting online mentoring sessions since 2016, with clients across ' +
-      'the Middle East, Africa and the USA.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'How does Svastrino verify futuristic career options?',
-    answer:
-      'We compare insights from the corporate world against those from top educational institutes to ' +
-      'identify which career pathways are genuinely futuristic.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Are sessions individual or group?',
-    answer: 'All our sessions and programs are conducted on an individual level.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Will my information remain confidential?',
-    answer:
-      'Yes. Any personal or sensitive information shared during the program remains strictly confidential ' +
-      'and is never shared without your explicit consent.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'What if I need guidance after my session?',
-    answer:
-      'We follow up with you within a week after the session to provide additional suggestions and guidance.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Can I reconnect months after completion?',
-    answer: 'Yes — feel free to reconnect with us anytime you have queries or concerns.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'Will the same mentor guide me throughout?',
-    answer:
-      'We assign the same mentor to guide you throughout the entire program, though mentors can be changed ' +
-      'if you would prefer someone else.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'How do I book a program?',
-    answer:
-      'Visit the Book Online page, or use the "Book Now" button at the bottom of each program page.',
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'What programs are available?',
-    answer: "The Bull's Eye Program, the Bloom Program and the Breakthrough Program.",
-  },
-  {
-    section: 'Mentoring Programs',
-    question: 'How do I choose if I am unsure?',
-    answer:
-      "Start with the Bull's Eye Program. It is the shortest of the three and is built for exactly this — " +
-      'getting clarity when you are stuck between options. Your mentor will tell you at the end whether a ' +
-      'longer program would help you more.',
-  },
-]
+const faqsForProgram = (slug) =>
+  FAQS.filter((f) => f.section === PROGRAM_FAQ_SECTIONS[slug]).map((f) => ({
+    q: f.question,
+    a: f.answer,
+  }))
 
 // ---------------------------------------------------------------------------
 // Success stories  (source: svastrino.com/success-stories)
@@ -631,9 +404,10 @@ async function run() {
 
   for (const p of PROGRAMS) {
     // Brochures/photos point at the local copies once `fetch:media` has run.
-    const doc = { ...p, brochureUrl: localMedia(p.brochureUrl || '') }
+    const faqs = faqsForProgram(p.slug)
+    const doc = { ...p, brochureUrl: localMedia(p.brochureUrl || ''), faqs }
     await MentoringProgram.findOneAndUpdate({ slug: p.slug }, { $set: doc }, { upsert: true })
-    console.log(`  ✓ Program: ${p.name}`)
+    console.log(`  ✓ Program: ${p.name} (${faqs.length} FAQs)`)
   }
   // Model Session was retired — remove any stale copy so it can't resurface.
   await MentoringProgram.deleteMany({ slug: { $nin: PROGRAMS.map((p) => p.slug) } })
@@ -646,7 +420,12 @@ async function run() {
   // below rather than this delete-and-reinsert.
   await Faq.deleteMany({})
   await Faq.insertMany(FAQS.map((f, i) => ({ ...f, order: i, active: true })))
-  console.log(`✓ FAQs: ${FAQS.length} across ${new Set(FAQS.map((f) => f.section)).size} sections`)
+  const faqGroups = new Set(FAQS.map((f) => f.group))
+  const faqSections = new Set(FAQS.map((f) => f.section))
+  console.log(
+    `✓ FAQs: ${FAQS.length} across ${faqSections.size} sections in ${faqGroups.size} groups ` +
+      `(${[...faqGroups].join(', ')})`
+  )
 
   await Testimonial.deleteMany({})
   await Testimonial.insertMany(

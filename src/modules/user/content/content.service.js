@@ -27,16 +27,36 @@ export async function getProgramBySlug(slug) {
 
 // ---- FAQs ------------------------------------------------------------------
 
-/** All active FAQs, grouped into ordered sections for the accordion. */
-export async function listFaqsGrouped() {
-  const faqs = await Faq.find({ active: true }).sort({ order: 1 })
+// Group names travel as slugs ('Svastrino Services' → 'svastrino-services') so
+// they can sit in a URL. Matched in JS rather than the query because the stored
+// value is the display name.
+const slugifyGroup = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
-  const bySection = new Map()
+/**
+ * All active FAQs as the accordion wants them: groups ('Nirmaan',
+ * 'Svastrino Services') each holding their ordered sections. `order` is global
+ * across the FAQs doc, so sorting once keeps both levels in the doc's order.
+ *
+ * `group` narrows it to one group by slug — the Nirmaan page wants its own 28
+ * questions, not all 143.
+ */
+export async function listFaqsGrouped({ group } = {}) {
+  const all = await Faq.find({ active: true }).sort({ order: 1 })
+  const faqs = group ? all.filter((f) => slugifyGroup(f.group || '') === group) : all
+
+  const byGroup = new Map()
   for (const f of faqs) {
-    if (!bySection.has(f.section)) bySection.set(f.section, [])
-    bySection.get(f.section).push(f)
+    const group = f.group || 'Svastrino Services'
+    if (!byGroup.has(group)) byGroup.set(group, new Map())
+    const sections = byGroup.get(group)
+    if (!sections.has(f.section)) sections.set(f.section, [])
+    sections.get(f.section).push(f)
   }
-  return [...bySection.entries()].map(([section, items]) => ({ section, items }))
+
+  return [...byGroup.entries()].map(([group, sections]) => ({
+    group,
+    sections: [...sections.entries()].map(([section, items]) => ({ section, items })),
+  }))
 }
 
 // ---- Testimonials ----------------------------------------------------------

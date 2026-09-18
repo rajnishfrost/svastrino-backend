@@ -28,7 +28,9 @@
     "migrate:course-sections": "node src/modules/user/content/migrateCourseSections.js",
     "build:sitemap": "node src/modules/user/content/buildSitemap.js",
     "build:redirects": "node src/modules/user/content/buildRedirects.js",
-    "sync:resources": "node src/modules/user/learn/syncNirmaanResources.js"
+    "sync:resources": "node src/modules/user/learn/syncNirmaanResources.js",
+    "build:faqs": "node src/modules/user/content/parseFaqs.js",
+    "sync:faqs": "node src/modules/user/content/syncFaqs.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",

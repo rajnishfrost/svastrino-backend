@@ -23,11 +23,15 @@ export const getProgram = asyncHandler(async (req, res) => {
   res.json({ program: toProgramDTO(program) })
 })
 
-// GET /api/user/content/faqs  → [{ section, items: [...] }]
+// GET /api/user/content/faqs[?group=nirmaan]
+//   → [{ group, sections: [{ section, items }] }]
 export const listFaqs = asyncHandler(async (req, res) => {
-  const groups = await service.listFaqsGrouped()
+  const groups = await service.listFaqsGrouped({ group: req.query.group || undefined })
   res.json({
-    faqs: groups.map((g) => ({ section: g.section, items: g.items.map(toFaqDTO) })),
+    faqs: groups.map((g) => ({
+      group: g.group,
+      sections: g.sections.map((s) => ({ section: s.section, items: s.items.map(toFaqDTO) })),
+    })),
   })
 })
 
