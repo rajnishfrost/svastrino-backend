@@ -68,9 +68,27 @@ async function run() {
 
   // Articles and career pages keep the root-level addresses the WordPress site
   // ranked for, so that is what goes in the sitemap — not the /blog/ form.
+  //
+  // An article's lastmod is the day it was published, not `updatedAt`.
+  // `updatedAt` is when the record was last written, which is a different thing:
+  // a bulk write during the move off WordPress stamped 217 of the 219 articles
+  // with the same date, so this file was telling Google that every article on
+  // the site changed on one day in August. lastmod that is identical everywhere
+  // describes nothing, and Google's own guidance is that it then stops reading
+  // the field — throwing away the 191 genuinely different publication dates
+  // underneath it.
+  //
+  // The trade is that an article edited in the panel from now on will not move
+  // its lastmod. Worth it: nothing is edited often here, and a date that is
+  // occasionally stale is better than a date that is uniformly wrong. Give the
+  // model a timestamp for content edits if that changes.
   const posts = await Blog.find({ published: true }).select('slug updatedAt publishedAt').lean()
-  for (const p of posts) urls.push(entry(`/${p.slug}`, p.updatedAt || p.publishedAt))
+  for (const p of posts) urls.push(entry(`/${p.slug}`, p.publishedAt))
 
+  // Career pages keep `updatedAt`. They have no publication date of their own,
+  // and the one date all 52 share is true — they were all rewritten the day the
+  // career library became a single document. A date being the same everywhere
+  // is only a problem when it is the same for no reason.
   const courses = await Course.find({ active: true }).select('slug updatedAt').lean()
   for (const c of courses) urls.push(entry(`/${c.slug}`, c.updatedAt))
 
@@ -91,9 +109,19 @@ async function run() {
   // Listed as well as linked because this is also what the prerenderer builds
   // its file list from: an address absent here gets no HTML of its own.
   // Page one is /blog itself, so the count starts at two.
+  //
+  // Every listing page carries the newest date in its list, because a new
+  // article changes all of them at once: it goes on page one and pushes the
+  // last article of every page onto the next. These are the pages a crawler
+  // walks to reach the other 207, so they are the ones worth telling it are
+  // fresh.
+  const newest = (rows, key) =>
+    rows.reduce((latest, r) => (r[key] && (!latest || r[key] > latest) ? r[key] : latest), null)
   const pagesOf = (count) => Math.ceil(count / PER_PAGE)
-  for (let n = 2; n <= pagesOf(posts.length); n += 1) urls.push(entry(`/blog/page/${n}`))
-  for (let n = 2; n <= pagesOf(courses.length); n += 1) urls.push(entry(`/resources/career-library/page/${n}`))
+  const newestPost = newest(posts, 'publishedAt')
+  const newestCourse = newest(courses, 'updatedAt')
+  for (let n = 2; n <= pagesOf(posts.length); n += 1) urls.push(entry(`/blog/page/${n}`, newestPost))
+  for (let n = 2; n <= pagesOf(courses.length); n += 1) urls.push(entry(`/resources/career-library/page/${n}`, newestCourse))
 
   const xml =
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
