@@ -107,27 +107,84 @@ async function run() {
 //   aws cloudfront publish-function --name svastrino-legacy-redirects --if-match <ETag>
 // then attach it to the default cache behaviour as a viewer-request function.
 // Updating an existing one is \`update-function\` with the same arguments.
+//
+// This function assumes the distribution answers 403 and 404 with /404.html at
+// a 404 status. Pointed at /index.html with a 200 instead — which is how it
+// shipped — every address that misses answers with the home page, and the app
+// routes below are the only thing that keeps working.
 
 var MOVED = {
 ${entries}
 }
 
+// Addresses that belong to the app rather than to a page: nothing prerenders a
+// dashboard, so none of these has a file behind it. Matched a whole segment at
+// a time, because /learn-how-to-be-successful-by-cultivating-a-growth-mindset
+// is an article and not the /learn area.
+var APP_ROUTES = [
+  '/admin', '/checkout', '/dashboard', '/downloads', '/learn', '/login',
+  '/organisation', '/reset-password', '/settings', '/support', '/verify-email',
+  '/welcome',
+]
+
 function handler(event) {
   var request = event.request
   var uri = request.uri
+  var host = request.headers.host ? request.headers.host.value : ''
+
+  // Carried onto every redirect below. Dropping it would throw away the
+  // ?utm_source on a campaign link at the moment the click is counted.
+  var qs = ''
+  for (var name in request.querystring) {
+    var value = request.querystring[name].value
+    qs += (qs ? '&' : '?') + name + (value ? '=' + value : '')
+  }
+
+  function moved(to) {
+    return {
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: { location: { value: to } },
+    }
+  }
 
   // WordPress served every page with a trailing slash. Match without it, so
   // both /bulls-eye and /bulls-eye/ are recognised.
   var key = uri.length > 1 && uri.charAt(uri.length - 1) === '/'
     ? uri.substring(0, uri.length - 1)
     : uri
+  var lower = key.toLowerCase()
 
-  var target = MOVED[key.toLowerCase()]
+  // www and the apex are aliases of one distribution, so both answer
+  // everything, and a page reachable at two addresses splits its own ranking.
+  // Written as a prefix rather than a redirect of its own so that www, a
+  // trailing slash and a moved address together still cost a single hop.
+  var isWww = host.indexOf('www.') === 0
+  var prefix = isWww ? 'https://' + host.substring(4) : ''
+
+  var target = MOVED[lower]
   if (target) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved Permanently',
-      headers: { location: { value: target } },
+    return moved(prefix + target + (target.indexOf('?') === -1 ? qs : ''))
+  }
+
+  if (isWww || key !== uri) {
+    return moved(prefix + key + qs)
+  }
+
+  // Anything carrying a file extension is left alone, so a genuinely missing
+  // asset still fails as one.
+  var last = key.substring(key.lastIndexOf('/') + 1)
+  if (last.indexOf('.') !== -1) {
+    return request
+  }
+
+  // An app route is pointed at the shell by name. These used to arrive here,
+  // miss, and be rescued by the distribution's 403/404 rule — which now
+  // answers a real 404, because a miss has to mean missing.
+  for (var i = 0; i < APP_ROUTES.length; i++) {
+    if (lower === APP_ROUTES[i] || lower.indexOf(APP_ROUTES[i] + '/') === 0) {
+      request.uri = '/app.html'
+      return request
     }
   }
 
@@ -135,23 +192,14 @@ function handler(event) {
   //
   // Prerendering writes each page as <path>/index.html, and an S3 REST origin
   // has no notion of a directory index: asked for /law it looks for an object
-  // named "law" and finds nothing. This function used to answer that by sending
-  // every address to /index.html, which worked — and meant all 292 prerendered
-  // pages were never served, every one of them answering with the home page's
-  // title.
+  // named "law" and finds nothing.
   //
-  // So each address is pointed at its own file instead. An address with no file
-  // behind it — an app route like /dashboard, or a typo — misses, and the
-  // distribution's 403/404 rule returns the app shell, exactly as before. That
-  // rule is what makes this safe; without it a missed address would return S3's
-  // XML error rather than the site.
-  //
-  // Anything carrying a file extension is left alone, so a genuinely missing
-  // asset still fails as one.
-  var last = key.substring(key.lastIndexOf('/') + 1)
-  if (last.indexOf('.') === -1) {
-    request.uri = key === '/' ? '/index.html' : key + '/index.html'
-  }
+  // An address with no file behind it misses, and the 403/404 rule answers
+  // /404.html with a 404 status. That rule is the whole point: while it
+  // returned the home page at 200, every typo and every retired WordPress
+  // address was another copy of the home page, and Google filed a few hundred
+  // of them under "crawled, currently not indexed".
+  request.uri = key === '/' ? '/index.html' : key + '/index.html'
 
   return request
 }
