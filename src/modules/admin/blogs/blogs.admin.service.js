@@ -1,5 +1,6 @@
 import { Blog } from '../../user/blogs/blog.model.js'
 import { ROWS_PER_PAGE } from '../../../utils/paginate.js'
+import { LIMITS, optionalLink, raw, str, strList } from '../../../utils/validate.js'
 
 /**
  * Blog management for the admin panel. Deliberately separate from the public
@@ -15,7 +16,15 @@ const httpError = (message, status) => {
 const MAX_LIMIT = 100
 
 export const slugify = (s) =>
-  String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  String(s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    // A slug is a public URL, so it is capped where a URL segment stops being
+    // readable. Without this a 20,000-character title produced a 20,000-character
+    // address, which every browser and every index would then truncate anyway.
+    .slice(0, LIMITS.slug)
 
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -23,10 +32,15 @@ const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const readingMinsFor = (body) =>
   Math.max(1, Math.round(String(body || '').trim().split(/\s+/).filter(Boolean).length / 200))
 
+// Categories, from either an array or a comma-separated string. Capped in both
+// directions: a category name is a filter chip, and thirty of them on one post is
+// not a taxonomy.
 const asList = (v) =>
-  Array.isArray(v)
-    ? [...new Set(v.map((s) => String(s).trim()).filter(Boolean))]
-    : String(v || '').split(',').map((s) => s.trim()).filter(Boolean)
+  [...new Set(
+    Array.isArray(v)
+      ? strList(v, { max: LIMITS.name, count: 30 })
+      : str(v, LIMITS.longText).split(',').map((s) => str(s, LIMITS.name)).filter(Boolean).slice(0, 30)
+  )]
 
 /**
  * Paginated list for the admin table — drafts included, body stripped (a page
@@ -38,12 +52,17 @@ export async function listPosts({ page = 1, limit = ROWS_PER_PAGE, q, category, 
   const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || ROWS_PER_PAGE))
 
   const filter = {}
-  if (category) filter.categories = category
-  if (owner) filter.owner = owner
+  // Forced through `str` before any of it reaches the query. Express parses a
+  // query string with qs, so "?category[$ne]=x" arrives as an OBJECT and Mongo
+  // would read it as an operator — "every category" rather than one. Coercing to
+  // a string is what makes these filters mean what they say.
+  const term = str(q, LIMITS.search)
+  if (category) filter.categories = str(category, LIMITS.name)
+  if (owner) filter.owner = str(owner, LIMITS.slug)
   if (status === 'published') filter.published = true
   if (status === 'draft') filter.published = false
-  if (q) {
-    const rx = new RegExp(escapeRegExp(q), 'i')
+  if (term) {
+    const rx = new RegExp(escapeRegExp(term), 'i')
     filter.$or = [{ title: rx }, { excerpt: rx }, { slug: rx }, { author: rx }]
   }
 
@@ -82,17 +101,23 @@ export async function listAllCategories() {
  */
 function buildPatch(body = {}) {
   const patch = {}
-  if (body.title !== undefined) patch.title = String(body.title).trim()
+  if (body.title !== undefined) patch.title = str(body.title, LIMITS.title)
   if (body.owner !== undefined) patch.owner = body.owner === 'nirmaan' ? 'nirmaan' : 'svastrino'
-  if (body.author !== undefined) patch.author = String(body.author).trim() || 'Svastrino'
+  if (body.author !== undefined) patch.author = str(body.author, LIMITS.name) || 'Svastrino'
   if (body.categories !== undefined) patch.categories = asList(body.categories)
-  if (body.excerpt !== undefined) patch.excerpt = String(body.excerpt).trim()
-  if (body.body !== undefined) patch.body = String(body.body)
-  if (body.coverImage !== undefined) patch.coverImage = String(body.coverImage).trim()
-  if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
-  if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
-  if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
-  if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(body.canonicalSlug)
+  if (body.excerpt !== undefined) patch.excerpt = str(body.excerpt, LIMITS.description)
+  // `raw`, not `str`: the body is Markdown, and a line beginning "> " is a
+  // blockquote. Stripping angle brackets here would quietly rewrite every quote
+  // in every post. It is still capped, and the renderer builds React elements
+  // rather than HTML, so nothing tag-shaped in here can execute.
+  if (body.body !== undefined) patch.body = raw(body.body, LIMITS.article)
+  // Both of these end up in an href or a src, so they are held to being a real
+  // link: http(s), or a path on this site that our own uploader produced.
+  if (body.coverImage !== undefined) patch.coverImage = optionalLink(body.coverImage, { field: 'coverImage' })
+  if (body.sourceUrl !== undefined) patch.sourceUrl = optionalLink(body.sourceUrl, { field: 'sourceUrl' })
+  if (body.seoTitle !== undefined) patch.seoTitle = str(body.seoTitle, LIMITS.title)
+  if (body.seoDescription !== undefined) patch.seoDescription = str(body.seoDescription, LIMITS.description)
+  if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(str(body.canonicalSlug, LIMITS.slug))
   if (body.published !== undefined) patch.published = !!body.published
   if (body.order !== undefined) patch.order = Number(body.order) || 0
   if (body.publishedAt) {

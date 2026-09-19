@@ -34,5 +34,10 @@ export function errorHandler(err, req, res, next) {
   // without string-matching the message.
   const body = { error: message }
   if (err.code) body.code = err.code
+  // `field` names the input the message is about, so a form can mark that box
+  // instead of putting one line at the bottom and leaving the visitor to work out
+  // which of six fields it means. The validators in utils/validate.js set it; it
+  // was being set and then dropped here.
+  if (err.field) body.field = err.field
   res.status(status).json(body)
 }

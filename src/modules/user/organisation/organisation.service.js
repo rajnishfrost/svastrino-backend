@@ -8,6 +8,9 @@ import { sendOrgApprovedEmail, sendStudentInviteEmail } from '../../../utils/mai
 import { Enrollment } from '../payments/enrollment.model.js'
 import { normalisePackageSkus, sponsoredCourses, grantSponsoredPackages, rosterCourseProgress } from './sponsorship.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
+import {
+  EMAIL_RE, LIMITS, optionalPhone, optionalPincode, optionalUrl, str as sstr,
+} from '../../../utils/validate.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -16,8 +19,30 @@ const httpError = (message, status, code) => {
   return err
 }
 
-const str = (v, max = 200) => String(v ?? '').replace(/[<>]/g, '').trim().slice(0, max)
-const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+// The shared normaliser under its historic local name, so every call site below
+// reads as it always did. It strips markup and invisible characters as well as
+// truncating — see utils/validate.js.
+const str = sstr
+const isEmail = (s) => EMAIL_RE.test(s)
+
+/**
+ * How long each profile field may be.
+ *
+ * Read from the shared LIMITS rather than written out here, because the browser's
+ * maxLength attributes read from the same object: a number typed twice is a number
+ * that eventually disagrees with itself, and when it does the visible symptom is a
+ * form that silently loses the tail of what somebody typed.
+ */
+const PROFILE_CAPS = {
+  name: LIMITS.title,
+  description: LIMITS.description,
+  branch: LIMITS.title,
+  address: LIMITS.address,
+  city: LIMITS.city,
+  state: LIMITS.state,
+  contactPerson: LIMITS.name,
+}
+
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const clientUrl = () =>
   (process.env.CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5174').replace(/\/$/, '')
@@ -82,7 +107,7 @@ export const fullOrgDTO = (o) => ({
 
 /** Public form submission. One application per client IP, as before. */
 export async function submitApplication(body, ip) {
-  const name = str(body.name, 120)
+  const name = str(body.name, LIMITS.title)
   const email = String(body.email || '').trim().toLowerCase()
   const type = ORG_TYPES.includes(body.type) ? body.type : 'school'
   if (!name) throw httpError('Organisation name is required', 400)
@@ -96,18 +121,16 @@ export async function submitApplication(body, ip) {
     throw httpError('An organisation with this email has already applied.', 409, 'EMAIL_ALREADY_APPLIED')
   }
 
+  const fields = {}
+  for (const [field, max] of Object.entries(PROFILE_CAPS)) fields[field] = str(body[field], max)
+
   return Organisation.create({
+    ...fields,
     name,
     type,
-    description: str(body.description, 1200),
-    branch: str(body.branch, 120),
-    address: str(body.address, 240),
-    city: str(body.city, 80),
-    state: str(body.state, 80),
-    pincode: str(body.pincode, 12),
-    website: str(body.website, 200),
-    contactPerson: str(body.contactPerson, 80),
-    phone: str(body.phone, 20),
+    pincode: optionalPincode(body.pincode),
+    website: optionalUrl(body.website, { field: 'website' }),
+    phone: optionalPhone(body.phone),
     email,
     submittedIp: ip || '',
     status: 'pending',
@@ -155,7 +178,7 @@ export async function getOrganisation(id) {
  */
 export function assertOrganisationDraft(draft, ownerEmail) {
   const d = draft || {}
-  if (!str(d.name, 120)) throw httpError('Organisation name is required', 400)
+  if (!str(d.name, PROFILE_CAPS.name)) throw httpError('Organisation name is required', 400)
   if (d.type && !ORG_TYPES.includes(d.type)) throw httpError('Pick a valid organisation type', 400)
   const email = String(d.email || ownerEmail || '').trim().toLowerCase()
   if (!isEmail(email)) throw httpError('The organisation needs a valid contact email', 400)
@@ -174,19 +197,19 @@ export async function createOrganisationForOwner(owner, draft = {}) {
   if (await Organisation.exists({ email })) {
     throw httpError('An organisation with this email already exists', 409)
   }
-  const name = str(draft.name, 120)
+  // The same caps as the organisation's own profile form and the public partner
+  // application, from the one table, so an organisation created by an admin holds
+  // fields of the same shape as one that applied for itself.
+  const fields = {}
+  for (const [field, max] of Object.entries(PROFILE_CAPS)) fields[field] = str(draft[field], max)
+  const name = fields.name
   return Organisation.create({
-    name,
+    ...fields,
     type: ORG_TYPES.includes(draft.type) ? draft.type : 'school',
-    description: str(draft.description, 1200),
-    branch: str(draft.branch, 120),
-    address: str(draft.address, 240),
-    city: str(draft.city, 80),
-    state: str(draft.state, 80),
-    pincode: str(draft.pincode, 12),
-    website: str(draft.website, 200),
-    contactPerson: str(draft.contactPerson, 80) || owner.name || '',
-    phone: str(draft.phone, 20),
+    pincode: optionalPincode(draft.pincode),
+    website: optionalUrl(draft.website, { field: 'website' }),
+    contactPerson: fields.contactPerson || owner.name || '',
+    phone: optionalPhone(draft.phone),
     email,
     code: await generateCode(name),
     // Admin typed these details in person — no review step to wait for.
@@ -292,20 +315,15 @@ export async function updateOrganisationByAdmin(id, body = {}) {
 
 /** Profile fields an organisation may edit about itself (shared with admin). */
 function applyProfileFields(org, body) {
-  if (body.name !== undefined) {
-    const name = str(body.name, 120)
-    if (!name) throw httpError('Organisation name is required', 400)
-    org.name = name
+  for (const [field, max] of Object.entries(PROFILE_CAPS)) {
+    if (body[field] !== undefined) org[field] = str(body[field], max)
   }
-  if (body.description !== undefined) org.description = str(body.description, 1200)
-  if (body.branch !== undefined) org.branch = str(body.branch, 120)
-  if (body.address !== undefined) org.address = str(body.address, 240)
-  if (body.city !== undefined) org.city = str(body.city, 80)
-  if (body.state !== undefined) org.state = str(body.state, 80)
-  if (body.pincode !== undefined) org.pincode = str(body.pincode, 12)
-  if (body.website !== undefined) org.website = str(body.website, 200)
-  if (body.contactPerson !== undefined) org.contactPerson = str(body.contactPerson, 80)
-  if (body.phone !== undefined) org.phone = str(body.phone, 20)
+  if (body.name !== undefined && !org.name) throw httpError('Organisation name is required', 400)
+  // The three that are checked rather than merely capped: a number somebody will
+  // ring, a link somebody will click, and a PIN code that is digits or nothing.
+  if (body.phone !== undefined) org.phone = optionalPhone(body.phone)
+  if (body.website !== undefined) org.website = optionalUrl(body.website, { field: 'website' })
+  if (body.pincode !== undefined) org.pincode = optionalPincode(body.pincode)
 }
 
 /** The organisation editing its own profile — never its status/modules/email. */
@@ -376,8 +394,12 @@ export function sampleCsv() {
 /** Every account attached to this organisation. */
 export async function listOrgStudents(orgId, { q } = {}) {
   const filter = { organisation: orgId, organisationRole: 'member' }
-  if (q) {
-    const rx = new RegExp(escapeRegExp(q), 'i')
+  // Capped before it becomes a pattern. `q` arrives from a query string, which
+  // express parses with qs — so it can be an object, and RegExp(object) is not a
+  // search, it is a 500.
+  const term = str(q, LIMITS.search)
+  if (term) {
+    const rx = new RegExp(escapeRegExp(term), 'i')
     filter.$or = [{ name: rx }, { email: rx }]
   }
   // Both auth fields, not just the password: accountStatus needs googleId too,
@@ -435,11 +457,15 @@ async function addStudent(org, row) {
 
   const { user, created, link, attached } = await provisionAccount({
     email,
-    name: str(row.name, 80),
-    phone: str(row.phone, 20) || undefined,
+    name: str(row.name, LIMITS.name),
+    // A roster number comes from a spreadsheet as often as from the portal form,
+    // so it is normalised rather than refused: optionalPhone accepts a bare ten
+    // digit Indian number and puts +91 in front of it, and turns away anything
+    // that is not a plausible number at all.
+    phone: optionalPhone(row.phone) || undefined,
     // The class belongs on the ACCOUNT: it is what the student sees in
     // Settings, and what the psychometric plan checks their year against.
-    studentClass: str(row.class, 20) || undefined,
+    studentClass: str(row.class, LIMITS.studentClass) || undefined,
     organisation: org._id,
     organisationRole: 'member',
     // The organisation's own login is who added them — that is the answer the
@@ -463,8 +489,8 @@ async function addStudent(org, row) {
   }
 
   // A roster import may carry a newer class than the account was created with.
-  if (row.class && user.studentClass !== str(row.class, 20)) {
-    user.studentClass = str(row.class, 20)
+  if (row.class && user.studentClass !== str(row.class, LIMITS.studentClass)) {
+    user.studentClass = str(row.class, LIMITS.studentClass)
     await user.save()
   }
 

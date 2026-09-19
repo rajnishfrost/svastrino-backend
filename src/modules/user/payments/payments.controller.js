@@ -12,6 +12,7 @@ import {
   toOrderDTO,
   toEnrollmentDTO,
 } from './payments.dto.js'
+import { LIMITS, couponStr, str } from '../../../utils/validate.js'
 
 // ---- User (requireUserAuth) ----
 
@@ -19,15 +20,19 @@ import {
 export const getQuote = asyncHandler(async (req, res) => {
   const q = await service.quote({
     userId: req.user.id,
-    packageId: String(req.query.packageId || ''),
-    couponCode: req.query.coupon ? String(req.query.coupon) : null,
+    packageId: str(req.query.packageId, LIMITS.slug),
+    // The buyer typed this one, so it is normalised rather than refused: a stray
+    // space or a lower-case letter is a typo we can absorb, and what is left
+    // either matches a coupon or does not. The cap is the point — a query string
+    // is the one place a caller can put a megabyte without a body at all.
+    couponCode: couponStr(req.query.coupon) || null,
   })
   res.json(q)
 })
 
 // GET /api/user/payments/upgrade-status?product=nirmaan
 export const upgradeStatus = asyncHandler(async (req, res) => {
-  const status = await service.upgradeStatus(req.user.id, String(req.query.product || ''))
+  const status = await service.upgradeStatus(req.user.id, str(req.query.product, LIMITS.slug))
   res.json(status)
 })
 

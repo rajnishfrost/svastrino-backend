@@ -42,6 +42,7 @@ const pkgDTO = (p) => ({
   summary: p.summary || '', trustLine: p.trustLine || '',
   durationLabel: p.durationLabel || '', sessionsLabel: p.sessionsLabel || '',
   deliveryMode: p.deliveryMode || '', buyMode: p.buyMode || 'self-serve',
+  expertEnquiry: p.expertEnquiry ?? p.buyMode === 'expert-call',
   paymentMode: p.paymentMode || 'one-time', phases: p.phases || 1,
   includesPsychometric: !!p.includesPsychometric,
   cta: p.cta, variant: p.variant, featured: p.featured, badge: p.badge,

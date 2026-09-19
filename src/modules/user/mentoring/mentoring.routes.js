@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { requireUserAuth } from '../../../middleware/auth.js'
 import { asyncHandler } from '../../../utils/asyncHandler.js'
 import * as service from './mentoring.service.js'
+import { validateBooking, validateSlot } from './mentoring.dto.js'
+import { str } from '../../../utils/validate.js'
 
 // Mounted at /api/user/mentoring
 const router = Router()
@@ -18,7 +20,7 @@ router.get('/categories', asyncHandler(async (req, res) => {
 
 // GET /slots?date=YYYY-MM-DD → available 2-hour starts for that IST date
 router.get('/slots', asyncHandler(async (req, res) => {
-  res.json(await service.slotsFor(String(req.query.date || '')))
+  res.json(await service.slotsFor(str(req.query.date, 10)))
 }))
 
 // Signed-in — booking + the dashboard tables.
@@ -28,12 +30,12 @@ router.get('/my', requireUserAuth, asyncHandler(async (req, res) => {
 
 // { sku, date: 'YYYY-MM-DD', start: 'HH:MM' }
 router.post('/bookings', requireUserAuth, asyncHandler(async (req, res) => {
-  const b = await service.createBooking(req.user.id, req.body || {})
+  const b = await service.createBooking(req.user.id, validateBooking(req.body || {}))
   res.status(201).json({ booking: b })
 }))
 
 router.post('/bookings/:id/reschedule', requireUserAuth, asyncHandler(async (req, res) => {
-  const b = await service.rescheduleBooking(req.user.id, req.params.id, req.body || {})
+  const b = await service.rescheduleBooking(req.user.id, req.params.id, validateSlot(req.body || {}))
   res.json({ booking: b })
 }))
 

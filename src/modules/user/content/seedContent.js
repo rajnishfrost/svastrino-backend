@@ -104,9 +104,12 @@ const PROGRAMS = [
   },
   {
     slug: 'breakthrough',
-    // Sold after a call, not from a checkout page — see the Breakthrough row
-    // in the emotional flow: Service Page → Talking to an Expert → payment link.
-    buyMode: 'expert-call',
+    // Bought outright at the listed price from /book-online, and ALSO offered
+    // through the "Talk to an Expert" form on its own page, where the team
+    // agrees a price after the call. Two separate flags because those are two
+    // separate questions — see program.model.js.
+    buyMode: 'self-serve',
+    expertEnquiry: true,
     name: 'Breakthrough Program',
     category: { slug: 'personalised-mentoring', name: 'Personalised Mentoring' },
     bookingSku: 'mentoring-breakthrough',

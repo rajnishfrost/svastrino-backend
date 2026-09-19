@@ -1,58 +1,57 @@
 import { TICKET_CATEGORIES } from './ticket.model.js'
-
-const fail = (message, field) => {
-  const err = new Error(message)
-  err.status = 400
-  if (field) err.field = field
-  return err
-}
-
-const clean = (v, max) => String(v ?? '').trim().slice(0, max)
+import {
+  LIMITS, MINIMUMS, oneOf, optionalSlug, requireInt, requireLine, requireText,
+} from '../../../utils/validate.js'
 
 // The whole thread is read on one screen, so a single message is capped well
 // below an essay. Long enough for a student to explain themselves properly.
-const MAX_MESSAGE = 4000
-const MAX_SUBJECT = 120
-const MAX_PRODUCT = 60
-
-/**
- * A course slug, and nothing else. The form fills this in from the courses the
- * student actually holds, so anything that is not slug shaped did not come from
- * the picker.
- *
- * Two things ride on it, which is why it is checked at all rather than merely
- * trimmed. The panel shows this value to an admin as the course the ticket is
- * about, so free prose here would read as a course name that does not exist.
- * And a second ticket about the same course and category hands back the thread
- * the student already has instead of opening another one, so a field that
- * accepts anything is a field that can be varied to defeat that and fill the
- * queue. Empty stays perfectly valid — a general question is about no course.
- */
-const PRODUCT_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const MAX_MESSAGE = LIMITS.ticketMessage
+const MAX_SUBJECT = LIMITS.subject
 
 /** Validate and normalise the first message of a new ticket. */
 export function validateTicketCreate(body = {}) {
-  const subject = clean(body.subject, MAX_SUBJECT)
-  const text = clean(body.text ?? body.message, MAX_MESSAGE)
-  const product = clean(body.product, MAX_PRODUCT).toLowerCase()
-  const category = TICKET_CATEGORIES.includes(body.category) ? body.category : 'other'
-
-  if (subject.length < 3) throw fail('Please give this a short title so we know what it is about', 'subject')
-  if (!text) throw fail('Please tell us what you need help with', 'text')
-  if (product && !PRODUCT_SLUG.test(product)) {
-    throw fail(
+  const subject = requireLine(body.subject, {
+    field: 'subject',
+    label: 'a short title so we know what it is about',
+    min: MINIMUMS.subject,
+    max: MAX_SUBJECT,
+  })
+  const text = requireText(body.text ?? body.message, {
+    field: 'text',
+    label: 'what you need help with',
+    max: MAX_MESSAGE,
+  })
+  /*
+   * A course slug, and nothing else. The form fills this in from the courses the
+   * student actually holds, so anything that is not slug shaped did not come
+   * from the picker.
+   *
+   * Two things ride on it, which is why it is checked at all rather than merely
+   * trimmed. The panel shows this value to an admin as the course the ticket is
+   * about, so free prose here would read as a course name that does not exist.
+   * And a second ticket about the same course and category hands back the thread
+   * the student already has instead of opening another one, so a field that
+   * accepts anything is a field that can be varied to defeat that and fill the
+   * queue. Empty stays perfectly valid — a general question is about no course.
+   */
+  const product = optionalSlug(body.product, {
+    field: 'product',
+    max: LIMITS.slug,
+    message:
       'Please choose your course from the list. If your question is not about a course, leave that box empty.',
-      'product'
-    )
-  }
+  })
+  const category = oneOf(body.category, TICKET_CATEGORIES, 'other')
 
   return { subject, text, product, category }
 }
 
 /** Validate a reply — from the student or from an admin, the rule is the same. */
 export function validateReply(body = {}) {
-  const text = clean(body.text ?? body.message, MAX_MESSAGE)
-  if (!text) throw fail('Please write your message before sending it', 'text')
+  const text = requireText(body.text ?? body.message, {
+    field: 'text',
+    label: 'your message before sending it',
+    max: MAX_MESSAGE,
+  })
   return { text }
 }
 
@@ -62,10 +61,12 @@ export function validateReply(body = {}) {
  * worth — anything longer should be a fresh purchase, not a support decision.
  */
 export function validateGrant(body = {}) {
-  const days = Number(body.days)
-  if (!Number.isInteger(days) || days < 1 || days > 365) {
-    throw fail('Enter how many days of access to give, as a whole number from 1 to 365', 'days')
-  }
+  const days = requireInt(body.days, {
+    field: 'days',
+    label: 'how many days of access to give',
+    min: 1,
+    max: 365,
+  })
   return { days }
 }
 

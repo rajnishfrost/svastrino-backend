@@ -2,6 +2,7 @@ import { Enquiry } from './enquiry.model.js'
 import { sendEnquiryEmail, sendEnquiryAckEmail, sendExpertApprovalEmail } from '../../../utils/mailer.js'
 import { enquiryRecipients } from '../../admin/settings/settings.service.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
+import { LIMITS, text } from '../../../utils/validate.js'
 
 /**
  * Save an enquiry, then write to both the people it concerns: the team, who have
@@ -73,7 +74,9 @@ export async function updateEnquiry(id, { status, notes } = {}) {
 
   const patch = {}
   if (status && STATUSES.includes(status)) patch.status = status
-  if (notes != null) patch.notes = String(notes).slice(0, 2000)
+  // An admin's own note, but still stripped of markup and capped: it is shown
+  // back in the panel and carried into the approval email.
+  if (notes != null) patch.notes = text(notes, LIMITS.notes)
 
   const newlyApproved = patch.status === 'approved' && before.status !== 'approved'
   if (newlyApproved) patch.approvedAt = new Date()

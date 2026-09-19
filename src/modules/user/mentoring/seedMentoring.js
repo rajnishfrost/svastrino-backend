@@ -48,9 +48,10 @@ const SUBCATEGORIES = [
         cta: 'Book Bloom', featured: true, badge: 'Most Popular', order: 1,
       },
       {
-        // Sold after a call, never straight from the checkout — see the
-        // Breakthrough row in the emotional flow.
-        buyMode: 'expert-call',
+        // Self-serve like the other two since 2026-09-19: someone who has
+        // reached Book Online has decided, and a call in front of the button is
+        // a negotiation they did not ask for. Left to the model default so this
+        // file and seedServicePrograms.js cannot disagree about it again.
         sku: 'mentoring-breakthrough', slug: 'breakthrough', name: 'Breakthrough Program',
         tagline: 'The full journey — 22 sessions',
         price: 13900000, sessionsCount: 22, sessionMins: 120, period: 'one-time',

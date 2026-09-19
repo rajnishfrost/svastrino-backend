@@ -17,6 +17,7 @@ import { MentoringBooking } from '../../user/mentoring/booking.model.js'
 
 import { roleExists, rolePermissions, hasPanelAccess } from '../roles/roles.service.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
+import { LIMITS, optionalLink, str, strList, text } from '../../../utils/validate.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -65,8 +66,12 @@ export async function stats() {
 
 // --- Accounts (unified: site users + panel admins live in one collection) ----
 export async function listUsers({ q, page, limit } = {}) {
-  const filter = q
-    ? { $or: [{ name: new RegExp(q, 'i') }, { email: new RegExp(q, 'i') }] }
+  // Escaped and capped before it becomes a regex. Unescaped, an admin typing "("
+  // into the search box got a 500 rather than no results, and a pattern like
+  // "(a+)+$" is a query the database then spends real time on.
+  const term = str(q, LIMITS.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const filter = term
+    ? { $or: [{ name: new RegExp(term, 'i') }, { email: new RegExp(term, 'i') }] }
     : {}
   const p = pageOf({ page, limit })
   // The auth fields are select:false, and accountStatus needs them — without
@@ -172,22 +177,69 @@ export async function listPackages() {
   return Package.find().populate('skillBuild', 'name slug kind').sort({ order: 1 })
 }
 
-const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'benefits', 'modeLabel', 'priceNote', 'summary', 'trustLine', 'durationLabel', 'sessionsLabel', 'deliveryMode', 'buyMode', 'paymentMode', 'phases', 'includesPsychometric', 'cta', 'variant', 'featured', 'badge', 'order', 'active', 'listed']
+const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'benefits', 'modeLabel', 'priceNote', 'summary', 'trustLine', 'durationLabel', 'sessionsLabel', 'deliveryMode', 'buyMode', 'expertEnquiry', 'paymentMode', 'phases', 'includesPsychometric', 'cta', 'variant', 'featured', 'badge', 'order', 'active', 'listed']
+
+/**
+ * How long each of a package's text fields may be.
+ *
+ * Every one of these is drawn on a pricing card, so the cap is what the card can
+ * show rather than what the box will accept. Declared once and applied on create
+ * and on update, because the two used to shape the same fields differently: the
+ * create path at least ran them through String(), while the update path assigned
+ * body[f] straight onto the document and would take an object.
+ */
+const PKG_CAPS = {
+  name: LIMITS.title,
+  tagline: LIMITS.shortText,
+  period: 24,
+  modeLabel: LIMITS.name,
+  priceNote: LIMITS.shortText,
+  summary: LIMITS.description,
+  trustLine: LIMITS.shortText,
+  durationLabel: LIMITS.name,
+  sessionsLabel: LIMITS.name,
+  deliveryMode: LIMITS.name,
+  cta: LIMITS.name,
+  variant: LIMITS.slug,
+  badge: LIMITS.name,
+}
+
 // '' / null → null, otherwise Number — for the optional numeric fields.
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v))
-export async function updatePackage(id, body) {
-  const update = {}
-  for (const f of PKG_FIELDS) if (body[f] !== undefined) update[f] = body[f]
+
+/** Normalise whichever of a package's fields are present, in place. */
+function shapePackageFields(update) {
+  for (const [f, max] of Object.entries(PKG_CAPS)) {
+    if (update[f] !== undefined) update[f] = str(update[f], max)
+  }
   if (update.price != null) update.price = Number(update.price)
   if (update.phases !== undefined) update.phases = Math.max(1, Number(update.phases) || 1)
   if (update.includesPsychometric !== undefined) update.includesPsychometric = !!update.includesPsychometric
   if (update.listed !== undefined) update.listed = update.listed !== false
+  if (update.featured !== undefined) update.featured = !!update.featured
+  if (update.active !== undefined) update.active = update.active !== false
+  if (update.order !== undefined) update.order = Number(update.order) || 0
+  if (update.buyMode !== undefined) update.buyMode = update.buyMode === 'expert-call' ? 'expert-call' : 'self-serve'
+  // Whether the program page leads with the "Talk to an Expert" form. Separate
+  // from buyMode: a program can take a negotiated price through that form and
+  // still sell at the listed price from the checkout.
+  if (update.expertEnquiry !== undefined) update.expertEnquiry = update.expertEnquiry === true || update.expertEnquiry === 'true'
+  if (update.paymentMode !== undefined) update.paymentMode = update.paymentMode === 'per-phase' ? 'per-phase' : 'one-time'
+  // Bullet lists: twenty lines of a card's worth each. An array is the one shape
+  // a cap on a single string never reaches.
   for (const f of ['features', 'benefits']) {
-    if (update[f] !== undefined) update[f] = (Array.isArray(update[f]) ? update[f] : []).filter(Boolean)
+    if (update[f] !== undefined) update[f] = strList(update[f], { max: LIMITS.shortText, count: 20 })
   }
   for (const f of ['earlyBird', 'durationDays', 'sessionsCount', 'sessionMins']) {
     if (update[f] !== undefined) update[f] = numOrNull(update[f])
   }
+  return update
+}
+
+export async function updatePackage(id, body) {
+  const update = {}
+  for (const f of PKG_FIELDS) if (body[f] !== undefined) update[f] = body[f]
+  shapePackageFields(update)
   const pkg = await Package.findByIdAndUpdate(id, update, { new: true }).populate('skillBuild', 'name slug kind')
   if (!pkg) throw httpError('Package not found', 404)
   return pkg
@@ -195,45 +247,42 @@ export async function updatePackage(id, body) {
 
 /** New priced package under an existing skill-build (course tier OR mentoring program). */
 export async function createPackage(body) {
-  const sb = await SkillBuild.findOne({ slug: String(body.skillBuildSlug || '').toLowerCase().trim() })
+  const sb = await SkillBuild.findOne({ slug: str(body.skillBuildSlug, LIMITS.slug).toLowerCase() })
   if (!sb) throw httpError('Pick a skill-build for this package', 400)
 
-  const sku = String(body.sku || '').toLowerCase().trim()
-  const name = String(body.name || '').trim()
+  const sku = str(body.sku, LIMITS.slug).toLowerCase()
   if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(sku)) throw httpError('SKU: lowercase letters/numbers/dashes only', 400)
-  if (!name) throw httpError('Name is required', 400)
   if (!(Number(body.price) > 0)) throw httpError('Price (₹) is required', 400)
   if (await Package.findOne({ sku })) throw httpError('That SKU is already in use', 409)
 
+  // The same shaping the update path uses, so a package created here and a
+  // package edited later end up with the same rules applied to the same fields.
+  const fields = {}
+  for (const f of PKG_FIELDS) if (body[f] !== undefined) fields[f] = body[f]
+  shapePackageFields(fields)
+  if (!fields.name) throw httpError('Name is required', 400)
+
   const pkg = await Package.create({
+    ...fields,
     skillBuild: sb._id,
     sku,
-    slug: String(body.slug || '').trim() || sku.replace(new RegExp(`^${sb.slug}-`), ''),
-    name,
-    tagline: String(body.tagline || '').trim(),
+    slug: str(body.slug, LIMITS.slug) || sku.replace(new RegExp(`^${sb.slug}-`), ''),
     price: Number(body.price),
-    earlyBird: numOrNull(body.earlyBird),
-    period: String(body.period || 'one-time').trim() || 'one-time',
-    durationDays: numOrNull(body.durationDays),
-    sessionsCount: numOrNull(body.sessionsCount),
-    sessionMins: numOrNull(body.sessionMins),
-    features: Array.isArray(body.features) ? body.features.filter(Boolean) : [],
-    benefits: Array.isArray(body.benefits) ? body.benefits.filter(Boolean) : [],
-    modeLabel: String(body.modeLabel || '').trim(),
-    priceNote: String(body.priceNote || '').trim(),
-    summary: String(body.summary || '').trim(),
-    trustLine: String(body.trustLine || '').trim(),
-    durationLabel: String(body.durationLabel || '').trim(),
-    sessionsLabel: String(body.sessionsLabel || '').trim(),
-    deliveryMode: String(body.deliveryMode || '').trim(),
-    buyMode: body.buyMode === 'expert-call' ? 'expert-call' : 'self-serve',
-    paymentMode: body.paymentMode === 'per-phase' ? 'per-phase' : 'one-time',
-    phases: Math.max(1, Number(body.phases) || 1),
+    period: fields.period || 'one-time',
+    buyMode: fields.buyMode || 'self-serve',
+    // `fields`, not `body`: the raw body would skip the coercion above, so the
+    // string "false" from a form post would create a package with the flag ON.
+    // Only written when the caller actually asked for it — an explicit false on
+    // every new row would kill the `?? buyMode === 'expert-call'` fallback that
+    // readers rely on for rows that predate the field.
+    ...(fields.expertEnquiry === undefined ? {} : { expertEnquiry: fields.expertEnquiry }),
+    paymentMode: fields.paymentMode || 'one-time',
+    phases: fields.phases ?? 1,
     includesPsychometric: !!body.includesPsychometric,
-    cta: String(body.cta || '').trim() || 'Buy now',
+    cta: fields.cta || 'Buy now',
     featured: !!body.featured,
-    badge: String(body.badge || '').trim() || null,
-    order: Number(body.order) || 0,
+    badge: fields.badge || null,
+    order: fields.order ?? 0,
     active: body.active !== false,
     listed: body.listed !== false,
   })
@@ -251,10 +300,10 @@ export async function listAllSkillBuilds() {
 export async function updateSkillBuild(slug, body) {
   const update = {}
   if (body.name !== undefined) {
-    update.name = String(body.name).trim()
+    update.name = str(body.name, LIMITS.title)
     if (!update.name) throw httpError('Name is required', 400)
   }
-  if (body.tagline !== undefined) update.tagline = String(body.tagline).trim()
+  if (body.tagline !== undefined) update.tagline = str(body.tagline, LIMITS.shortText)
   if (body.order !== undefined) update.order = Number(body.order) || 0
   if (body.active !== undefined) update.active = !!body.active
   const sb = await SkillBuild.findOneAndUpdate({ slug }, update, { new: true })
@@ -264,8 +313,8 @@ export async function updateSkillBuild(slug, body) {
 
 /** New top-level product. kind: 'course' (videos/sessions) | 'mentoring' (bookable). */
 export async function createSkillBuild(body) {
-  const slug = String(body.slug || '').toLowerCase().trim()
-  const name = String(body.name || '').trim()
+  const slug = str(body.slug, LIMITS.slug).toLowerCase()
+  const name = str(body.name, LIMITS.title)
   const kind = body.kind === 'mentoring' ? 'mentoring' : 'course'
   if (!/^[a-z0-9][a-z0-9-]{1,40}$/.test(slug)) throw httpError('Slug: lowercase letters/numbers/dashes only', 400)
   if (!name) throw httpError('Name is required', 400)
@@ -274,7 +323,7 @@ export async function createSkillBuild(body) {
     slug,
     name,
     kind,
-    tagline: String(body.tagline || '').trim(),
+    tagline: str(body.tagline, LIMITS.shortText),
     order: Number(body.order) || 0,
     active: body.active !== false,
   })
@@ -297,19 +346,30 @@ function sessionFromBody(body) {
   return {
     order: Number(body.order) || 1,
     tier: Number(body.tier) || 1,
-    title: String(body.title || '').trim(),
-    description: String(body.description || '').trim(),
-    videoUrl: String(body.videoUrl || '').trim(),
+    title: str(body.title, LIMITS.title),
+    description: text(body.description, LIMITS.description),
+    // Played in a <video>/HLS source, so it has to be a link: either an https URL
+    // or the relative path our own uploader returns.
+    videoUrl: optionalLink(body.videoUrl, { field: 'videoUrl' }),
     durationMins: Number(body.durationMins) || 0,
     worksheet: {
-      title: String(body.worksheet?.title || '').trim(),
-      tasks: Array.isArray(body.worksheet?.tasks) ? body.worksheet.tasks.filter(Boolean) : [],
+      title: str(body.worksheet?.title, LIMITS.title),
+      // A worksheet is a list of things to do, read on one screen — fifty lines is
+      // already more than any session has ever had.
+      tasks: strList(body.worksheet?.tasks, { max: LIMITS.shortText, count: 50 }),
     },
+    // Timeline notes: a caption shown over the player at a given second. Capped at
+    // a hundred, because they are drawn as markers on a bar that is a few hundred
+    // pixels wide.
     notes: Array.isArray(body.notes)
       ? body.notes
-          .filter((n) => n && Number.isFinite(Number(n.time)) && String(n.text || '').trim())
-          .map((n) => ({ time: Math.max(0, Math.round(Number(n.time))), text: String(n.text).trim() }))
+          .filter((n) => n && Number.isFinite(Number(n.time)) && str(n.text, LIMITS.shortText))
+          .map((n) => ({
+            time: Math.max(0, Math.round(Number(n.time))),
+            text: str(n.text, LIMITS.shortText),
+          }))
           .sort((a, b) => a.time - b.time)
+          .slice(0, 100)
       : [],
     active: body.active !== false,
   }
@@ -351,10 +411,9 @@ export async function saveQuestions(sessionId, prompts) {
   const session = await Session.findById(sessionId)
   if (!session) throw httpError('Session not found', 404)
 
-  const clean = (Array.isArray(prompts) ? prompts : [])
-    .map((p) => String(p || '').trim())
-    .filter(Boolean)
-    .slice(0, 6)
+  // Six questions per session is the product rule; the cap on each is what the
+  // student's screen shows above the answer box.
+  const clean = strList(prompts, { max: LIMITS.subject * 2, count: 6 })
 
   // Upsert by order (keeps existing rows + any answers intact where possible).
   const ops = clean.map((prompt, i) => ({

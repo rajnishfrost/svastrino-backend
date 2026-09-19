@@ -1,11 +1,15 @@
 // Input validation + shaping for the user credentials module.
 // DTOs keep raw request bodies out of the service/controller layer and are the
 // authoritative server-side validation (the client checks are only UX sugar).
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-// E.164-ish: optional +, 8–15 digits. Phone is optional on signup.
-const PHONE_RE = /^\+?[0-9]{8,15}$/
-const NAME_RE = /^[\p{L}][\p{L}\s'.-]{1,59}$/u
+//
+// The name, email and phone rules come from utils/validate.js, which the browser
+// mirrors. They used to live here as a third private copy, and the copies had
+// drifted: this file capped a phone at 15 characters while the enquiry forms and
+// the database allowed 20, and its name rule refused a name of 61 characters with
+// the message "enter a valid name".
+import {
+  LIMITS, optionalPhone, requireEmail, requireName, str,
+} from '../../../utils/validate.js'
 
 const fail = (message, status = 400) => {
   const err = new Error(message)
@@ -15,13 +19,9 @@ const fail = (message, status = 400) => {
 
 // Strip angle brackets to shrink the HTML/script-injection surface. Real
 // escaping happens at render time; this is defence-in-depth on the way in.
-const clean = (s) => String(s ?? '').replace(/[<>]/g, '').trim()
+const clean = (s, max = LIMITS.shortText) => str(s, max)
 
-function normalizeEmail(raw) {
-  const email = clean(raw).toLowerCase()
-  if (!EMAIL_RE.test(email) || email.length > 254) fail('Enter a valid email address')
-  return email
-}
+const normalizeEmail = (raw) => requireEmail(raw)
 
 // 0–4 strength score — mirrors the client's utils/password.js scorePassword.
 function scorePassword(pw) {
@@ -39,7 +39,7 @@ function scorePassword(pw) {
 function checkPassword(raw) {
   const password = String(raw ?? '')
   if (password.length < 8) fail('Password must be at least 8 characters')
-  if (password.length > 128) fail('Password is too long')
+  if (password.length > LIMITS.password) fail('Password is too long')
   if (scorePassword(password) < 2) fail('Use letters, numbers & a symbol')
   return password
 }
@@ -55,19 +55,22 @@ export function passwordHasName(name, password) {
     .some((part) => lowerPw.includes(part))
 }
 
-// Normalise a phone string to bare digits (with optional leading +). Returns
-// null for an empty value (caller decides whether clearing is allowed).
+/**
+ * Normalise a phone to E.164. Returns null for an empty value, so the caller
+ * decides whether clearing is allowed.
+ *
+ * Every phone field on the site is a country picker now, so what arrives from our
+ * own pages already carries its dial code. A bare ten-digit number is still
+ * accepted and read as Indian, because accounts created before the picker existed
+ * hold numbers in that shape and a profile save must not fail on a number the
+ * account already had.
+ */
 function parsePhone(raw) {
-  const phone = clean(raw).replace(/[\s()-]/g, '')
-  if (phone === '') return null
-  if (!PHONE_RE.test(phone)) fail('Enter a valid phone number')
-  return phone
+  return optionalPhone(raw) || null
 }
 
 export function validateSignup(body) {
-  const name = clean(body.name)
-  if (!NAME_RE.test(name)) fail("Enter a valid name (letters, spaces, . - ')")
-
+  const name = requireName(body.name)
   const email = normalizeEmail(body.email)
   const password = checkPassword(body.password)
 
@@ -82,8 +85,7 @@ export function validateSignup(body) {
 /** Guest checkout (mentoring booking): name + email required, no password —
  *  the account is created on the fly and a set-password email follows. */
 export function validateGuest(body) {
-  const name = clean(body.name)
-  if (!NAME_RE.test(name)) fail("Enter a valid name (letters, spaces, . - ')")
+  const name = requireName(body.name)
   const email = normalizeEmail(body.email)
   const phone = body.phone != null ? parsePhone(body.phone) : undefined
   return { name, email, phone: phone ?? undefined }
@@ -93,11 +95,7 @@ export function validateGuest(body) {
  *  be present. */
 export function validateUpdateProfile(body) {
   const out = {}
-  if (body.name != null) {
-    const name = clean(body.name)
-    if (!NAME_RE.test(name)) fail("Enter a valid name (letters, spaces, . - ')")
-    out.name = name
-  }
+  if (body.name != null) out.name = requireName(body.name)
   if (body.phone != null) {
     out.phone = parsePhone(body.phone) // string, or null to clear
   }
@@ -106,7 +104,7 @@ export function validateUpdateProfile(body) {
     // 'Graduate' and 'Other', and that list is worded by marketing rather than by
     // us. A bounded free string keeps every one of those answers valid, and the
     // psychometric eligibility check reads the number out of it. '' clears it.
-    out.studentClass = clean(body.studentClass).slice(0, 40)
+    out.studentClass = clean(body.studentClass, LIMITS.studentClass)
   }
   if (Object.keys(out).length === 0) fail('Nothing to update')
   return out

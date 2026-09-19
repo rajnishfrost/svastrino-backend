@@ -1,3 +1,8 @@
+// Loads .env.local the way every other script does. Without it this file fell
+// back to a localhost URI, so running it plainly wrote to whatever database
+// happened to be on this machine and reported success — a silent no-op against
+// the database the site actually reads.
+import '../../../config/env.js'
 import mongoose from 'mongoose'
 import { Package } from './package.model.js'
 
@@ -7,8 +12,13 @@ import { Package } from './package.model.js'
  * The card copy used to live in the client (journeyStages.js ALL_PROGRAMS)
  * while the price and the buy rule lived in the catalogue — two owners for one
  * program. That is how Breakthrough ended up marked 'expert-call' on the page
- * and 'self-serve' in the database, which quietly opened a checkout the
- * business never meant to open. The catalogue is the only owner now.
+ * and 'self-serve' in the database, disagreeing with each other. The catalogue
+ * is the only owner now.
+ *
+ * All three are 'self-serve': someone who has reached Book Online has already
+ * decided, and putting a call in front of them there is a negotiation nobody
+ * asked for. Breakthrough was the exception until 2026-09-19. The expert-call
+ * mode still exists and the admin panel can set it per program.
  *
  * Text is copied verbatim from that file; nothing here is reworded.
  *
@@ -54,7 +64,8 @@ const PROGRAMS = [
     "durationLabel": "2 Years with atleast 2,200 minutes",
     "sessionsLabel": "Pre-session 90 minutes + 10 Sessions of 2 Hours each Or 20 Sessions of 1 Hour each (Depending on students’ speed, availability, and comfort) Spread over 2 years + regular follow-ups and support in between sessions",
     "deliveryMode": "Online",
-    "buyMode": "expert-call",
+    "buyMode": "self-serve",
+    "expertEnquiry": true,
     "categorySlug": "personalised-mentoring"
   }
 ]
@@ -80,6 +91,10 @@ async function main() {
       sessionsLabel: p.sessionsLabel,
       deliveryMode: p.deliveryMode,
       buyMode: p.buyMode,
+      // Written outright, not left to the model default: $set leaves an
+      // existing key alone when the payload omits it, so an omitted flag would
+      // never clear a stale value.
+      expertEnquiry: !!p.expertEnquiry,
     }
     const changed = Object.entries(set).filter(([k, v]) => String(cur[k] ?? '') !== String(v))
     if (!changed.length) { console.log(`  ${p.sku}: pehle se same`); continue }

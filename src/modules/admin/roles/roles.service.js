@@ -1,5 +1,6 @@
 import { Role, SEED_ROLES } from './roles.model.js'
 import { ADMIN_MODULES } from '../credentials/credentials.model.js'
+import { LIMITS, str } from '../../../utils/validate.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -47,7 +48,10 @@ export async function listRoles() {
 }
 
 export async function createRole({ name, permissions }) {
-  const label = String(name || '').trim()
+  // A role label is shown in a dropdown and in the sidebar, so it is capped to
+  // what those can carry. `str` also strips markup, which matters because the
+  // slug is derived from it and the label is rendered back to every admin.
+  const label = str(name, LIMITS.name)
   if (!label) throw httpError('Role name is required', 400)
   const key = slugify(label)
   if (!key) throw httpError('Role name must contain letters or numbers', 400)
@@ -63,7 +67,7 @@ export async function updateRole(id, { name, permissions }) {
   if (role.locked) throw httpError(`The ${role.label} role cannot be edited`, 400)
 
   if (name !== undefined && !role.system) {
-    const label = String(name).trim()
+    const label = str(name, LIMITS.name)
     if (!label) throw httpError('Role name is required', 400)
     const dup = await Role.findOne({ _id: { $ne: role._id }, key: new RegExp(`^${escapeRegExp(slugify(label))}$`, 'i') })
     if (dup) throw httpError('A role with this name already exists', 409)

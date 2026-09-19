@@ -1,4 +1,5 @@
 import { Blog } from './blog.model.js'
+import { LIMITS, str } from '../../../utils/validate.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -17,11 +18,18 @@ export async function listBlogs({ page = 1, limit = 12, category, owner, q } = {
   const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || 12))
 
   const filter = { published: true }
-  if (category) filter.categories = category
-  if (owner) filter.owner = owner
+  // These three are the only public, unauthenticated inputs in this module, and
+  // every one of them reaches a Mongo query. Express parses query strings with
+  // qs, so "?category[$ne]=x" arrives as an OBJECT: uncoerced, Mongo reads it as
+  // an operator and the filter stops filtering, while "?q[$ne]=x" used to reach
+  // `q.replace` and crash with a 500. `str` makes all three what they claim to be
+  // and caps them on the way past.
+  const term = str(q, LIMITS.search)
+  if (category) filter.categories = str(category, LIMITS.name)
+  if (owner) filter.owner = str(owner, LIMITS.slug)
   // Regex (not $text) so partial words match while typing.
-  if (q) {
-    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
+  if (term) {
+    const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
     filter.$or = [{ title: rx }, { excerpt: rx }]
   }
 

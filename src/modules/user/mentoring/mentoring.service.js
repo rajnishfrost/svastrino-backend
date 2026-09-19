@@ -74,6 +74,10 @@ const programDTO = ({ pkg, parent }) => ({
   sessionsLabel: pkg.sessionsLabel || '',
   deliveryMode: pkg.deliveryMode || '',
   buyMode: pkg.buyMode || 'self-serve',
+  // Whether the /services card offers the call-back form instead of the
+  // checkout. Falls back to the old buyMode rule on rows written before the
+  // field existed, so an un-migrated database keeps its current behaviour.
+  expertEnquiry: pkg.expertEnquiry ?? pkg.buyMode === 'expert-call',
   features: pkg.features,
   featured: pkg.featured,
   badge: pkg.badge,

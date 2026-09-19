@@ -14,6 +14,10 @@ export function toProgramCardDTO(p) {
     category: p.category?.slug ? { slug: p.category.slug, name: p.category.name } : null,
     bookingSku: p.bookingSku || '',
     buyMode: p.buyMode || 'self-serve',
+    // Falls back to the old buyMode rule when the row predates expertEnquiry,
+    // so a database that has not been migrated yet still shows the form rather
+    // than silently losing it.
+    expertEnquiry: p.expertEnquiry ?? p.buyMode === 'expert-call',
   }
 }
 

@@ -1,4 +1,5 @@
 import { OFFER_AUDIENCES } from './notification.model.js'
+import { LIMITS, couponStr, optionalLink, str, text as cleanText } from '../../../utils/validate.js'
 
 const fail = (message, field) => {
   const err = new Error(message)
@@ -7,7 +8,9 @@ const fail = (message, field) => {
   return err
 }
 
-const clean = (v, max) => String(v ?? '').trim().slice(0, max)
+// The shared normaliser: trims and truncates as before, and now also strips
+// markup and invisible characters. An offer card is drawn on the public site.
+const clean = (v, max) => str(v, max)
 
 /**
  * Parse a date the admin form sent. An empty value is a deliberate "no bound"
@@ -27,14 +30,16 @@ const date = (v, field) => {
  * back either way, so there is nothing to merge.
  */
 export function validateOffer(body = {}) {
-  const title = clean(body.title, 140)
-  const text = clean(body.body, 2000)
+  const title = clean(body.title, LIMITS.title)
+  const text = cleanText(body.body, LIMITS.message)
   // Coupon codes are stored and compared upper-case everywhere else (see the
   // payments module), so the one we print on the card matches what checkout
-  // will accept.
-  const code = clean(body.code, 40).toUpperCase()
-  const link = clean(body.link, 300)
-  const image = clean(body.image, 500)
+  // will accept — which also means it is held to the shape a code can have.
+  const code = couponStr(body.code)
+  // Both of these end up in the card's href and src, so they have to be links:
+  // http(s), or a path on this site that our own uploader produced.
+  const link = optionalLink(body.link, { field: 'link' })
+  const image = optionalLink(body.image, { field: 'image' })
 
   if (title.length < 2) throw fail('Please give the offer a title', 'title')
 

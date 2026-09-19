@@ -1,55 +1,72 @@
-const fail = (message, field) => {
-  const err = new Error(message)
-  err.status = 400
-  if (field) err.field = field
-  return err
-}
+import {
+  LIMITS, MINIMUMS, oneOf, optionalLine, optionalPhone, optionalPlace,
+  requireEmail, requireLine, requireName, requirePhone, requirePlace, requireText,
+} from '../../../utils/validate.js'
 
-const clean = (v, max) => String(v ?? '').trim().slice(0, max)
+/**
+ * Validate and normalise an incoming enquiry. Never trust the body.
+ *
+ * Three forms post here and they ask for different things, so the rules are
+ * declared per source rather than written out three times:
+ *
+ *   home         the banner form — everything, plus which class they are in
+ *   expert-call  the program-page panel — everything, plus when to ring
+ *   contact      the Contact page — no city, and the phone is their choice
+ *
+ * The checks come from utils/validate.js, which the browser mirrors. That is what
+ * makes the two agree: a message the form accepted is one this will accept, and a
+ * phone number that got past the country picker is one with a dial code on it.
+ * The mirror is a convenience for the visitor, though — this is the copy that
+ * decides, because nothing obliges a caller to have loaded our page at all.
+ */
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const SOURCES = ['home', 'expert-call', 'contact']
 
-/** Validate and normalise an incoming enquiry. Never trust the body. */
 export function validateEnquiry(body = {}) {
-  const name = clean(body.name, 80)
-  const email = clean(body.email, 160).toLowerCase()
-  const phone = clean(body.phone, 20)
-  const message = clean(body.message, 2000)
-  const studentClass = clean(body.studentClass, 40)
-  const city = clean(body.city, 80)
-  const program = clean(body.program, 60)
-  const preferredTime = clean(body.preferredTime, 80)
-  const SOURCES = ['home', 'expert-call', 'contact']
-  const source = SOURCES.includes(body.source) ? body.source : 'contact'
+  const source = oneOf(body.source, SOURCES, 'contact')
+  // The Contact page asks for less. Everywhere else, an enquiry without a city or
+  // a number is one the team cannot act on, and the browser is the last place to
+  // enforce that.
+  const full = source !== 'contact'
 
-  if (name.length < 2) throw fail('Please tell us your name', 'name')
+  const name = requireName(body.name)
+  const email = requireEmail(body.email)
+  const phone = full
+    ? requirePhone(body.phone)
+    : optionalPhone(body.phone)
+  const city = full
+    ? requirePlace(body.city, { label: 'city' })
+    : optionalPlace(body.city)
+  const message = requireText(body.message, {
+    field: 'message',
+    label: 'your message',
+    min: MINIMUMS.message,
+    max: LIMITS.message,
+  })
 
-  // The home banner and the expert-call panel share one set of fields and ask
-  // for all of them, so they are checked the same way here. An enquiry missing
-  // a city or a way to reach the sender is one the team cannot act on, and the
-  // browser is the last place to enforce that — anything can post to this route.
-  //
-  // The contact page is a different form with a different shape (no city, no
-  // phone) and keeps the rules it always had.
-  const FULL = source === 'home' || source === 'expert-call'
+  // Only the expert-call panel asks when to ring, and it is free text on purpose:
+  // "after 6pm", "weekends" and "tomorrow morning" all beat a fake slot.
+  const preferredTime = source === 'expert-call'
+    ? requireLine(body.preferredTime, {
+        field: 'preferredTime', label: 'when we should call you', max: LIMITS.shortText,
+      })
+    : optionalLine(body.preferredTime, { field: 'preferredTime', max: LIMITS.shortText })
 
-  if (!email) throw fail('Please add your email address', 'email')
-  if (!EMAIL_RE.test(email)) throw fail('That email does not look right', 'email')
-
-  if (FULL) {
-    if (!phone) throw fail('Please leave a phone number so we can reach you', 'phone')
-    if (!city) throw fail('Please tell us where you are based', 'city')
-    if (message.length < 3) throw fail('Please tell us how we can help', 'message')
-    if (source === 'expert-call' && !preferredTime) {
-      throw fail('Please tell us when we should call', 'preferredTime')
-    }
-  } else if (message.length < 3) {
-    throw fail('Please tell us how we can help', 'message')
+  return {
+    name,
+    email,
+    phone,
+    message,
+    city,
+    // Not an enum: the home form's list is worded by marketing, and the
+    // psychometric eligibility check reads the year out of whatever it says.
+    // Bounded free text keeps every one of those answers valid.
+    studentClass: optionalLine(body.studentClass, { field: 'studentClass', max: LIMITS.studentClass }),
+    // A program slug the page filled in for them, not something anyone typed.
+    program: optionalLine(body.program, { field: 'program', max: LIMITS.slug }),
+    preferredTime,
+    source,
   }
-
-  if (phone && !/^[+\d][\d\s-]{6,19}$/.test(phone)) throw fail('That phone number does not look right', 'phone')
-
-  return { name, email, phone, message, studentClass, city, program, preferredTime, source }
 }
 
 export function toEnquiryDTO(e) {

@@ -1,4 +1,5 @@
 import { Settings } from './settings.model.js'
+import { EMAIL_RE, LIMITS, str } from '../../../utils/validate.js'
 
 const KEY = 'site'
 
@@ -23,18 +24,20 @@ export async function enquiryRecipients() {
     .filter(Boolean)
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 /** Update the settings. Only known fields are accepted; the rest are ignored. */
 export async function updateSettings(patch = {}, adminId = null) {
   const next = {}
 
   if (patch.enquiryTo != null) {
-    const list = String(patch.enquiryTo)
+    // Ten addresses is more than any team needs on one alias, and each is held to
+    // the site's one email rule. The count cap is what stops the field being used
+    // as a mailing list: every enquiry is sent to all of them.
+    const list = str(patch.enquiryTo, LIMITS.email * 10 + 20)
       .split(',')
-      .map((e) => e.trim())
+      .map((e) => e.trim().toLowerCase())
       .filter(Boolean)
-    const bad = list.find((e) => !EMAIL_RE.test(e))
+      .slice(0, 10)
+    const bad = list.find((e) => !EMAIL_RE.test(e) || e.length > LIMITS.email)
     if (bad) {
       const err = new Error(`"${bad}" is not a valid email address`)
       err.status = 400

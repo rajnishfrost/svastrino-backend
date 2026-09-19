@@ -30,11 +30,24 @@ const mentoringProgramSchema = new mongoose.Schema(
     // The bookable program SKU (mentoring catalog) this page's "Book" CTA opens.
     bookingSku: { type: String, default: '' },
 
-    // How this program is bought. Most are 'self-serve' — pick a slot, pay,
-    // done. Breakthrough is 'expert-call': a two-year commitment is not sold
-    // from a checkout page, so the visitor asks for a call and the team sends a
-    // payment link afterwards.
+    // How this program is BOUGHT. Every program is 'self-serve' today — pick a
+    // slot, pay, done. 'expert-call' instead refuses the checkout until the
+    // team has approved that person's call request; Breakthrough was sold that
+    // way until 2026-09-19. Set per program from the admin panel.
     buyMode: { type: String, enum: ['self-serve', 'expert-call'], default: 'self-serve' },
+
+    // Whether this program's PAGE leads with the "Talk to an Expert" form
+    // instead of a Book Now strip. Separate from buyMode on purpose: Breakthrough
+    // takes a negotiated price through that form AND can be bought outright at
+    // the listed price from /book-online, and one flag could not say both. It
+    // used to be derived from buyMode, so making Breakthrough self-serve took
+    // the form off its page along with the checkout gate.
+    // No default on purpose, the same as Package.expertEnquiry. The content
+    // service returns hydrated documents, so `default: false` would have
+    // Mongoose fill the field in on rows that predate it — and the readers'
+    // `?? buyMode === 'expert-call'` fallback would never fire, leaving an
+    // un-migrated database showing Book Now where the form belongs.
+    expertEnquiry: { type: Boolean },
     tagline: { type: String, default: '' },
     // One line of reassurance under the hero buttons. Per program, because
     // "500+ students mentored" is true of the practice but not of every

@@ -10,6 +10,7 @@ import { courseAccess } from './courseAccess.js'
 import { Assessment } from '../assessment/assessment.model.js'
 import { nextIstMidnight, istDaysBetween, istDayIndex } from '../../../utils/schedule.js'
 import { mediaUrl } from '../../../config/uploads.js'
+import { LIMITS, MINIMUMS, assertHumanText, text as cleanText } from '../../../utils/validate.js'
 
 
 /**
@@ -636,10 +637,20 @@ export async function markVideoDone(userId, sessionId) {
   return { ok: true }
 }
 
-/** Submit the free-text answer to the currently-open question of its session. */
+/**
+ * Submit the free-text answer to the currently-open question of its session.
+ *
+ * The answer is a student writing about their own week, so the only shaping it
+ * gets is a markup strip and a cap. The cap matters more here than it looks: an
+ * answer is stored for the life of the account and read back by a mentor, and
+ * until this was added the field had no limit at all on either side — the request
+ * body cap was the only thing standing between us and a novel per question.
+ */
 export async function submitAnswer(userId, questionId, text) {
-  const body = String(text || '').trim()
+  assertHumanText(text, 'text')
+  const body = cleanText(text, LIMITS.answer)
   if (!body) throw httpError('Please type an answer before submitting', 400)
+  if (body.length < MINIMUMS.answer) throw httpError('Please write a little more before submitting', 400)
 
   const question = await Question.findById(questionId)
   if (!question || !question.active) throw httpError('Question not found', 404)

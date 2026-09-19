@@ -100,6 +100,10 @@ export async function getPackageBySku(sku, { includeInactive = false } = {}) {
     // 'expert-call' package unless the team has approved that caller, so this
     // must travel with the projection — without it the guard silently passes.
     buyMode: pkg.buyMode || 'self-serve',
+    // Whether the /services card sends the visitor to the program page's
+    // "Talk to an Expert" form instead of the checkout. Falls back to the old
+    // buyMode rule on rows written before the field existed.
+    expertEnquiry: pkg.expertEnquiry ?? pkg.buyMode === 'expert-call',
     // The parent the package hangs off: 'mentoring' for a counselling or
     // mentoring program, otherwise a course. The dashboard needs this to put
     // a purchase under the right heading.

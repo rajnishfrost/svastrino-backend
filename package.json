@@ -30,7 +30,8 @@
     "build:redirects": "node src/modules/user/content/buildRedirects.js",
     "sync:resources": "node src/modules/user/learn/syncNirmaanResources.js",
     "build:faqs": "node src/modules/user/content/parseFaqs.js",
-    "sync:faqs": "node src/modules/user/content/syncFaqs.js"
+    "sync:faqs": "node src/modules/user/content/syncFaqs.js",
+    "sync:buymode": "node src/modules/user/mentoring/syncBuyMode.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",

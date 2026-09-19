@@ -1,8 +1,13 @@
 // Validation + shaping for admin credentials.
+import { LIMITS, lower } from '../../../utils/validate.js'
 
 export function validateLogin(body) {
-  const email = String(body.email || '').trim().toLowerCase()
-  const password = String(body.password || '')
+  const email = lower(body.email, LIMITS.email)
+  // Capped, not merely coerced. A login is the cheapest endpoint on the site to
+  // point a flood at, because each attempt costs us a bcrypt hash over whatever
+  // was sent — and bcrypt ignores everything past 72 bytes anyway, so a longer
+  // string was never a stronger password.
+  const password = String(body.password ?? '').slice(0, LIMITS.password)
   if (!email || !password) {
     const err = new Error('Email and password are required')
     err.status = 400

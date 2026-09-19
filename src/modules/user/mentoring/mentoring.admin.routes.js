@@ -4,6 +4,7 @@ import { asyncHandler } from '../../../utils/asyncHandler.js'
 import { MentoringBooking } from './booking.model.js'
 import { SkillBuild } from '../skillbuild/skillbuild.model.js'
 import { Package } from '../skillbuild/package.model.js'
+import { strList, text } from '../../../utils/validate.js'
 
 // Mounted at /api/admin/mentoring — manage bookings, write session updates/tasks.
 const router = Router()
@@ -41,9 +42,12 @@ router.get('/bookings', asyncHandler(async (req, res) => {
 router.patch('/bookings/:id', asyncHandler(async (req, res) => {
   const b = await MentoringBooking.findById(req.params.id)
   if (!b) return res.status(404).json({ error: 'Booking not found' })
-  if (req.body.update != null) b.update = String(req.body.update).slice(0, 5000)
+  // The mentor's write-up of the session and the tasks they set. Capped as
+  // before, and now stripped of markup too: the student reads both of these back
+  // on their dashboard, and the reminder email carries the task list.
+  if (req.body.update != null) b.update = text(req.body.update, 5000)
   if (Array.isArray(req.body.tasks)) {
-    b.tasks = req.body.tasks.map((t) => String(t).slice(0, 500)).filter(Boolean).slice(0, 50)
+    b.tasks = strList(req.body.tasks, { max: 500, count: 50 })
   }
   if (['booked', 'completed', 'cancelled'].includes(req.body.status)) b.status = req.body.status
   await b.save()

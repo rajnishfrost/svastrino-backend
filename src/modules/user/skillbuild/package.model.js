@@ -31,10 +31,18 @@ const packageSchema = new mongoose.Schema(
     sessionsCount: { type: Number, default: null },
     sessionMins: { type: Number, default: null },        // e.g. 120 (2-hour slots)
 
-    // How this package is bought. 'self-serve' is the normal checkout. With
+    // How this package is BOUGHT. 'self-serve' is the normal checkout. With
     // 'expert-call' the visitor cannot pay online at all: they request a call
-    // and the team sends a payment link afterwards (Breakthrough).
+    // and the team sends a payment link afterwards.
     buyMode: { type: String, enum: ['self-serve', 'expert-call'], default: 'self-serve' },
+
+    // Whether this program is ALSO offered through the "Talk to an Expert"
+    // form, where the team agrees a price after the call. Separate from
+    // buyMode: Breakthrough takes a negotiated price that way and sells at the
+    // listed price from /book-online, and one flag cannot say both. Undefined
+    // on rows written before this field existed — readers fall back to
+    // buyMode === 'expert-call', so nothing changes until it is set.
+    expertEnquiry: { type: Boolean },
 
     // The pricing card splits its list in two: what the plan INCLUDES
     // (features) and what the student GETS OUT of it (benefits).

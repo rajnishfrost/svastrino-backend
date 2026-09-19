@@ -3,6 +3,7 @@ import { User } from '../../user/credentials/credentials.model.js'
 import { rolePermissions, hasPanelAccess, roleExists } from '../roles/roles.service.js'
 import { signToken } from '../../../utils/token.js'
 import { deleteByKey, keyFromUrl } from '../../../config/uploads.js'
+import { LIMITS, requireEmail, requireName } from '../../../utils/validate.js'
 
 const httpError = (message, status) => {
   const err = new Error(message)
@@ -71,11 +72,14 @@ const ORG_ROLE = 'organisation'
  *  (email pre-verified) so they can sign in right away. Picking the
  *  `organisation` role also creates the organisation itself — see ORG_ROLE. */
 export async function createManagedAdmin({ name, email, password, role, organisation, createdBy = null }) {
-  const cleanName = String(name || '').trim()
-  const cleanEmail = String(email || '').trim().toLowerCase()
-  if (!cleanName) throw httpError('Name is required', 400)
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) throw httpError('Enter a valid email', 400)
-  if (String(password || '').length < 8) throw httpError('Password must be at least 8 characters', 400)
+  // The site's one name rule and one email rule, so an account made here is held
+  // to exactly what a self-signup is held to — and both are capped, which they
+  // were not: a blank check on the name accepted a field of any length.
+  const cleanName = requireName(name)
+  const cleanEmail = requireEmail(email)
+  const pw = String(password ?? '')
+  if (pw.length < 8) throw httpError('Password must be at least 8 characters', 400)
+  if (pw.length > LIMITS.password) throw httpError('Password is too long', 400)
   const finalRole = role || 'student' // new accounts default to student
   if (!(await roleExists(finalRole))) throw httpError('Selected role does not exist', 400)
   if (await User.findOne({ email: cleanEmail })) throw httpError('An account with this email already exists', 409)
@@ -88,7 +92,7 @@ export async function createManagedAdmin({ name, email, password, role, organisa
     assertOrganisationDraft(organisation, cleanEmail)
   }
 
-  const passwordHash = await bcrypt.hash(String(password), 10)
+  const passwordHash = await bcrypt.hash(pw, 10)
   const user = await User.create({
     name: cleanName,
     email: cleanEmail,
@@ -186,17 +190,15 @@ export async function updateManagedAdmin(actorId, id, body) {
     if (others === 0) throw httpError('At least one active superadmin must remain', 400)
   }
 
-  if (body.name !== undefined) {
-    const n = String(body.name).trim()
-    if (!n) throw httpError('Name is required', 400)
-    user.name = n
-  }
+  if (body.name !== undefined) user.name = requireName(body.name)
   if (newRole) user.role = newRole
   const reactivating = body.active === true && user.active === false
   if (body.active !== undefined) user.active = !!body.active
   if (body.password) {
-    if (String(body.password).length < 8) throw httpError('Password must be at least 8 characters', 400)
-    user.passwordHash = await bcrypt.hash(String(body.password), 10)
+    const next = String(body.password)
+    if (next.length < 8) throw httpError('Password must be at least 8 characters', 400)
+    if (next.length > LIMITS.password) throw httpError('Password is too long', 400)
+    user.passwordHash = await bcrypt.hash(next, 10)
   }
 
   await user.save()

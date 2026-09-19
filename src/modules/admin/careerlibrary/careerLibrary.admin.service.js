@@ -2,6 +2,7 @@ import { CareerField } from '../../user/content/careerField.model.js'
 import { Course } from '../../user/content/course.model.js'
 import { ROWS_PER_PAGE } from '../../../utils/paginate.js'
 import { blocksToText, sanitizeBlocks, textToBlocks } from '../../user/content/richText.js'
+import { LIMITS, optionalLink, str, strList, text } from '../../../utils/validate.js'
 
 /**
  * Career Library management — streams (CareerField) and the course detail pages
@@ -20,7 +21,15 @@ const httpError = (message, status) => {
 }
 
 export const slugify = (s) =>
-  String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  String(s || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    // A slug is a public URL. Capped here rather than at each call site, because
+    // it is derived from the name as often as it is typed, and a 20,000-character
+    // name should not become a 20,000-character address.
+    .slice(0, LIMITS.slug)
 
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -47,7 +56,7 @@ export async function resyncField(slug) {
 }
 
 export async function createField(body = {}) {
-  const name = String(body.name || '').trim()
+  const name = str(body.name, LIMITS.title)
   if (!name) throw httpError('Stream name is required', 400)
 
   const slug = slugify(body.slug || name)
@@ -57,7 +66,7 @@ export async function createField(body = {}) {
   return CareerField.create({
     slug,
     name,
-    description: String(body.description || '').trim(),
+    description: text(body.description, LIMITS.description),
     order: Number(body.order) || 0,
     active: body.active === undefined ? true : !!body.active,
     courses: [], // filled in from the course side
@@ -69,11 +78,11 @@ export async function updateField(id, body = {}) {
   const prevName = field.name
 
   if (body.name !== undefined) {
-    const name = String(body.name).trim()
+    const name = str(body.name, LIMITS.title)
     if (!name) throw httpError('Stream name is required', 400)
     field.name = name
   }
-  if (body.description !== undefined) field.description = String(body.description).trim()
+  if (body.description !== undefined) field.description = text(body.description, LIMITS.description)
   if (body.order !== undefined) field.order = Number(body.order) || 0
   if (body.active !== undefined) field.active = !!body.active
 
@@ -138,7 +147,10 @@ export async function getCourse(id) {
 
 /** Resolve the submitted stream slugs into the [{ name, slug }] the model stores. */
 async function resolveFields(slugs) {
-  const wanted = [...new Set((Array.isArray(slugs) ? slugs : []).map((s) => String(s).trim()).filter(Boolean))]
+  // Bounded in both directions before it becomes a $in: an array is the one input
+  // shape that a cap on a single string never reaches, and this one goes straight
+  // into a query.
+  const wanted = [...new Set(strList(slugs, { max: LIMITS.slug, count: 50 }))]
   if (!wanted.length) return []
   const fields = await CareerField.find({ slug: { $in: wanted } })
   return fields.map((f) => ({ name: f.name, slug: f.slug }))
@@ -146,7 +158,7 @@ async function resolveFields(slugs) {
 
 function buildCoursePatch(body = {}) {
   const patch = {}
-  if (body.name !== undefined) patch.name = String(body.name).trim()
+  if (body.name !== undefined) patch.name = str(body.name, LIMITS.title)
   // The overview travels as editor blocks; the plain string is derived from
   // them. A save carrying only the old plain field — an older panel, a script,
   // a seed — still works: the blocks are rebuilt from the text, so the two
@@ -156,12 +168,13 @@ function buildCoursePatch(body = {}) {
     patch.overviewBlocks = doc
     patch.overview = doc ? blocksToText(doc) : ''
   } else if (body.overview !== undefined) {
-    patch.overview = String(body.overview).trim()
+    patch.overview = text(body.overview, LIMITS.longText)
     patch.overviewBlocks = textToBlocks(patch.overview)
   }
-  if (body.sourceUrl !== undefined) patch.sourceUrl = String(body.sourceUrl).trim()
-  if (body.seoTitle !== undefined) patch.seoTitle = String(body.seoTitle).trim()
-  if (body.seoDescription !== undefined) patch.seoDescription = String(body.seoDescription).trim()
+  // Rendered as a link on the course page, so it has to be one.
+  if (body.sourceUrl !== undefined) patch.sourceUrl = optionalLink(body.sourceUrl, { field: 'sourceUrl' })
+  if (body.seoTitle !== undefined) patch.seoTitle = str(body.seoTitle, LIMITS.title)
+  if (body.seoDescription !== undefined) patch.seoDescription = str(body.seoDescription, LIMITS.description)
   if (body.canonicalSlug !== undefined) patch.canonicalSlug = slugify(body.canonicalSlug)
   if (body.active !== undefined) patch.active = !!body.active
   return patch

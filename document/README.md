@@ -4,6 +4,8 @@ Backend API for the Svastrino career-mentoring & Skill-Build (Nirmaan) platform.
 Express + MongoDB, organised as small **feature modules**.
 
 > New here? Read in this order: **README → ARCHITECTURE → API → DATABASE → AUTH_AND_SECURITY → LEARNING_SYSTEM**.
+> Touching a route that accepts typed input? `utils/validate.js` is the contract every one of them obeys,
+> and it is written up in `../../client/document/INPUT_VALIDATION.md` (it covers both halves).
 
 ---
 
@@ -15,7 +17,7 @@ Express + MongoDB, organised as small **feature modules**.
 | Database | MongoDB via Mongoose 8 |
 | Auth | JWT (`jsonwebtoken`) + bcrypt (`bcryptjs`) |
 | Email | Nodemailer (SMTP) |
-| Security | `helmet`, `express-rate-limit`, CORS |
+| Security | `helmet`, `express-rate-limit`, CORS, `utils/validate.js` (limits + shape + injection) |
 | Google sign-in | Verify Google access token server-side (no client secret) |
 | Logging | `morgan` (dev) |
 | Config | `dotenv` (loads `.env.local`, falls back to `.env`) |
