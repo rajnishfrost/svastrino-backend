@@ -29,6 +29,7 @@ const basePrice = (pkg) => (pkg.earlyBird != null ? pkg.earlyBird : pkg.price)
 const upgradeCredit = (currentPkg, totalPaid) => Math.max(totalPaid, basePrice(currentPkg))
 import { sendReceiptEmail } from '../../../utils/mailer.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
+import { parseStudentClass, PSYCHOMETRIC_MIN_CLASS, PSYCHOMETRIC_MAX_CLASS } from '../../../utils/studentClass.js'
 
 // Upgrade rules: only within this many days of the day the student STARTS the
 // course, and only upward in price. Credit = the tier they already own.
@@ -172,23 +173,8 @@ async function standingFor(userId, pkg, ctx) {
 
 const REFERRAL_COMMISSION = 20000 // ₹200 flat student/parent cashback (SRS §9.4)
 
-// The psychometric test is written for school students, so the 2026 plans sheet
-// offers every package that bundles it to classes 7 to 12 only.
-const PSYCHOMETRIC_MIN_CLASS = 7
-const PSYCHOMETRIC_MAX_CLASS = 12
-
-/**
- * The class number hiding in a profile's free-text class, or null when there is
- * nothing usable there. Students write 'Class 9', '9', '10th' and everything in
- * between, so take the first standalone one- or two-digit number. A longer run
- * of digits is a year or a phone number, never a class, so it is left alone.
- */
-const parseStudentClass = (raw) => {
-  const match = String(raw || '').match(/(?<!\d)\d{1,2}(?!\d)/)
-  if (!match) return null
-  const n = Number(match[0])
-  return n > 0 ? n : null
-}
+// Class parsing and the 7-to-12 band live in utils/studentClass.js, shared with
+// the Mindler handoff so both read a class the same way.
 
 // --- Pricing -----------------------------------------------------------------
 
