@@ -1,5 +1,7 @@
 import { Assessment } from './assessment.model.js'
 import { Enrollment } from '../payments/enrollment.model.js'
+import { Package } from '../skillbuild/package.model.js'
+import { User } from '../credentials/credentials.model.js'
 import * as mindler from './mindler.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
 
@@ -10,12 +12,48 @@ const httpError = (message, status, code) => {
   return err
 }
 
-/** The psychometric test ships with every package, so any active enrollment grants it. */
-async function requireEnrollment(userId, product) {
-  const enrollment = await Enrollment.findOne({ user: userId, product, status: 'active' })
-  if (!enrollment)
+/**
+ * The test belongs to plans that bundle it, not to every plan. It used to come
+ * with every package, and this check never caught up with the change: it only
+ * asked whether the student was enrolled at all, so a plan without the test
+ * could still open one. That cost nothing while opening the test was a link to
+ * the white-label site; with Mindler's token login every open is an API call
+ * against our account, so it has to be a plan that paid for it.
+ *
+ * Any active plan for the product counts, so a student who bought the course
+ * first and upgraded to a plan with the test is let in — the same rule the
+ * course page's gate uses (learn.service.js userRank).
+ */
+async function requireEntitlement(userId, product) {
+  const enrollments = await Enrollment.find({ user: userId, product, status: 'active' }).select('packageId').lean()
+  if (!enrollments.length)
     throw httpError('Enrol in this product to take the psychometric test', 403, 'NOT_ENROLLED')
-  return enrollment
+  const withTest = await Package.exists({
+    sku: { $in: enrollments.map((e) => e.packageId) },
+    includesPsychometric: true,
+  })
+  if (!withTest)
+    throw httpError('Your plan does not include the psychometric test.', 403, 'NOT_INCLUDED')
+}
+
+/**
+ * What the account still needs before the test can open, in API mode — where
+ * we sign the student in on Mindler with their details. The class picks the
+ * test (Stream or Career), so without a class from 7 to 12 there is no test to
+ * send them to; and the phone goes into their Mindler account, which is how
+ * the team reaches them about the report. Handoff mode sends Mindler nothing,
+ * so it needs nothing.
+ *
+ * The card reads this list to open its "add your details" pop-up before the
+ * test, rather than letting the click fail.
+ */
+async function missingForTest(userId) {
+  if (!mindler.isApiMode()) return { user: null, needs: [] }
+  const user = await User.findById(userId).select('name email phone studentClass').lean()
+  const needs = []
+  if (!mindler.userTypeFor(user?.studentClass)) needs.push('studentClass')
+  if (!user?.phone) needs.push('phone')
+  return { user, needs }
 }
 
 /** Get (or lazily create) the student's assessment record. */
@@ -25,11 +63,15 @@ async function getOrCreate(userId, product) {
   return Assessment.create({ user: userId, product, provider: 'mindler' })
 }
 
-function toDTO(a) {
+function toDTO(a, needs = []) {
+  const api = mindler.isApiMode()
   const handoff = mindler.handoffInfo()
   return {
     product: a.product,
     provider: a.provider,
+    // 'api': the student is signed in for them, so there is no site to visit,
+    // code to copy or steps to follow — the card just says take the test.
+    mode: api ? 'api' : 'handoff',
     status: a.status,
     startedAt: a.startedAt,
     submittedAt: a.submittedAt,
@@ -38,9 +80,12 @@ function toDTO(a) {
     // Handoff details for the "take the test" step. The student's own Mindler
     // coupon (generated per-student in the partner dashboard) wins over the
     // env-level fallback code.
-    testUrl: handoff.testUrl,
-    accessCode: a.couponCode || handoff.accessCode,
-    steps: handoff.steps,
+    testUrl: api ? null : handoff.testUrl,
+    accessCode: api ? null : a.couponCode || handoff.accessCode,
+    steps: api ? [] : handoff.steps,
+    // Profile fields to collect before the test can open: 'studentClass',
+    // 'phone'. Always empty in handoff mode.
+    needs,
     report: a.status === 'completed' ? reportDTO(a.report) : null,
   }
 }
@@ -60,21 +105,45 @@ function reportDTO(report = {}) {
 
 /** Status for the course page card. */
 export async function getStatus(userId, product) {
-  await requireEnrollment(userId, product)
+  await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
-  return toDTO(a)
+  const { needs } = await missingForTest(userId)
+  return toDTO(a, needs)
 }
 
-/** Student opened the test site — mark in progress. */
+/**
+ * Student opened the test. In API mode this is where they get signed in on
+ * Mindler: the returned `redirectUrl` is a one-time login link, and the card
+ * sends the browser there. It is only marked in progress once Mindler has
+ * handed a link back, so a failed call leaves it as it was and the student can
+ * simply try again.
+ */
 export async function start(userId, product) {
-  await requireEnrollment(userId, product)
+  await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
+
+  let redirectUrl = null
+  if (mindler.isApiMode()) {
+    // The card asks for these before calling here; this is the backstop for a
+    // stale page or a direct call, and it keeps a half-filled account from
+    // ever reaching Mindler.
+    const { user, needs } = await missingForTest(userId)
+    if (needs.length) {
+      throw httpError(
+        'Please add your class and phone number before you take the test.',
+        400,
+        'PROFILE_INCOMPLETE'
+      )
+    }
+    redirectUrl = await mindler.testUrlFor(user)
+  }
+
   if (a.status === 'not_started') {
     a.status = 'in_progress'
     a.startedAt = new Date()
     await a.save()
   }
-  return toDTO(a)
+  return { ...toDTO(a), redirectUrl }
 }
 
 /**
@@ -83,7 +152,7 @@ export async function start(userId, product) {
  * report, which is what flips it to 'completed'.
  */
 export async function markSubmitted(userId, product, externalRef) {
-  await requireEnrollment(userId, product)
+  await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
   if (a.status === 'completed') return toDTO(a)
 
