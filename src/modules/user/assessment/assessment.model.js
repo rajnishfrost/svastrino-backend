@@ -8,6 +8,10 @@ import mongoose from 'mongoose'
  *               → submitted     student says they finished it
  *               → completed     admin verified + attached the report
  *
+ * In API mode `completed` also comes straight from Mindler: while the test is
+ * open or self-reported, each status read asks getAssessmentStatus, and a
+ * finished answer completes it (providerStatus records what Mindler said).
+ *
  * The report fields are what the Career Report page renders (RIASEC code drives
  * which pre-recorded explanation video is shown).
  */
@@ -32,6 +36,13 @@ const assessmentSchema = new mongoose.Schema(
     // dashboard ("Assessment Coupons Remaining" → pick Stream/Career/College +
     // services → generate) and saves it here; the student uses it to sign up.
     couponCode: { type: String, default: null },
+
+    // What Mindler said at the last getAssessmentStatus call ('completed', or
+    // how far through, e.g. '40% done'), and when we asked. The check is throttled on providerCheckedAt.
+    providerStatus: { type: String, default: null },
+    // How far through the test Mindler says they are, 0–100 (null = never asked).
+    providerPercent: { type: Number, default: null, min: 0, max: 100 },
+    providerCheckedAt: { type: Date, default: null },
 
     startedAt: { type: Date, default: null },
     submittedAt: { type: Date, default: null },

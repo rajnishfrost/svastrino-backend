@@ -19,10 +19,14 @@
  *     Needs MINDLER_CLIENT_CODE. MINDLER_ORIGIN and MINDLER_API_BASE default
  *     to the values in the guide.
  *
+ *     Knowing when a student has finished: getAssessmentStatus (API guide §3),
+ *     asked with the student's session from validateAuthToken as its `Key`
+ *     header. See fetchAssessmentStatus below.
+ *
  * NEVER hard-code portal logins here. Anything secret belongs in the env.
  *
- * Not in the API yet, so still manual in both modes: knowing when a student has
- * finished, and fetching the report. See fetchResult below.
+ * Still not in the API, so manual in both modes: fetching the report itself.
+ * The student reads it on the test site (My Report). See fetchResult below.
  */
 
 import { parseStudentClass } from '../../../utils/studentClass.js'
@@ -200,9 +204,96 @@ export async function testUrlFor(user) {
   return `${ORIGIN}/loginWithToken/${encodeURIComponent(token)}`
 }
 
+// The report on the test site: the results page of its first sub-test, from
+// where the student steps through the rest. The route takes a test id; the
+// bare /assessment/assessment-test-result also works and picks the first
+// finished one itself. Override with MINDLER_REPORT_PATH if Mindler moves it.
+const REPORT_PATH = process.env.MINDLER_REPORT_PATH || '/assessment/assessment-test-result/1'
+
+/**
+ * Where to send a student who has finished, to read their report.
+ *
+ * The token login cannot take them there itself: /loginWithToken always lands
+ * on /assessment (their router hard-codes it). So the card does it in two
+ * steps — `loginUrl` is loaded out of sight first, which leaves the test
+ * site's session in place, then the browser goes to `reportUrl`. A student who
+ * took the test in this browser is still signed in there anyway.
+ */
+export async function reportLinksFor(user) {
+  const reportUrl = `${ORIGIN}${REPORT_PATH.startsWith('/') ? '' : '/'}${REPORT_PATH}`
+  if (!isApiMode()) return { reportUrl, loginUrl: null }
+  return { reportUrl, loginUrl: await testUrlFor(user) }
+}
+
+// A status check runs while the student waits on the course page, so it gets
+// less time than opening the test does. Failing it costs nothing: the page
+// shows what we already had and asks again on the next visit.
+const STATUS_TIMEOUT_MS = 8000
+
+/** One GRAFT call for the status check: JSON back, or null with the reason logged. */
+async function graftCall(name, url, init, email) {
+  const res = await fetch(url, { ...init, signal: AbortSignal.timeout(STATUS_TIMEOUT_MS) })
+  const data = await res.json().catch(() => null)
+  if (!res.ok || !data?.success) {
+    const why = data?.message || (data?.errors || []).map((e) => e.message).join(', ') || `HTTP ${res.status}`
+    console.error(`✗ Mindler ${name} refused for ${email}: ${why}`)
+    return null
+  }
+  return data
+}
+
+/**
+ * Ask Mindler whether this student has finished the test (API guide §3,
+ * getAssessmentStatus). Its `Key: <session>` header is the student's session
+ * on the test site, which takes three calls to get to:
+ *
+ *   generateAuthToken  → a one-time login token
+ *   validateAuthToken  → exchanges it for the session (`data.session`); this
+ *                        is what the test site itself does at /loginWithToken
+ *   getAssessmentStatus, Key: session
+ *     → { data: { isAssessmentCompleted, assessmentPercentage, careerMatches } }
+ *
+ * Verified against the live API on 2026-09-24: the login token itself is
+ * refused (401 Not authorized); the session works. A finished test reads
+ * { true, 100, true }, an untouched one { false, 0, false }.
+ *
+ * Never throws: a check that fails returns null and the caller keeps the
+ * status it already had. Otherwise { completed, percent }.
+ */
+export async function fetchAssessmentStatus(user) {
+  if (!isApiMode() || !CLIENT_CODE) return null
+  try {
+    const token = await generateAuthToken(user)
+    const valid = await graftCall(
+      'validateAuthToken',
+      `${API_BASE}/api/graftAuth/v1/validateAuthToken/${encodeURIComponent(token)}`,
+      { method: 'POST', headers: { Origin: ORIGIN } },
+      user.email
+    )
+    const session = valid?.data?.session
+    if (!session) return null
+
+    const data = await graftCall(
+      'getAssessmentStatus',
+      `${API_BASE}/api/graftDashboard/v1/getAssessmentStatus`,
+      { method: 'GET', headers: { Key: session, Origin: ORIGIN } },
+      user.email
+    )
+    if (!data?.data) return null
+    const percent = Number(data.data.assessmentPercentage)
+    return {
+      completed: data.data.isAssessmentCompleted === true,
+      percent: Number.isFinite(percent) ? Math.max(0, Math.min(100, Math.round(percent))) : null,
+    }
+  } catch (err) {
+    console.error(`✗ Mindler status check failed for ${user.email}:`, err.name === 'TimeoutError' ? `timed out after ${STATUS_TIMEOUT_MS}ms` : err.message)
+    return null
+  }
+}
+
 /**
  * Pull a finished result back from Mindler. There is no endpoint for this in
- * either mode yet — the GRAFT guide covers login only — so results are still
+ * either mode yet — the GRAFT guide covers login and status only — so results are still
  * entered by an admin from the partner portal. Returns null when there is
  * nothing to sync.
  */

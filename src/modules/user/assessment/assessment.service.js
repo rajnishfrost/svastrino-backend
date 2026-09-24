@@ -3,6 +3,7 @@ import { Enrollment } from '../payments/enrollment.model.js'
 import { Package } from '../skillbuild/package.model.js'
 import { User } from '../credentials/credentials.model.js'
 import * as mindler from './mindler.js'
+import { psychometricGuides } from '../../admin/settings/settings.service.js'
 import { pageOf, pageResult } from '../../../utils/paginate.js'
 
 const httpError = (message, status, code) => {
@@ -63,7 +64,54 @@ async function getOrCreate(userId, product) {
   return Assessment.create({ user: userId, product, provider: 'mindler' })
 }
 
-function toDTO(a, needs = []) {
+// How often one student's status is asked of Mindler. The course page and the
+// psychometric page both read it on load, and every check costs two calls
+// against our account (a login token, then the status).
+const STATUS_CHECK_EVERY_MS = 60 * 1000
+
+/**
+ * Ask Mindler whether the test is finished, and bring our status in line.
+ *
+ * Mindler's answer is the final word: finished completes it, and "not yet"
+ * takes a self-reported `submitted` back to `in_progress` — a student who
+ * tapped "I've finished it" at 10% sees the test card again, not a report the
+ * test site does not have. A check that fails changes nothing.
+ *
+ * Only once the student has opened the test (so a Mindler account exists) and
+ * before it is completed; `force` skips the throttle, for when the student has
+ * just said they are done. Returns Mindler's answer, or null.
+ */
+async function syncWithMindler(a, user, { force = false } = {}) {
+  if (!mindler.isApiMode() || !user) return null
+  if (a.status !== 'in_progress' && a.status !== 'submitted') return null
+  if (!force && a.providerCheckedAt && Date.now() - a.providerCheckedAt.getTime() < STATUS_CHECK_EVERY_MS) return null
+
+  const result = await mindler.fetchAssessmentStatus(user)
+  a.providerCheckedAt = new Date()
+  if (result) {
+    a.providerStatus = result.completed ? 'completed' : result.percent != null ? `${result.percent}% done` : 'not completed'
+    if (result.completed) a.providerPercent = 100
+    else if (result.percent != null) a.providerPercent = result.percent
+    if (result.completed) {
+      a.status = 'completed'
+      a.submittedAt = a.submittedAt || new Date()
+      a.completedAt = a.completedAt || new Date()
+    } else if (a.status === 'submitted') {
+      a.status = 'in_progress'
+      a.submittedAt = null
+    }
+  }
+  await a.save()
+  return result
+}
+
+/** The student's details the Mindler calls need, or null outside API mode. */
+async function mindlerUser(userId) {
+  if (!mindler.isApiMode()) return null
+  return User.findById(userId).select('name email phone studentClass').lean()
+}
+
+function toDTO(a, needs = [], guides = null) {
   const api = mindler.isApiMode()
   const handoff = mindler.handoffInfo()
   return {
@@ -87,6 +135,13 @@ function toDTO(a, needs = []) {
     // 'phone'. Always empty in handoff mode.
     needs,
     report: a.status === 'completed' ? reportDTO(a.report) : null,
+    // How far through the test the student is, 0–100, as Mindler last told us
+    // (API mode). Null until we have asked, and in handoff mode.
+    progress: a.status === 'completed' ? 100 : a.providerPercent ?? null,
+    // The two guide videos, set in Admin → Settings: `test` plays before the
+    // student is sent to the test, `report` before they go to read the report.
+    // Null = not set, and the card goes straight on.
+    guides: guides || { test: null, report: null },
   }
 }
 
@@ -107,8 +162,9 @@ function reportDTO(report = {}) {
 export async function getStatus(userId, product) {
   await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
-  const { needs } = await missingForTest(userId)
-  return toDTO(a, needs)
+  const { user, needs } = await missingForTest(userId)
+  await syncWithMindler(a, user)
+  return toDTO(a, needs, await psychometricGuides())
 }
 
 /**
@@ -121,6 +177,12 @@ export async function getStatus(userId, product) {
 export async function start(userId, product) {
   await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
+
+  // Finished: the button is "See your report", and it goes to the report page.
+  if (a.status === 'completed') {
+    const { reportUrl, loginUrl } = await mindler.reportLinksFor(await mindlerUser(userId))
+    return { ...toDTO(a, [], await psychometricGuides()), redirectUrl: reportUrl, loginUrl }
+  }
 
   let redirectUrl = null
   if (mindler.isApiMode()) {
@@ -143,25 +205,40 @@ export async function start(userId, product) {
     a.startedAt = new Date()
     await a.save()
   }
-  return { ...toDTO(a), redirectUrl }
+  return { ...toDTO(a, [], await psychometricGuides()), redirectUrl }
 }
 
 /**
- * Student self-reports that they finished the test on Mindler. This does NOT
- * complete it — an admin verifies against the partner portal and attaches the
- * report, which is what flips it to 'completed'.
+ * Student says they finished the test. In API mode Mindler is asked first: a
+ * finished answer completes it, and "not yet" is refused with how far they
+ * are, so the weeks do not open on a test that is not done. Only when Mindler
+ * cannot be asked (handoff mode, or the check failed) is the student's word
+ * recorded as submitted — which unlocks the weeks, as it always has.
  */
 export async function markSubmitted(userId, product, externalRef) {
   await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
-  if (a.status === 'completed') return toDTO(a)
+  const guides = await psychometricGuides()
+  if (a.status === 'completed') return toDTO(a, [], guides)
+
+  // Only asks once the test has been opened; see syncWithMindler.
+  const result = await syncWithMindler(a, await mindlerUser(userId), { force: true })
+  if (a.status === 'completed') return toDTO(a, [], guides)
+  if (result && !result.completed) {
+    const pct = result.percent ?? 0
+    throw httpError(
+      `The test site says your test is ${pct}% done. Please finish the remaining sections, then tap “I’ve finished it” again.`,
+      409,
+      'TEST_NOT_FINISHED'
+    )
+  }
 
   a.status = 'submitted'
   a.submittedAt = new Date()
   if (externalRef) a.externalRef = String(externalRef).trim()
   if (!a.startedAt) a.startedAt = new Date()
   await a.save()
-  return toDTO(a)
+  return toDTO(a, [], guides)
 }
 
 // ---- Admin ----------------------------------------------------------------
