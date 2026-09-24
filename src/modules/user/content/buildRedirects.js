@@ -162,6 +162,23 @@ function handler(event) {
   var isWww = host.indexOf('www.') === 0
   var prefix = isWww ? 'https://' + host.substring(4) : ''
 
+  // WordPress's default permalink put the date in the address:
+  // /2023/11/20/the-transformative-power-of-positive-role-models/. The article
+  // is alive at /the-transformative-power-of-positive-role-models — only the
+  // date in front of it is gone — so the date is dropped and the reader, and
+  // whatever ranking the address still holds, is sent to the article.
+  //
+  // Search Console found these under "not found (404)" and "soft 404". They
+  // were not in MOVED because there is no list of them: the dates make each one
+  // different, there are years of them, and Google has surfaced five so far out
+  // of however many it remembers. A rule costs nothing and catches all of them.
+  // The backslashes are doubled because this whole function is written inside a
+  // template literal: a single one would be eaten before it reached the file.
+  var dated = key.match(/^\\/\\d{4}\\/\\d{2}\\/\\d{2}\\/(.+)$/)
+  if (dated) {
+    return moved(prefix + '/' + dated[1] + qs)
+  }
+
   var target = MOVED[lower]
   if (target) {
     return moved(prefix + target + (target.indexOf('?') === -1 ? qs : ''))

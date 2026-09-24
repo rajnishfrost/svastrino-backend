@@ -3,6 +3,8 @@ import * as service from './settings.service.js'
 
 const toDTO = (s) => ({
   enquiryTo: s.enquiryTo || '',
+  psychometricTestVideo: s.psychometricTestVideo || '',
+  psychometricReportVideo: s.psychometricReportVideo || '',
   updatedAt: s.updatedAt,
   // What the site would actually use right now, so the screen can show the
   // fallback in place rather than an empty box that looks broken.

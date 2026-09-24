@@ -1,5 +1,6 @@
 import { Settings } from './settings.model.js'
-import { EMAIL_RE, LIMITS, str } from '../../../utils/validate.js'
+import { EMAIL_RE, LIMITS, optionalLink, str } from '../../../utils/validate.js'
+import { mediaUrl } from '../../../config/uploads.js'
 
 const KEY = 'site'
 
@@ -24,6 +25,18 @@ export async function enquiryRecipients() {
     .filter(Boolean)
 }
 
+/**
+ * The psychometric guide videos, as playable URLs, for the student's test card.
+ * Null for one that has not been set, which the card reads as "skip it".
+ */
+export async function psychometricGuides() {
+  const s = await getSettings().catch(() => null)
+  return {
+    test: mediaUrl(s?.psychometricTestVideo) || null,
+    report: mediaUrl(s?.psychometricReportVideo) || null,
+  }
+}
+
 /** Update the settings. Only known fields are accepted; the rest are ignored. */
 export async function updateSettings(patch = {}, adminId = null) {
   const next = {}
@@ -45,6 +58,12 @@ export async function updateSettings(patch = {}, adminId = null) {
       throw err
     }
     next.enquiryTo = list.join(', ')
+  }
+
+  // The student's browser plays these, so only an http(s) link or a path on
+  // this site is kept — the same rule as every other link a student clicks.
+  for (const field of ['psychometricTestVideo', 'psychometricReportVideo']) {
+    if (patch[field] != null) next[field] = optionalLink(patch[field], { field })
   }
 
   next.updatedBy = adminId

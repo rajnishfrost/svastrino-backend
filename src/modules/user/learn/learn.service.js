@@ -127,38 +127,58 @@ async function userRank(userId, skillBuildSlug) {
   const packages = await Package.find({ sku: { $in: skus } })
   let rank = 0
   let packageName = null
-  // Any active plan that bundles the psychometric test makes it a step of this
-  // course, not an extra — so an upgrade brings the requirement with it.
   const includesPsychometric = packages.some((p) => p.includesPsychometric)
   for (const p of packages) {
     if (p.order > rank) { rank = p.order; packageName = p.name }
   }
-  return { rank, packageName, includesPsychometric }
+  const psychometricFromStart = includesPsychometric && await boughtWithTest(userId, skillBuildSlug)
+  return { rank, packageName, includesPsychometric, psychometricFromStart }
+}
+
+/**
+ * Whether the test came with the student's FIRST purchase of this course —
+ * which is what decides whether it gates the course (see psychometricGate).
+ *
+ * An upgrade keeps the old enrollment (status 'upgraded') and adds a new one,
+ * so the first purchase is simply the earliest enrollment. A free trial is not
+ * a purchase and is skipped; neither is one that was refunded. If that first
+ * plan did not include the test, the student added it later.
+ */
+async function boughtWithTest(userId, skillBuildSlug) {
+  const first = await Enrollment.findOne({
+    user: userId, product: skillBuildSlug, trial: { $ne: true }, status: { $ne: 'revoked' },
+  }).sort({ createdAt: 1 }).select('packageId').lean()
+  if (!first) return false
+  return !!(await Package.exists({ sku: first.packageId, includesPsychometric: true }))
 }
 
 /**
  * The psychometric gate.
  *
- * A student whose plan includes the test does the test first: the report is
- * what the weeks are meant to be read against, so watching them before it is
- * done is doing the course backwards. It applies from whenever the plan starts
- * including it — someone who upgrades mid-course meets the same gate.
+ * A student who bought the course WITH the test does the test first: the
+ * report is what the course is meant to be read against, so the whole course —
+ * the introduction included — stays shut, and cannot even be started, until
+ * the test is done. Then everything runs as normal.
+ *
+ * A student who added the test later is never gated: their course was already
+ * running, and stopping it for the test would take away what they paid for.
+ * They take the test alongside the weeks (see boughtWithTest).
  *
  * "Done" means the student has finished taking it (`submitted`), not that an
  * admin has verified it and attached the report (`completed`). Verification is
  * our queue, not theirs, and a paid student should not sit locked out waiting
  * on staff.
  *
- * The introduction is never gated: it has no tasks, and it is the video that
- * explains how to read the report they are about to go and get.
  */
 const PSYCHOMETRIC_DONE = ['submitted', 'completed']
 
-function psychometricGate({ includesPsychometric, assessment }) {
+function psychometricGate({ includesPsychometric, psychometricFromStart, assessment }) {
   const status = assessment?.status || 'not_started'
-  const required = !!includesPsychometric
+  const required = !!psychometricFromStart
   const done = !required || PSYCHOMETRIC_DONE.includes(status)
-  return { required, done, status, blocks: required && !done }
+  // `included`: the plan has the test at all, gating or not — so the page can
+  // offer it alongside the course to a student who added it later.
+  return { included: !!includesPsychometric, required, done, status, blocks: required && !done }
 }
 
 /**
@@ -211,7 +231,7 @@ async function loadState(userId, slug) {
   const sb = await SkillBuild.findOne({ slug, active: true })
   if (!sb) throw httpError('Course not found', 404)
 
-  const { rank, packageName, includesPsychometric } = await userRank(userId, slug)
+  const { rank, packageName, includesPsychometric, psychometricFromStart } = await userRank(userId, slug)
   if (rank === 0) throw httpError('You need to enrol in this course first.', 403, 'NOT_ENROLLED')
 
   // resourceBlocks is deliberately left behind: the week's written resource is
@@ -245,7 +265,7 @@ async function loadState(userId, slug) {
 
   return {
     sb, rank, packageName, sessions, learnState, progressMap, questionsBySession, answersByQid, phases,
-    includesPsychometric, assessment,
+    includesPsychometric, psychometricFromStart, assessment,
   }
 }
 
@@ -360,10 +380,10 @@ export async function getCourse(userId, slug) {
     if (closed) return closedSession(s, prog, phase, phaseLocked, st)
     const videoUnlockAt = videoUnlockAtFor(i, st.sessions, st.progressMap, startedAt, st.questionsBySession)
     const plays = prog?.plays || 0
-    // A week with tasks stays shut until the psychometric test is done. The
-    // introduction has none, so it stays open — it is what explains the report.
+    // Bought with the test: every session, the introduction too, stays shut
+    // until the test is done.
     const taskCount = st.questionsBySession.get(String(s._id))?.length || 0
-    const psychometricLocked = gate.blocks && taskCount > 0
+    const psychometricLocked = gate.blocks
     const videoLocked = phaseLocked || psychometricLocked || !videoUnlockAt || now.getTime() < videoUnlockAt.getTime()
     // A locked week still reports how many of its tasks are already answered.
     // The prompts stay withheld; only the count goes out, because the progress
@@ -471,6 +491,16 @@ export async function getCourse(userId, slug) {
 export async function startCourse(userId, slug) {
   await assertActiveCourse(userId, slug)   // the year must still be running
   const st = await loadState(userId, slug) // also enforces enrolment
+  // Bought with the test: the course starts after it. Starting now would set
+  // the daily clock running on a course the student cannot open yet, and they
+  // would be "behind" on the first day it opens.
+  if (psychometricGate(st).blocks) {
+    throw httpError(
+      'Take your psychometric test first — the course opens as soon as it is complete.',
+      403,
+      'PSYCHOMETRIC_PENDING',
+    )
+  }
   if (!st.learnState) {
     await LearnState.create({ user: userId, skillBuild: st.sb._id, slug, startedAt: new Date() })
   }
@@ -533,7 +563,7 @@ export async function assertPlayable(userId, sessionId) {
   }
 
   const gate = psychometricGate(st)
-  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+  if (gate.blocks) {
     throw httpError(
       'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
       403,
@@ -564,10 +594,9 @@ export async function registerPlay(userId, sessionId) {
     throw httpError('Pay for this phase to open its videos.', 403, 'PHASE_LOCKED')
   }
 
-  // The test comes first for a plan that includes it — but the introduction,
-  // which carries no tasks, stays open.
+  // The test comes first for a course bought with it — the introduction too.
   const gate = psychometricGate(st)
-  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+  if (gate.blocks) {
     throw httpError(
       'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
       403,
@@ -606,10 +635,9 @@ export async function markVideoDone(userId, sessionId) {
     throw httpError('This video is not open yet', 403, 'LOCKED')
   }
 
-  // The test comes first for a plan that includes it — but the introduction,
-  // which carries no tasks, stays open.
+  // The test comes first for a course bought with it — the introduction too.
   const gate = psychometricGate(st)
-  if (gate.blocks && (st.questionsBySession.get(String(st.session._id))?.length || 0) > 0) {
+  if (gate.blocks) {
     throw httpError(
       'Take your psychometric test first — the weekly videos and tasks open as soon as you have finished it.',
       403,
