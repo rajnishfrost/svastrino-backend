@@ -23,9 +23,11 @@ const learnStateSchema = new mongoose.Schema(
     lastNotifiedDay: { type: Number },
     // IST day index of the last EVENING "still pending" nudge — same cap.
     lastEveningNudgeDay: { type: Number },
-    // How many evening nudges this student has received — rotates the 20 taana
-    // templates (1st nudge → template 1 … 20th → 20, then back to 1).
-    eveningNudgeCount: { type: Number, default: 0 },
+    // How many of each reminder this student has received. Each walks its own
+    // message list in order (1st → #1, 2nd → #2 …, then wraps) — see mailer.js.
+    lessonReminderCount: { type: Number, default: 0 }, // morning, video open
+    taskReminderCount: { type: Number, default: 0 }, // morning, question open
+    eveningNudgeCount: { type: Number, default: 0 }, // evening, still pending
   },
   { timestamps: true }
 )
