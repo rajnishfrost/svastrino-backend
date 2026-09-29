@@ -15,7 +15,7 @@ async function start() {
     console.log(`🟢 Svastrino server running on http://localhost:${PORT}`)
   })
 
-  // Daily learning nudge at 7:00 AM IST — "today's question/video is open".
+  // Daily learning nudge at 7:00 AM IST — new lesson (video) or today's task.
   // Disable with DISABLE_REMINDERS=true (e.g. on a second machine, so students
   // aren't emailed twice).
   if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_REMINDERS !== 'true') {

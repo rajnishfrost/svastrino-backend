@@ -368,105 +368,107 @@ export async function sendEnquiryAckEmail(to, details) {
   await sendMail({ to, ...buildEnquiryAckEmail(details) })
 }
 
+// --- Nirmaan daily reminders -------------------------------------------------
 /**
- * The student's streak, in one line. This mail is the moment it matters most —
- * it lands while the day can still be saved — so the reset rule is always in
- * it. What the reward IS stays with the programme; the line only says that
- * consistency is what earns one.
+ * Notification-sized mails: a title (subject + heading), one line of body and a
+ * button — nothing else, so a student reads it in a glance.
  *
- * `tone` picks the voice: 'en' for the morning reminder, 'hi' for the evening
- * taana, which is written in Hinglish and would jar in English.
+ *   Part 1 — NEW_LESSON: 7 AM, today's open step is a video.
+ *   Part 2 — DAILY_TASK: 7 AM, today's open step is a question.
+ *   Part 3 — GENTLE:     7 PM, whatever is open is still not done.
+ *
+ * Each part is its own sequence per student (`variant` = how many of THAT part
+ * they have had): 1st → #1, 2nd → #2 … last, then back to #1 — so nobody gets
+ * the same line twice until the whole list has gone round.
  */
-function streakLine({ days = 0, best = 0, brokenAfter = false } = {}, tone = 'en') {
-  const hi = tone === 'hi'
-  if (days > 0) {
-    return hi
-      ? `🔥 ${days} din ka streak chal raha hai — aaj ka step ise ${days + 1} kar dega. Ek poora din chhoot gaya to zero. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.`
-      : `🔥 You're on a ${days}-day streak — today's step makes it ${days + 1}. Miss a whole day and it goes back to zero. Rewards are waiting for the students who keep it going.`
+const NEW_LESSON = [
+  { title: 'Naya lesson aa gaya', body: 'Is week ka lesson ready hai. Thoda time nikal ke, dekh lena.' },
+  { title: '15 minutes apne liye?', body: 'Naya lesson ready hai. Aaj sirf 15 minute Apne Nirmaan ko de do.' },
+  { title: 'Is week kya naya milega?', body: 'Aapka Naya lesson ready hai. Dekho, shayad khud ke baare mein kuch interesting pata chale.' },
+  { title: 'Jawan, chalo ek aur lesson karte hain.', body: 'Naya week, naya lesson. Aajka target pura kare.' },
+  { title: 'Jab time mile, start kar dena.', body: 'Is week ka lesson aa gaya hai. Koi rush nahi—bas miss mat karna.' },
+  { title: 'Bas apna Nirmaan page open karo.', body: 'Naya lesson ready hai. Start karoge toh aage kaafi easy lagega.' },
+  { title: 'Aaj ka thoda time khud ke naam.', body: 'Nirmaan ka naya lesson ready hai. Take some time for yourself.' },
+  { title: 'Suno, naya video aa gaya hai', body: 'Is week ka Nirmaan lesson aa gaya. Jab 15 minutes mil jaayein, dekh lena.' },
+  { title: 'New week, new step.', body: 'Nirmaan ka new lesson tumhara wait kar raha hai. Chalo, aage badhte hain.' },
+  { title: 'Ready when you are.', body: 'Is week ka lesson available hai. Jab convenient ho, start kar dena.' },
+  { title: 'Aaj ka 15-minute plan?', body: 'Naya lesson ready hai. Apne din mein bas thoda sa time apne Nirmaan ke liye nikaal lo.' },
+  { title: 'Ek naya lesson. Ek naya thought.', body: 'Is week ka Nirmaan lesson ready hai. Dekho, aaj kya naya sochne ko milta hai.' },
+  { title: 'Jawan, new lesson is here.', body: 'Naya Nirmaan lesson ready hai. Chalo, is week ka target complete karte hain.' },
+  { title: 'Aaj thoda time apne future ko do.', body: 'Nirmaan ka naya lesson ready hai. Jab time mile, complete kar lena.' },
+  { title: 'Ek naya lesson tumhara wait kar raha hai.', body: 'Jab time mile, open kar lena. Ho sakta hai is week ki learning tumhe apne future ko thoda aur clearly dekhne mein help kare.' },
+  { title: 'Apne Nirmaan ke liye ek aur step lena hai.', body: 'Is week ka lesson aa gaya hai. Chalo, start karte hain.' },
+  { title: 'Future ke liye kaam aaj se hi shuru hota hai.', body: 'Is week ka Nirmaan lesson ready hai. Jab time mile, dekh lena.' },
+  { title: 'Ek naya lesson. Ek nayi learning.', body: 'Is week ka lesson tumhara wait kar raha hai. Open karo aur dekho aaj naya lesson kya sikhata hai.' },
+  { title: 'Ek aur lesson, khud ko samajhne ka ek aur chance.', body: 'Naya lesson ready hai. Dekho, is baar apne baare mein kya naya jaanne ko milta hai.' },
+  { title: 'Aaj ke 15 minutes ka kya plan hai?', body: 'Apne liye thoda time nikalo aur Nirmaan ka naya lesson start karo.' },
+]
+
+const DAILY_TASK = [
+  { title: 'Aaj ka task ready hai.', body: 'Jab free ho, Apne aaj ke Nirmaan ko complete kar lena.' },
+  { title: 'Aaj ke 15 minutes?', body: 'Bas itna hi chahiye. Nirmaan ka aaj ka task tumhara wait kar raha hai…' },
+  { title: 'Jo aaj practice karoge, wahi kal kaam aayega.', body: 'Communication ho, discipline ho ya decision-making—Nirmaan ka task miss mat karna.' },
+  { title: 'Zyada sochna nahi hai!', body: 'Dashboard open karo, question padho, aur aaj jo genuinely feel ho woh likh do.' },
+  { title: 'Aaj khud ko thoda samay do.', body: 'Nirmaan ka task ready hai. Kuch minutes sirf apne thoughts ke saath spend karo.' },
+  { title: 'Busy hone se pehle kar lo.', body: 'Aaj ka task abhi complete karoge toh baad mein yaad rakhne ki tension nahi.' },
+  { title: 'Aaj ka Nirmaan ka task hua kya?', body: 'Nahi hua toh koi baat nahi. Abhi bhi time hai, kar lo.' },
+  { title: 'Bas ek task.', body: 'Aaj hi poora course nahi karna 😄 Sirf aaj ka chhota sa task complete karna hai.' },
+  { title: 'Time kam hai? Koi problem nahi.', body: 'Nirmaan ko max 15 minutes dene hain. Aaj ka task kar lo.' },
+  { title: 'Aaj bhi apne liye thoda time.', body: 'Nirmaan ka task ready hai. Chalo, aaj ka task kar lete hain.' },
+  { title: 'Apne Nirmaan ke liye time nahi hai?', body: 'Time hota nahi hai, nikalna padta hai- Travelling karte hua, Class ke bich main, etc.' },
+  { title: 'Ek chhota task, ek useful habit.', body: 'Roz apne liye thoda time nikaalna bhi toh practice hai. Aaj ka task miss mat kerna.' },
+  { title: 'Life mein har answer ready-made nahi milta.', body: 'Aaj ka Nirmaan task kholo aur jo sach mein feel karte ho, wahi likho. Right answer ki tension mat lo.' },
+  { title: '15 minutes today, better clarity tomorrow.', body: 'Aaj ka task karo. Ek answer, ek thought ya ek realisation future ke decisions mein zaroor kaam aayega.' },
+  { title: 'Kal ke better decisions aaj se bante hain.', body: 'Nirmaan ka aaj ka task miss mat karna. Khud ko samajhna bhi future ke liye preparation hai.' },
+  { title: 'Apni life ko samajhne ke liye time nikaal rahe ho?', body: 'Nirmaan ka aaj ka task ready hai. Aaj ke 15 minutes se shuru karo.' },
+  { title: 'Motivation ka wait mat karo.', body: 'Aaj bas task complete karne par focus karo. Aur apne future ke liye discipline build karo.' },
+  { title: 'Nirmaan ka task tumhare liye hai, marks ke liye nahi.', body: 'Isliye right answer ki tension mat lo. Jo genuinely feel karte ho, woh likho.' },
+  { title: '15 minutes nikaal sakte ho?', body: 'Aaj ka Nirmaan task kar lo. Itna time toh apne liye banta hi hai.' },
+  { title: 'Aaj ka 15-minute break useful banao.', body: 'Nirmaan ka task tumhara wait kar raha hai. Ho sakta hai in kuch minutes mein apne baare mein kuch naya samajh aaye.' },
+]
+
+const GENTLE = [
+  { title: 'Bas yaad dila rahe hain', body: 'Is week ka lesson abhi bhi wait kr raha hai. Jab time mile, dekh lena.' },
+  { title: 'Kya aaj 15 minutes mil sakte hain?', body: 'Toh Nirmaan ka pending lesson complete kar lo. Bas itna hi.' },
+  { title: 'Busy day chal raha hai?', body: 'Koi baat nahi. Jab thoda break mile, Nirmaan ko yaad kar lena.' },
+  { title: 'Abhi tak start nahi kiya?', body: 'No worries. Lesson abhi bhi wahi hai. Jab time mile, shuru kar dena.' },
+  { title: 'Ek small reminder…', body: 'Aaj ka Nirmaan ka task abhi bhi pending hai. Please aajhi kar lena.' },
+  { title: 'Thoda time khud ke liye milega?', body: 'Agar haan, toh Nirmaan ka lesson zaroor dekh lena.' },
+  { title: 'Start karne ka easiest time?', body: 'Jab tumhare paas thoda sa time ho. Aaj ka lesson ready hai.' },
+  { title: 'Nirmaan yaad hai na?', body: 'Aaj ka task abhi bhi tumhara wait kar raha hai.' },
+  { title: '15 minutes. Bas.', body: 'Agar din mein thoda sa time nikal sakte ho, toh aaj ka lesson kar lena.' },
+  { title: 'Jab convenient ho, task kar dena.', body: 'Hum bas remind kara rahe hain. Nirmaan ka lesson ready hai.' },
+  { title: 'Nirmaan aaphi ne shuru kiya hai naa?', body: 'Toh roz iske task ko pora bhi aaphi ko karna hai.' },
+  { title: 'Apni life mein jo change chahte hain…', body: 'Uski practice small steps se hi hoti hai. Naya Nirmaan lesson ready hai.' },
+  { title: 'Aaj ka task kal par mat chhodiye.', body: 'Baaki sab ke beech apne Nirmaan ke liye bhi thoda time nikaal lijiye.' },
+  { title: 'Aaj ka small reminder 🙂', body: 'Nirmaan ka task abhi complete nahi hua hai. Jab time mile, kar lena.' },
+]
+
+const pick = (list, variant = 0) => list[((variant % list.length) + list.length) % list.length]
+
+function buildNudge({ title, body }, { slug, cta }) {
+  const link = `${clientUrl()}/learn/${slug}`
+  return {
+    subject: title,
+    text: `${body} ${link}`,
+    html: template({ heading: title, preheader: body, intro: body, cta, link }),
   }
-  if (brokenAfter) {
-    return hi
-      ? `Ek din chhootne se streak zero ho gaya${best > 1 ? ` (sabse lamba: ${best} din)` : ''} — aaj ka step naya shuru kar dega. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.`
-      : `Your streak is back at zero${best > 1 ? ` — your best run was ${best} days` : ''}. Today's step starts a new one. Rewards are waiting for the students who keep it going.`
-  }
-  return hi
-    ? 'Aaj ka step aapka streak shuru kar dega — roz ka roz karo. Jo streak banaye rakhte hain, reward unhi ka intezaar kar raha hai.'
-    : 'Today\'s step starts your streak — rewards are waiting for the students who keep it going.'
 }
 
-export function buildLearningReminderEmail({ name, courseName, taskLabel, slug, streak }) {
-  const first = String(name || '').trim().split(/\s+/)[0] || 'there'
-  const run = streakLine(streak, 'en')
-  return {
-    subject: `Today's task is ready — ${courseName}`,
-    text: `Hi ${first}, ${taskLabel}. ${run} Open your course: ${clientUrl()}/learn/${slug}`,
-    html: template({
-      heading: "Today's task is ready 🎯",
-      preheader: streak?.days > 0
-        ? `${taskLabel} — your ${streak.days}-day streak is on the line.`
-        : `${taskLabel} — keep your ${courseName} streak going.`,
-      intro: `Hi ${first}! ${taskLabel}. ${run}`,
-      cta: 'Continue learning',
-      link: `${clientUrl()}/learn/${slug}`,
-      note: 'You get at most one reminder a day, and only when something new is waiting for you.',
-    }),
-  }
+/** Morning (7 AM): Part 1 when today's step is a video, Part 2 when it's a question. */
+export function buildLearningReminderEmail({ slug, kind, variant = 0 }) {
+  return kind === 'video'
+    ? buildNudge(pick(NEW_LESSON, variant), { slug, cta: 'Lesson dekho' })
+    : buildNudge(pick(DAILY_TASK, variant), { slug, cta: 'Aaj ka task karo' })
 }
 
 export async function sendLearningReminderEmail(to, details) {
   await sendMail({ to, ...buildLearningReminderEmail(details) })
 }
 
-/**
- * Evening follow-up — sent only if the morning's task is STILL pending by
- * evening (checked again at send time; done = no e-mail).
- *
- * 20 gentle-funny taanas, rotated per student (`variant` = their nudge count):
- * 1st evening → #1, 2nd → #2 … 20th → #20, then back to #1.
- * {first} and {task} are filled in; keep them warm — students, not defaulters.
- */
-const TAANAS = [
-  { subject: 'Aaj ka task abhi bhi baaki hai 👀', heading: 'Aaj ka task… abhi bhi baaki hai 😅', intro: 'Hi {first}! No pressure… but "{task}" subah se wait kar raha hai. Bas 5 minute ka kaam hai. 😉' },
-  { subject: 'Aapka task akela baitha hai 🥺', heading: 'Task bola — "main subah se yahin hoon…"', intro: 'Hi {first}! "{task}" ne humse shikayat ki hai ki aap aaye hi nahi. Uska akelapan door kar do? 🥲' },
-  { subject: 'Reels ho gayin? Ab 5 minute idhar 😌', heading: 'Scroll break ka time!', intro: 'Hi {first}! Thumb ki exercise to ho gayi hogi… ab dimaag ki baari — "{task}" ready hai. 😄' },
-  { subject: 'Ding dong! Yaad hai na? 🔔', heading: 'Yaad dilane aaye hain, daantne nahi 😇', intro: 'Hi {first}! Bas ek pyari si yaad-dihani: "{task}" aaj ka hai, aaj hi ka rahe to mazaa hai.' },
-  { subject: 'Kal aap bologe "kal kar lunga"… 😏', heading: '"Kal" naam ka din calendar me nahi hota', intro: 'Hi {first}! Hum jaante hain plan kya hai — "kal pakka". Par "{task}" aaj ke naam pe likha hai. Abhi nipta do? 😏' },
-  { subject: 'Report sab yaad rakhti hai 📝', heading: 'Hum bhool jayenge, report nahi 😬', intro: 'Hi {first}! "{task}" abhi bhi pending hai — aur aapki completion report ki yaaddasht hathi jaisi hai. 🐘' },
-  { subject: 'Bas 5 minute — pinky promise 🤙', heading: 'Chai banne se pehle ho jayega ☕', intro: 'Hi {first}! "{task}" itna chhota hai ki chai thandi hone se pehle khatam. Timer laga ke dekho. ⏱️' },
-  { subject: 'Aaj ka task: 1, Aap: 0 😅', heading: 'Scoreboard update chahiye!', intro: 'Hi {first}! Aaj ka score: Task 1 — {first} 0. Ek submit se barabari ho jayegi. "{task}" — game on? 🏏' },
-  { subject: 'Phone charge hai, net chal raha hai… to phir? 🤔', heading: 'Saare bahane check kar liye humne', intro: 'Hi {first}! Phone ✓ Internet ✓ Aap ✓ … sirf "{task}" ka checkmark baaki hai. 😄' },
-  { subject: 'Streak ka khayal rakhna 💔', heading: 'Roz ka roz = asli jadoo', intro: 'Hi {first}! "{task}" pending hai — aur roz-ka-roz karne wali aadat hi aage le jaati hai. Aaj ka din khali mat jaane do. 💪' },
-  { subject: 'Hum dekh rahe hain 👀 (pyaar se)', heading: 'Nazar rakhi ja rahi hai… shubh nazar 😇', intro: 'Hi {first}! Mazaak alag, par "{task}" sach me aapka wait kar raha hai. Do minute de do use.' },
-  { subject: 'Task ne complaint darj ki hai 😤', heading: 'Complaint #420: "Mujhe kholo"', intro: 'Hi {first}! "{task}" ne official complaint daali hai — "subah se khula hoon, koi aaya nahi." Case close kar do? 📋' },
-  { subject: 'Sapne bade, task chhota — deal? 🤝', heading: 'Bade sapno ki chhoti kist', intro: 'Hi {first}! Career banana bada kaam hai, par aaj ki kist sirf "{task}" hai. Chhota kadam, roz. 🚶' },
-  { subject: 'Ye question aapke bina adhoora hai 💚', heading: 'Missing: aapka answer', intro: 'Hi {first}! "{task}" bilkul taiyaar hai — bas usme aapke shabd nahi hain. Wo sirf aap de sakte ho.' },
-  { subject: 'Kal wale aap naraz ho jayenge 😬', heading: 'Future-you se dosti rakho', intro: 'Hi {first}! Aaj skip karoge to kal wale {first} ko double lagega. Future-you ko gift do — "{task}" abhi. 🎁' },
-  { subject: 'Ek chhota click, ek bada kadam 🚀', heading: 'Rocket bhi countdown se udta hai', intro: 'Hi {first}! 3… 2… 1… "{task}". Bas itna hi launch sequence hai aaj ka. 🚀' },
-  { subject: 'Aaj nahi to kab? (Kal mat bolna) 😜', heading: 'Bas "kal" mat bolna', intro: 'Hi {first}! Sawaal simple hai: aaj nahi to kab? (Hint: jawab "kal" nahi hai 😜) "{task}" ready hai.' },
-  { subject: 'Topper log abhi kar chuke honge ☕', heading: 'Bas keh rahe hain…', intro: 'Hi {first}! Kahin na kahin koi student "{task}" jaisa task karke so raha hoga… sukoon se. Wo sukoon aapka bhi ho sakta hai. ☕' },
-  { subject: 'Dimaag bola: kar lo yaar 🧠', heading: 'Aapke dimaag ki taraf se message', intro: 'Hi {first}! Aapke dimaag ne bola — "mujhe 5 minute ka kaam do, main taiyaar hoon." "{task}" perfect warm-up hai. 🧠' },
-  { subject: 'Last call! Raat 12 baje naya aa jayega 🌙', heading: 'Aaj ka task, aaj ki tareekh tak 🌙', intro: 'Hi {first}! Raat 12 baje schedule aage badh jayega — "{task}" abhi karoge to kal fresh start milega. Last call! 🎬' },
-]
-
-export function buildEveningNudgeEmail({ name, courseName, taskLabel, slug, variant = 0, streak }) {
-  const first = String(name || '').trim().split(/\s+/)[0] || 'dost'
-  const t = TAANAS[((variant % TAANAS.length) + TAANAS.length) % TAANAS.length]
-  const fill = (s) => s.replaceAll('{first}', first).replaceAll('{task}', taskLabel)
-  const run = streakLine(streak, 'hi')
-  return {
-    subject: `${t.subject} — ${courseName}`,
-    text: `${fill(t.intro)} ${run} Link: ${clientUrl()}/learn/${slug}`,
-    html: template({
-      heading: t.heading,
-      preheader: streak?.days > 0
-        ? `${streak.days} din ka streak daanv par hai — ${taskLabel}`
-        : `Still pending: ${taskLabel}`,
-      intro: `${fill(t.intro)} ${run}`,
-      cta: "Finish today's task",
-      link: `${clientUrl()}/learn/${slug}`,
-      note: 'Already done it by the time this landed? Then ignore us — shabash! 🎉',
-    }),
-  }
+/** Evening (7 PM): Part 3 — only reaches students whose step is still pending. */
+export function buildEveningNudgeEmail({ slug, variant = 0 }) {
+  return buildNudge(pick(GENTLE, variant), { slug, cta: 'Nirmaan kholo' })
 }
 
 export async function sendEveningNudgeEmail(to, details) {
