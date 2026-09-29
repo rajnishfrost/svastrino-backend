@@ -25,15 +25,26 @@ export async function enquiryRecipients() {
     .filter(Boolean)
 }
 
+// The fields the admin screen edits for the psychometric guides.
+export const PSYCHOMETRIC_GUIDE_FIELDS = [
+  'psychometricTestVideo', 'psychometricReportVideo',
+  'psychometricReportVideoStream', 'psychometricReportVideoCareer', 'psychometricQuestionsPdf',
+]
+
 /**
- * The psychometric guide videos, as playable URLs, for the student's test card.
- * Null for one that has not been set, which the card reads as "skip it".
+ * The psychometric guides, as URLs, for one student's test card. `test` is
+ * 'stream' or 'career' — which test the student sits, from their class — and
+ * picks that test's report video. Null for anything not set, which the card
+ * reads as "show the written steps instead".
  */
-export async function psychometricGuides() {
+export async function psychometricGuides(test = null) {
   const s = await getSettings().catch(() => null)
+  const ownReport = test === 'stream' ? s?.psychometricReportVideoStream
+    : test === 'career' ? s?.psychometricReportVideoCareer : ''
   return {
     test: mediaUrl(s?.psychometricTestVideo) || null,
-    report: mediaUrl(s?.psychometricReportVideo) || null,
+    report: mediaUrl(ownReport || s?.psychometricReportVideo) || null,
+    questionsPdf: mediaUrl(s?.psychometricQuestionsPdf) || null,
   }
 }
 
@@ -62,7 +73,7 @@ export async function updateSettings(patch = {}, adminId = null) {
 
   // The student's browser plays these, so only an http(s) link or a path on
   // this site is kept — the same rule as every other link a student clicks.
-  for (const field of ['psychometricTestVideo', 'psychometricReportVideo']) {
+  for (const field of PSYCHOMETRIC_GUIDE_FIELDS) {
     if (patch[field] != null) next[field] = optionalLink(patch[field], { field })
   }
 

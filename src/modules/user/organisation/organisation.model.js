@@ -78,6 +78,15 @@ const organisationSchema = new mongoose.Schema(
     // sponsorship.js. Empty = the organisation runs its scholarship only.
     packages: { type: [String], default: [] },
 
+    // How many students the institution has paid for — each paid institution
+    // order adds its quantity. Null = no limit, which is every institution made
+    // before seats existed; they carry on exactly as before.
+    seats: { type: Number, default: null, min: 0 },
+    // Added by an admin to pay online, and not paid yet: no sign-in and no
+    // portal until it is (see issueSession and requireOrgAuth). Cleared when
+    // the payment lands.
+    awaitingPayment: { type: Boolean, default: false },
+
     // Shown in the public /organisations directory. The organisation can opt
     // out from its own profile page; admin can override.
     publicListed: { type: Boolean, default: true, index: true },

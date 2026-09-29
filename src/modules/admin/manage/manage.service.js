@@ -147,8 +147,8 @@ export async function setUserRole(actor, userId, role) {
   if (role !== user.role && (role === 'organisation' || user.role === 'organisation')) {
     throw httpError(
       role === 'organisation'
-        ? 'Use “Edit” to switch an account to Organisation — it needs the organisation’s name and address.'
-        : 'This is an organisation account. Use “Edit” to change its role.',
+        ? 'Use “Edit” to switch an account to Institution — it needs the institution’s name and address.'
+        : 'This is an institution account. Use “Edit” to change its role.',
       400
     )
   }

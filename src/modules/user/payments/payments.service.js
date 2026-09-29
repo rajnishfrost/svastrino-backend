@@ -9,6 +9,7 @@ import { LearnState } from '../learn/learnState.model.js'
 import { istDaysBetween } from '../../../utils/schedule.js'
 import { rupees } from '../../../utils/money.js'
 import * as gateway from './gateway.js'
+import { grantSeats } from '../organisation/seats.js'
 
 const clientUrl = () =>
   (process.env.CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5174').replace(/\/$/, '')
@@ -428,6 +429,13 @@ async function completePaidOrder(order, { paymentId } = {}) {
   const current = claimed || (await Order.findById(order._id))
   if (!current || current.status !== 'paid') return hydrate(current || order)
 
+  // An institution paying for seats enrols nobody: the seats go to the
+  // institution, and its students get the course as they are added.
+  if (current.kind === 'institution') {
+    await grantSeats(current)
+    return { order: current, enrollment: null }
+  }
+
   // Paid with nothing granted is the wreckage the old webhook left behind (and
   // what a crash mid-grant leaves too), so that case falls through and finishes
   // the job rather than handing back an order with no access attached.
@@ -547,6 +555,11 @@ async function completePaidOrder(order, { paymentId } = {}) {
 export async function verifyAndComplete({ userId, orderId, paymentId, signature }) {
   const order = await Order.findOne({ _id: orderId, user: userId })
   if (!order) throw httpError('Order not found', 404)
+  return verifyOrder(order, { paymentId, signature })
+}
+
+/** The part of verifyAndComplete after the order is found — shared with pay links. */
+async function verifyOrder(order, { paymentId, signature } = {}) {
   // Already paid: there is nothing left to verify, and a browser reload arrives
   // here without a payment id, so re-checking the signature would only mark a
   // good order failed. Hand it to the completer instead, which returns what was
@@ -744,7 +757,8 @@ export async function adminListOrders({ status, page, limit } = {}) {
   const q = status ? { status } : {}
   const p = pageOf({ page, limit })
   const [items, total] = await Promise.all([
-    Order.find(q).sort({ createdAt: -1 }).skip(p.skip).limit(p.limit).populate('user', 'name email'),
+    Order.find(q).sort({ createdAt: -1 }).skip(p.skip).limit(p.limit)
+      .populate('user', 'name email').populate('organisation', 'name'),
     Order.countDocuments(q),
   ])
   return pageResult(items, total, p)
@@ -771,6 +785,11 @@ export async function adminRefund({ orderId, reason }) {
   const order = await Order.findById(orderId)
   if (!order) throw httpError('Order not found', 404)
   if (order.status !== 'paid') throw httpError('Only paid orders can be refunded', 400)
+  // Its seats may already be students with the course. Taking them back is a
+  // conversation with the institution, not a button.
+  if (order.kind === 'institution') {
+    throw httpError('Institution orders are refunded by hand: talk to the institution about its seats, then refund the payment from the Cashfree dashboard.', 400, 'INSTITUTION_ORDER')
+  }
   // An order taken by a gateway we no longer run (Razorpay, before Cashfree)
   // cannot be refunded through the current one.
   if ((order.gateway || 'mock') !== gateway.GATEWAY) {
@@ -886,4 +905,69 @@ export async function handleWebhookEvent(event) {
   }
 
   return { received: true }
+}
+
+// --- Institution payment links ------------------------------------------------
+
+async function payLinkOrder(token) {
+  const t = String(token || '')
+  if (!/^[a-f0-9]{48}$/.test(t)) throw httpError('This payment link is not valid.', 404)
+  const order = await Order.findOne({ payToken: t, kind: 'institution' }).populate('organisation', 'name')
+  if (!order) throw httpError('This payment link is not valid.', 404)
+  return order
+}
+
+const payLinkSummary = (order) => ({
+  institution: order.organisation?.name || '',
+  item: order.packageLabel,
+  students: order.quantity,
+  amountInr: rupees(order.amount),
+  status: order.status === 'paid' ? 'paid' : order.status === 'refunded' ? 'refunded' : 'open',
+  receiptNo: order.receiptNo || null,
+  paidAt: order.paidAt || null,
+})
+
+/**
+ * What the /pay/<token> page shows, and — while unpaid — a checkout session to
+ * pay with. The session is asked for fresh each time, because the link may be
+ * opened days after it was sent. If Cashfree has expired the order meanwhile,
+ * a new one is made for the same order of ours.
+ */
+export async function getPayLink(token) {
+  const order = await payLinkOrder(token)
+  if (order.status === 'paid' || order.status === 'refunded') return payLinkSummary(order)
+
+  let session = await gateway.getSession(order.gatewayOrderId)
+  if (session.paid) {
+    // Paid, and we have not heard yet: finish it now.
+    await verifyOrder(order).catch(() => {})
+    return payLinkSummary(await Order.findById(order._id).populate('organisation', 'name'))
+  }
+  if (!session.open) {
+    const owner = await import('../credentials/credentials.model.js').then((m) => m.User.findById(order.user).select('name email phone'))
+    const gw = await gateway.createOrder({
+      amount: order.amount,
+      currency: 'INR',
+      receipt: `inst_${crypto.randomBytes(6).toString('hex')}`,
+      customer: { id: order.user, name: order.organisation?.name || owner?.name, email: owner?.email, phone: owner?.phone },
+      returnUrl: `${clientUrl()}/pay/${order.payToken}`,
+    })
+    order.gatewayOrderId = gw.id
+    order.status = 'created'
+    await order.save()
+    session = { open: true, paid: false, sessionId: gw.sessionId }
+  }
+  return {
+    ...payLinkSummary(order),
+    sessionId: session.sessionId,
+    mode: gateway.checkoutMode(),
+    mock: gateway.GATEWAY === 'mock',
+  }
+}
+
+/** The /pay page's "did it go through?" — the same check as a student's checkout. */
+export async function verifyPayLink(token, { paymentId, signature } = {}) {
+  const order = await payLinkOrder(token)
+  if (order.status !== 'paid') await verifyOrder(order, { paymentId, signature })
+  return payLinkSummary(await Order.findById(order._id).populate('organisation', 'name'))
 }

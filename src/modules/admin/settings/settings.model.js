@@ -16,12 +16,19 @@ const settingsSchema = new mongoose.Schema(
     // then to SEED_ADMIN_EMAIL, so the site never silently stops notifying.
     enquiryTo: { type: String, default: '', trim: true },
 
-    // The two short guides around the psychometric test, as links to the
-    // uploaded video (an .m3u8 from the video pipeline, or a plain .mp4). The
-    // first plays before the student is sent to the test, the second before
-    // they are sent to read their report. Blank = that step is skipped.
+    // The guides around the psychometric test, as links to the uploaded video
+    // (an .m3u8 from the video pipeline, or a plain .mp4). The test video plays
+    // before the student is sent to the test. The report video plays before
+    // they go to read their report, and there is one per test: Stream (classes
+    // 7 to 9) and Career (10 to 12). `psychometricReportVideo` is the older
+    // single report video, used for a test that has none of its own. Blank =
+    // the pop-up shows written steps instead.
     psychometricTestVideo: { type: String, default: '', trim: true },
     psychometricReportVideo: { type: String, default: '', trim: true },
+    psychometricReportVideoStream: { type: String, default: '', trim: true },
+    psychometricReportVideoCareer: { type: String, default: '', trim: true },
+    // The PDF on the report pop-up's "Questions" side.
+    psychometricQuestionsPdf: { type: String, default: '', trim: true },
 
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },

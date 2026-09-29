@@ -170,6 +170,26 @@ export async function createOrder({ amount, currency = 'INR', receipt, customer 
 }
 
 /**
+ * A fresh checkout session for a gateway order made earlier — for a payment
+ * link, which may be opened days after the order was created. Returns
+ * { open, paid, sessionId }: `open` false once Cashfree has expired or
+ * terminated the order (a new one has to be made), `paid` once it is paid.
+ */
+export async function getSession(gatewayOrderId) {
+  refuseUnlessLive()
+  if (GATEWAY === 'cashfree') {
+    const order = await cashfree(`/orders/${encodeURIComponent(gatewayOrderId)}`)
+    const status = order.order_status
+    return {
+      open: status === 'ACTIVE',
+      paid: status === 'PAID',
+      sessionId: order.payment_session_id || null,
+    }
+  }
+  return { open: true, paid: false, sessionId: null }
+}
+
+/**
  * MOCK ONLY — simulate a successful payment on a gateway order. Cashfree has no
  * server-side equivalent: the customer pays in Cashfree's own window.
  */

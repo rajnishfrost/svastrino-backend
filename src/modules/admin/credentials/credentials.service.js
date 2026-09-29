@@ -71,7 +71,7 @@ const ORG_ROLE = 'organisation'
 /** Create any account with a chosen role. Admin-created accounts are trusted
  *  (email pre-verified) so they can sign in right away. Picking the
  *  `organisation` role also creates the organisation itself — see ORG_ROLE. */
-export async function createManagedAdmin({ name, email, password, role, organisation, createdBy = null }) {
+export async function createManagedAdmin({ name, email, password, role, organisation, purchase, createdBy = null }) {
   // The site's one name rule and one email rule, so an account made here is held
   // to exactly what a self-signup is held to — and both are capped, which they
   // were not: a blank check on the name accepted a field of any length.
@@ -87,9 +87,15 @@ export async function createManagedAdmin({ name, email, password, role, organisa
   const isOrg = finalRole === ORG_ROLE
   // Validate the organisation BEFORE creating the account, so a bad form doesn't
   // leave a half-made user behind.
+  // An institution is added with what it is buying: a course, how many
+  // students, the total, and cash or online. Checked here too, for the same
+  // reason.
+  let cleanPurchase = null
   if (isOrg) {
     const { assertOrganisationDraft } = await import('../../user/organisation/organisation.service.js')
     assertOrganisationDraft(organisation, cleanEmail)
+    const { validateInstitutionPurchase } = await import('../../user/organisation/institutionOrder.js')
+    cleanPurchase = await validateInstitutionPurchase(purchase)
   }
 
   const passwordHash = await bcrypt.hash(pw, 10)
@@ -109,14 +115,29 @@ export async function createManagedAdmin({ name, email, password, role, organisa
 
   if (!isOrg) return user
 
+  let org = null
   try {
     const { createOrganisationForOwner } = await import('../../user/organisation/organisation.service.js')
-    const org = await createOrganisationForOwner(user, organisation)
+    // The course is the one being bought; the seats arrive with the payment.
+    org = await createOrganisationForOwner(user, { ...organisation, packages: [cleanPurchase.packageId] })
+    // Seats start at none: paid in cash they land in a moment, paid online
+    // they land when the institution pays.
+    org.seats = 0
+    // Paying online: nothing opens until the payment link is paid.
+    org.awaitingPayment = cleanPurchase.method === 'online'
+    await org.save()
     user.organisation = org._id
     user.organisationRole = 'owner'
     await user.save()
+
+    const { createInstitutionOrder } = await import('../../user/organisation/institutionOrder.js')
+    const { order, payLink } = await createInstitutionOrder({ org, owner: user, purchase: cleanPurchase, adminId: createdBy })
+    // For the response: the admin is shown the order, and the link to copy.
+    user.$locals.institutionOrder = { id: order._id, status: order.status, receiptNo: order.receiptNo || null, payLink }
   } catch (err) {
-    // Never leave an `organisation`-role account with no organisation to own.
+    // Never leave an `organisation`-role account with no organisation to own,
+    // nor an institution that nobody can pay for.
+    if (org) await org.deleteOne().catch(() => {})
     await user.deleteOne()
     throw err
   }
@@ -155,7 +176,7 @@ async function assertOrgRoleSwap(user, newRole, organisationDraft) {
 
   if (owned) {
     throw httpError(
-      `This account owns “${owned.name}”. Delete or suspend that organisation on the Organisations page before changing its role.`,
+      `This account owns “${owned.name}”. Delete or suspend that institution on the Institutions page before changing its role.`,
       400
     )
   }
@@ -233,11 +254,11 @@ async function cascadeDeleteUserData(userId) {
     ['../../user/mentoring/booking.model.js', 'MentoringBooking'],
     ['../../user/assessment/assessment.model.js', 'Assessment'],
   ]
-  for (const [path, name] of owned) {
+  for (const [path, name, extra = {}] of owned) {
     try {
       const mod = await import(path)
       const Model = mod[name]
-      if (Model) await Model.deleteMany({ user: userId })
+      if (Model) await Model.deleteMany({ user: userId, ...extra })
     } catch (err) {
       console.error(`✗ cascade delete ${name} failed:`, err.message)
     }
@@ -274,21 +295,30 @@ export async function deleteManagedAccount(actorId, id) {
     if (others === 0) throw httpError('At least one active superadmin must remain', 400)
   }
 
-  // Deleting an organisation's owner would leave the organisation with nobody
-  // able to sign in, while its students all still live. That's a decision for
-  // the Organisations page, not a side effect of deleting a user.
-  const { organisationOwnedBy } = await import('../../user/organisation/organisation.service.js')
+  // An institution's owner IS the institution's login, so deleting the account
+  // deletes the institution with it, and everything that belongs to it: every
+  // student account on its roster (with their courses, progress and orders),
+  // its orders, and the institution record. The admin confirmed exactly that.
+  const { organisationOwnedBy, institutionMemberIds, deleteInstitution } =
+    await import('../../user/organisation/organisation.service.js')
   const owned = await organisationOwnedBy(user._id)
+  let institution = null
   if (owned) {
-    throw httpError(
-      `This account owns “${owned.name}”. Delete or suspend that organisation on the Organisations page first.`,
-      400
-    )
+    const memberIds = await institutionMemberIds(owned)
+    for (const memberId of memberIds) {
+      const member = await User.findById(memberId)
+      if (!member) continue
+      await cascadeDeleteUserData(member._id)
+      await deleteByKey(keyFromUrl(member.avatar)).catch(() => {})
+      await member.deleteOne()
+    }
+    await deleteInstitution(owned)
+    institution = { name: owned.name, students: memberIds.length }
   }
 
   await cascadeDeleteUserData(user._id)
   // Drop the uploaded avatar file too (local or S3); remote avatars have no key.
   await deleteByKey(keyFromUrl(user.avatar)).catch(() => {})
   await user.deleteOne()
-  return { id: String(user._id) }
+  return { id: String(user._id), institution }
 }

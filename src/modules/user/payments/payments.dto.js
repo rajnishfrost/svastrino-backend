@@ -76,6 +76,13 @@ export function validateCouponCreate(body) {
 export function toOrderDTO(order) {
   return {
     id: order._id,
+    kind: order.kind || 'self',
+    quantity: order.quantity || 1,
+    paymentMethod: order.paymentMethod || 'online',
+    // Printed on the invoice, which the customer and the admin both download
+    // from this same shape — so both carry them.
+    reference: order.reference || '',
+    gatewayPaymentId: order.gatewayPaymentId || null,
     packageId: order.packageId,
     item: order.packageLabel,
     product: order.product,

@@ -105,6 +105,18 @@ async function syncWithMindler(a, user, { force = false } = {}) {
   return result
 }
 
+/**
+ * The guide videos for this student. The report video differs by test —
+ * Stream for classes 7 to 9, Career for 10 to 12 — so it is picked by class.
+ */
+async function guidesFor(userId) {
+  const user = await User.findById(userId).select('studentClass').lean()
+  const type = mindler.userTypeFor(user?.studentClass)
+  const testType = type === 1 ? 'stream' : type === 2 ? 'career' : null
+  // `testType` also picks the pre-test guide the card shows (Stream or Career).
+  return { ...(await psychometricGuides(testType)), testType }
+}
+
 /** The student's details the Mindler calls need, or null outside API mode. */
 async function mindlerUser(userId) {
   if (!mindler.isApiMode()) return null
@@ -141,7 +153,7 @@ function toDTO(a, needs = [], guides = null) {
     // The two guide videos, set in Admin → Settings: `test` plays before the
     // student is sent to the test, `report` before they go to read the report.
     // Null = not set, and the card goes straight on.
-    guides: guides || { test: null, report: null },
+    guides: guides || { test: null, report: null, questionsPdf: null, testType: null },
   }
 }
 
@@ -164,7 +176,7 @@ export async function getStatus(userId, product) {
   const a = await getOrCreate(userId, product)
   const { user, needs } = await missingForTest(userId)
   await syncWithMindler(a, user)
-  return toDTO(a, needs, await psychometricGuides())
+  return toDTO(a, needs, await guidesFor(userId))
 }
 
 /**
@@ -181,7 +193,7 @@ export async function start(userId, product) {
   // Finished: the button is "See your report", and it goes to the report page.
   if (a.status === 'completed') {
     const { reportUrl, loginUrl } = await mindler.reportLinksFor(await mindlerUser(userId))
-    return { ...toDTO(a, [], await psychometricGuides()), redirectUrl: reportUrl, loginUrl }
+    return { ...toDTO(a, [], await guidesFor(userId)), redirectUrl: reportUrl, loginUrl }
   }
 
   let redirectUrl = null
@@ -205,7 +217,7 @@ export async function start(userId, product) {
     a.startedAt = new Date()
     await a.save()
   }
-  return { ...toDTO(a, [], await psychometricGuides()), redirectUrl }
+  return { ...toDTO(a, [], await guidesFor(userId)), redirectUrl }
 }
 
 /**
@@ -218,7 +230,7 @@ export async function start(userId, product) {
 export async function markSubmitted(userId, product, externalRef) {
   await requireEntitlement(userId, product)
   const a = await getOrCreate(userId, product)
-  const guides = await psychometricGuides()
+  const guides = await guidesFor(userId)
   if (a.status === 'completed') return toDTO(a, [], guides)
 
   // Only asks once the test has been opened; see syncWithMindler.
