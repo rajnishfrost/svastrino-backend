@@ -11,6 +11,7 @@ import { pageOf, pageResult } from '../../../utils/paginate.js'
 import {
   EMAIL_RE, LIMITS, optionalPhone, optionalPincode, optionalUrl, str as sstr,
 } from '../../../utils/validate.js'
+import { seatsUsed, seatSummary } from './seats.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -97,6 +98,8 @@ export const fullOrgDTO = (o) => ({
   owner: o.owner || null,
   modules: o.modules || [],
   packages: o.packages || [],
+  seats: o.seats ?? null,
+  awaitingPayment: !!o.awaitingPayment,
   publicListed: !!o.publicListed,
   active: o.active !== false,
   reviewedAt: o.reviewedAt || null,
@@ -226,6 +229,31 @@ export async function createOrganisationForOwner(owner, draft = {}) {
 /** Does this account own an organisation? Used by the account-edit guards. */
 export async function organisationOwnedBy(userId) {
   return Organisation.findOne({ owner: userId })
+}
+
+/**
+ * The student accounts on an institution's roster — what deleting the
+ * institution deletes with it.
+ */
+export async function institutionMemberIds(org) {
+  return User.find({ organisation: org._id, organisationRole: 'member' }).distinct('_id')
+}
+
+/**
+ * Delete the institution record itself, and its orders, once its students
+ * have been deleted (see deleteManagedAccount). Nothing of it is left behind.
+ * Students it had already removed are no longer its students and keep their
+ * accounts; only their "removed from" marker, which would now point at
+ * nothing, is cleared.
+ */
+export async function deleteInstitution(org) {
+  const { Order } = await import('../payments/order.model.js')
+  await Order.deleteMany({ organisation: org._id })
+  await User.updateMany(
+    { removedFromOrganisation: org._id },
+    { $set: { removedFromOrganisation: null, removedFromOrganisationAt: null } }
+  )
+  await org.deleteOne()
 }
 
 /**
@@ -455,6 +483,11 @@ async function addStudent(org, row) {
   const email = String(row.email || '').trim().toLowerCase()
   if (!isEmail(email)) throw httpError('Enter a valid email', 400)
 
+  // An institution that has paid for a number of seats can fill only those.
+  if (org.seats != null && !(await holdsSeat(org, email)) && (await seatsUsed(org._id)) >= org.seats) {
+    throw httpError(noSeatsMessage(org), 409, 'NO_SEATS')
+  }
+
   const { user, created, link, attached } = await provisionAccount({
     email,
     name: str(row.name, LIMITS.name),
@@ -516,6 +549,21 @@ async function addStudent(org, row) {
   }
 }
 
+const noSeatsMessage = (org) =>
+  `All ${org.seats} seat${org.seats === 1 ? ' is' : 's are'} taken. Ask the Svastrino team for more seats to add another student.`
+
+/**
+ * Whether this email already counts against the institution's seats: a student
+ * on its roster now, or one who left after receiving its course. Adding them
+ * again takes no new seat.
+ */
+async function holdsSeat(org, email) {
+  const existing = await User.findOne({ email }).select('organisation organisationRole')
+  if (!existing) return false
+  if (String(existing.organisation || '') === String(org._id) && existing.organisationRole === 'member') return true
+  return !!(await Enrollment.exists({ user: existing._id, sponsoredBy: org._id }))
+}
+
 /** Single manual add from the portal. Sends the invite when it's a new account. */
 export async function addOrgStudent(orgId, body) {
   const org = await Organisation.findById(orgId)
@@ -550,13 +598,13 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false } = {}
   if (!org) throw httpError('Organisation not found', 404)
 
   const { records, rawHeaders = [] } = parseCsvRecords(csvText)
-  if (!records.length) throw httpError('That CSV has no data rows. Download the sample and fill it in.', 400)
+  if (!records.length) throw httpError('That sheet has no students in it. Download the sample sheet and fill it in.', 400)
   if (records.length > MAX_IMPORT_ROWS) {
-    throw httpError(`That's ${records.length} rows — please split the file into batches of ${MAX_IMPORT_ROWS}.`, 400)
+    throw httpError(`That's ${records.length} rows — please split the sheet into batches of ${MAX_IMPORT_ROWS}.`, 400)
   }
   if (!records[0] || !('email' in records[0])) {
     throw httpError(
-      `Missing an "email" column. Expected: ${CSV_HEADERS.join(', ')} — found: ${rawHeaders.join(', ') || 'nothing'}`,
+      `The sheet has no "email" column. Expected: ${CSV_HEADERS.join(', ')} — found: ${rawHeaders.join(', ') || 'nothing'}`,
       400
     )
   }
@@ -564,18 +612,28 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false } = {}
   const results = []
   const invites = []
   const seen = new Set() // duplicate emails inside the same file
+  // The preview counts seats the way the real import will spend them, so it
+  // says up front which rows will not fit.
+  let previewUsed = dryRun && org.seats != null ? await seatsUsed(org._id) : 0
 
   for (const rec of records) {
     const email = String(rec.email || '').trim().toLowerCase()
     const base = { line: rec.__line, name: rec.name || '', email }
 
     if (!isEmail(email)) { results.push({ ...base, status: 'error', message: 'Invalid or missing email' }); continue }
-    if (seen.has(email)) { results.push({ ...base, status: 'skipped', message: 'Duplicate row in this file' }); continue }
+    if (seen.has(email)) { results.push({ ...base, status: 'skipped', message: 'Listed twice in this sheet' }); continue }
     seen.add(email)
 
     if (dryRun) {
       const existing = await User.findOne({ email }).select('organisation organisationRole')
       const otherOrg = existing?.organisation && String(existing.organisation) !== String(org._id)
+      if (!otherOrg && org.seats != null && !(await holdsSeat(org, email))) {
+        if (previewUsed >= org.seats) {
+          results.push({ ...base, status: 'error', message: 'No seat left for this student' })
+          continue
+        }
+        previewUsed += 1
+      }
       results.push({
         ...base,
         status: otherOrg ? 'conflict' : existing ? 'existing' : 'created',
@@ -694,9 +752,11 @@ export async function organisationStats(orgId) {
 
   // The sponsored course at a glance: how many seats have landed, and how the
   // class is pacing. Null when the organisation sponsors nothing.
-  const org = await Organisation.findById(orgId).select('packages')
+  const org = await Organisation.findById(orgId).select('packages seats')
+  // Paid-for seats and how many are taken; null for an institution with no limit.
+  const seats = await seatSummary(org)
   const [course] = await sponsoredCourses(org)
-  if (!course) return { students, course: null }
+  if (!course) return { students, seats, course: null }
   const ids = members.map((m) => m._id)
   const enrolled = await Enrollment.countDocuments({ user: { $in: ids }, sponsoredBy: orgId })
   const rows = [...(await rosterCourseProgress(org, ids)).values()]
@@ -704,6 +764,7 @@ export async function organisationStats(orgId) {
   const started = rows.filter((r) => r.pace !== 'not-started')
   return {
     students,
+    seats,
     course: {
       name: course.name,
       enrolled,

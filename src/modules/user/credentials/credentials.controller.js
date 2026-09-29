@@ -25,7 +25,7 @@ async function accountFlags(user) {
   if (!user.organisation) return { ...flags, organisation: null }
 
   const { Organisation } = await import('../organisation/organisation.model.js')
-  const org = await Organisation.findById(user.organisation).select('name type city state status active code')
+  const org = await Organisation.findById(user.organisation).select('name type city state status active code awaitingPayment')
   if (!org) return { ...flags, organisation: null }
 
   return {
@@ -39,7 +39,7 @@ async function accountFlags(user) {
       code: org.code || '',
       status: org.status,
       // Can this account actually open the organisation portal right now?
-      portal: user.organisationRole === 'owner' && org.status === 'approved' && org.active !== false,
+      portal: user.organisationRole === 'owner' && org.status === 'approved' && org.active !== false && !org.awaitingPayment,
     },
   }
 }

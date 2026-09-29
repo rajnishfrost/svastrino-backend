@@ -529,3 +529,29 @@ export function buildStudentInviteEmail({ name, organisation, link, courses = []
 export async function sendStudentInviteEmail(to, details) {
   await sendMail({ to, ...buildStudentInviteEmail(details) })
 }
+
+// --- Institution: pay for its seats -----------------------------------------
+/**
+ * Sent when an admin sets an institution up to pay online. The link opens our
+ * own /pay page, which takes the payment through Cashfree; paying adds the
+ * seats straight away.
+ */
+export function buildInstitutionPaymentEmail({ organisation, course, students, amountInr, link }) {
+  const amount = `₹${Number(amountInr).toLocaleString('en-IN')}`
+  const what = `${course} for ${students} student${students === 1 ? '' : 's'}`
+  return {
+    subject: `Payment for ${organisation}: ${what}`,
+    text: `${organisation}: please pay ${amount} for ${what}. Pay here: ${link}`,
+    html: template({
+      heading: 'Your payment link',
+      preheader: `${amount} for ${what}.`,
+      intro: `This is the payment for ${organisation}: ${what}, ${amount} in all. Once it is paid, you can add your students from your ${BRAND} portal and each one gets the course.`,
+      cta: `Pay ${amount}`,
+      link,
+      note: 'You can pay by UPI, card or net banking. The link stays valid until it is paid.',
+    }),
+  }
+}
+export async function sendInstitutionPaymentEmail(to, details) {
+  await sendMail({ to, ...buildInstitutionPaymentEmail(details) })
+}

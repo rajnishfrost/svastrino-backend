@@ -28,7 +28,12 @@ export const getAdmins = asyncHandler(async (req, res) => {
 
 export const postAdmin = asyncHandler(async (req, res) => {
   const admin = await service.createManagedAdmin({ ...(req.body || {}), createdBy: req.admin?.id })
-  res.status(201).json({ admin: toAdminDTO(admin, await rolePermissions(admin.role)) })
+  res.status(201).json({
+    admin: toAdminDTO(admin, await rolePermissions(admin.role)),
+    // An institution's first order: its status, and the payment link when it is
+    // paying online.
+    institutionOrder: admin.$locals?.institutionOrder || null,
+  })
 })
 
 export const patchAdmin = asyncHandler(async (req, res) => {

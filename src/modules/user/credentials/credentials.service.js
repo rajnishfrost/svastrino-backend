@@ -37,7 +37,21 @@ function makeToken() {
 }
 const hashToken = (raw) => crypto.createHash('sha256').update(raw).digest('hex')
 
-function issueSession(user) {
+async function issueSession(user) {
+  // Every way in — password, Google, the email link, a password reset — ends
+  // here, so this is where an institution waiting on its payment is stopped:
+  // it has no access of any kind until the payment link has been paid.
+  if (user.organisationRole === 'owner' && user.organisation) {
+    const { Organisation } = await import('../organisation/organisation.model.js')
+    const org = await Organisation.findById(user.organisation).select('awaitingPayment')
+    if (org?.awaitingPayment) {
+      throw httpError(
+        'Your institution’s payment is still pending. Please pay using the link sent to your email — you can sign in as soon as it is paid.',
+        403,
+        'PAYMENT_PENDING'
+      )
+    }
+  }
   // `urole` carries the fine application role (student/institution/referral);
   // the second arg 'user' is the area claim (user vs admin).
   return signToken({ id: user._id.toString(), urole: user.role || 'student' }, 'user')
@@ -103,7 +117,7 @@ export async function login({ email, password }) {
   user.lastLoginAt = new Date()
   await user.save()
 
-  return { token: issueSession(user), user }
+  return { token: await issueSession(user), user }
 }
 
 // --- Guest checkout (mentoring booking) -------------------------------------
@@ -140,7 +154,7 @@ export async function guestAccount({ name, email, phone }) {
   }
 
   // Session token so the booking + payment continue seamlessly in this tab.
-  return { token: issueSession(user), user }
+  return { token: await issueSession(user), user }
 }
 
 // --- Provisioned accounts (organisation owners & imported students) ---------
@@ -323,7 +337,7 @@ export async function googleAuth({ accessToken }) {
 
   if (claimed) await afterFirstClaim(user)
 
-  return { token: issueSession(user), user, firstSignIn }
+  return { token: await issueSession(user), user, firstSignIn }
 }
 
 // --- Email verification -----------------------------------------------------
@@ -346,7 +360,7 @@ export async function verifyEmail(rawToken) {
   // A session comes back with the result. Clicking the link IS proof of the
   // address, so asking for the password again right afterwards adds nothing but
   // a step — and it is the step where a new student drifts off.
-  return { email: user.email, token: issueSession(user), user }
+  return { email: user.email, token: await issueSession(user), user }
 }
 
 export async function resendVerification({ email }) {
@@ -435,7 +449,7 @@ export async function resetPassword({ token, password }) {
   if (firstClaim) await afterFirstClaim(user)
 
   // Issue a fresh session so the user is logged straight in after resetting.
-  return { token: issueSession(user), user }
+  return { token: await issueSession(user), user }
 }
 
 export async function findUserById(id) {

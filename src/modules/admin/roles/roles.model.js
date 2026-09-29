@@ -33,6 +33,6 @@ export const Role = mongoose.models.Role || mongoose.model('Role', roleSchema)
 // gated by requireOrgAuth + the per-organisation `modules` list.
 export const SEED_ROLES = [
   { key: 'student', label: 'Student', permissions: [], system: true, locked: false },
-  { key: 'organisation', label: 'Organisation', permissions: [], system: true, locked: true },
+  { key: 'organisation', label: 'Institution', permissions: [], system: true, locked: true },
   { key: 'superadmin', label: 'Superadmin', permissions: [...ADMIN_MODULES], system: true, locked: true },
 ]

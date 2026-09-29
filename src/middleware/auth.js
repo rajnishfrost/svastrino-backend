@@ -159,6 +159,9 @@ export async function requireOrgAuth(req, res, next) {
     if (org.active === false) {
       return res.status(403).json({ error: 'Your organisation has been suspended', code: 'ORG_SUSPENDED' })
     }
+    if (org.awaitingPayment) {
+      return res.status(403).json({ error: 'Your institution’s payment is still pending', code: 'PAYMENT_PENDING' })
+    }
 
     req.orgUser = { id: String(user._id), name: user.name, email: user.email }
     req.org = { id: String(org._id), name: org.name, modules: org.modules || [], doc: org }

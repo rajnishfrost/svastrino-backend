@@ -13,11 +13,35 @@ import mongoose from 'mongoose'
  * arriving always outranks either.
  *
  * All monetary fields are in PAISE. `gateway` records which provider handled it
- * ('mock' in dev, 'cashfree' with real keys; older orders may say 'razorpay').
+ * ('mock' in dev, 'cashfree' with real keys; older orders may say 'razorpay';
+ * 'cash' for money an admin took in person).
+ *
+ * `kind: 'institution'` is an institution buying seats for its students: made
+ * by an admin, `user` is the institution's owner account, `quantity` the
+ * number of students, and being paid adds that many seats to the institution
+ * instead of enrolling anyone (see organisation/institutionOrder.js). Paid in
+ * cash, it is paid the moment it is made; paid online, the institution pays
+ * through the emailed link at /pay/<payToken>.
  */
 const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+
+    kind: { type: String, enum: ['self', 'institution'], default: 'self', index: true },
+    organisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
+    quantity: { type: Number, default: 1, min: 1 },
+    paymentMethod: { type: String, enum: ['online', 'cash'], default: 'online' },
+    // A cash receipt or other reference the admin typed in.
+    reference: { type: String, trim: true, default: '' },
+    // The secret in the institution's /pay/<token> link. Only for online
+    // institution orders.
+    payToken: { type: String, default: undefined, index: { unique: true, sparse: true } },
+    // The full link as it was emailed, kept so the admin can see and copy it.
+    payLink: { type: String, default: '' },
+    // Set once the paid order's seats have been added, so a webhook racing the
+    // browser can never add them twice.
+    seatsGranted: { type: Boolean, default: false },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
     // Snapshot of the purchased package (so later catalog changes don't rewrite history).
     packageId: { type: String, required: true },

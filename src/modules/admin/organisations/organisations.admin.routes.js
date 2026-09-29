@@ -39,7 +39,16 @@ router.get('/:id', asyncHandler(async (req, res) => {
     orgService.getOrganisation(req.params.id),
     orgService.organisationStats(req.params.id),
   ])
-  res.json({ organisation: orgService.fullOrgDTO(org), stats })
+  // An institution still waiting to pay: the link it was sent, for the admin
+  // to see and copy.
+  let pendingPayment = null
+  if (org.awaitingPayment) {
+    const { Order } = await import('../../user/payments/order.model.js')
+    const o = await Order.findOne({ organisation: org._id, kind: 'institution', status: { $nin: ['paid', 'refunded'] } })
+      .sort({ createdAt: -1 })
+    if (o) pendingPayment = { orderId: o._id, payLink: o.payLink, amountInr: o.amount / 100, students: o.quantity, createdAt: o.createdAt }
+  }
+  res.json({ organisation: orgService.fullOrgDTO(org), stats, pendingPayment })
 }))
 
 // PATCH /api/admin/organisations/:id — approve / reject

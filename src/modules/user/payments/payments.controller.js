@@ -137,6 +137,14 @@ export const adminListOrders = asyncHandler(async (req, res) => {
     orders: list.items.map((o) => ({
       ...toOrderDTO(o),
       user: o.user ? { id: o.user._id, name: o.user.name, email: o.user.email } : null,
+      organisation: o.organisation ? { id: o.organisation._id, name: o.organisation.name } : null,
+      reference: o.reference || '',
+      gatewayPaymentId: o.gatewayPaymentId || null,
+      // The institution's payment link, while it is still waiting to be paid.
+      // The institution's payment link as emailed, while it is still unpaid.
+      payLink: o.kind === 'institution' && o.payToken && o.status !== 'paid' && o.status !== 'refunded'
+        ? o.payLink || `${(process.env.CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5174').replace(/\/$/, '')}/pay/${o.payToken}`
+        : null,
     })),
   })
 })
