@@ -46,7 +46,6 @@ const STATIC_PATHS = [
   '/about',
   '/our-ideology',
   '/contact',
-  '/offers',
 ]
 
 // Anything behind a login, or that only makes sense to one person, is left out:
