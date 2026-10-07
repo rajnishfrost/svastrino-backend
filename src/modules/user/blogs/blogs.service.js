@@ -25,7 +25,12 @@ export async function listBlogs({ page = 1, limit = 12, category, owner, q } = {
   // `q.replace` and crash with a 500. `str` makes all three what they claim to be
   // and caps them on the way past.
   const term = str(q, LIMITS.search)
-  if (category) filter.categories = str(category, LIMITS.name)
+  // Whole-name match, any letter case: a shared link such as
+  // ?category=home+schooling finds "Home Schooling" instead of nothing.
+  if (category) {
+    const cat = str(category, LIMITS.name)
+    if (cat) filter.categories = new RegExp(`^${cat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+  }
   if (owner) filter.owner = str(owner, LIMITS.slug)
   // Regex (not $text) so partial words match while typing.
   if (term) {

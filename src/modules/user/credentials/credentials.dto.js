@@ -168,6 +168,10 @@ export function toUserDTO(user, extra = {}) {
     // Whether a password is set — the client shows "Change" vs "Set" password.
     // Only accurate when passwordHash was selected (see findUserById).
     hasPassword: !!user.passwordHash,
+    // Signs in with Google. Settings hides "Set password" for such an account
+    // that has none — Google is how it signs in. Accurate only when googleId was
+    // selected (findUserById and the profile updates select it).
+    googleLinked: !!user.googleId,
     isProfileComplete: user.isProfileComplete,
     // Which organisation added this account, and in what capacity:
     //   null       → a plain public signup
