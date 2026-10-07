@@ -182,7 +182,7 @@ First, take some time to reflect on your concerns and/ or goals. Then, check out
 
 1. What is the Bull's Eye program?
 
-The Bull's Eye program is the ultimate solution for anyone struggling with last-minute career confusion. In just few hours, you can gain a quick and accurate solution to your career queries.
+The Bull's Eye program is the ultimate solution for anyone struggling with last-minute career confusion. In just a few hours, you can gain a quick and accurate solution to your career queries.
 
 2. How do I know I need this program? 
 
@@ -201,7 +201,7 @@ If you're feeling unsure or hesitant about your career choices, it's always help
 Here are some pointers to help you understand when you can opt for this program:
 
 * If you're feeling unsure about what to do after your final exam, this program can help you gain clarity about your career path.  
-* If you've received your results and need guidance on choosing the right stream university, career field or course, this program can assist you in making an informed decision.  
+* If you've received your results and need guidance on choosing the right stream, university, career field or course, this program can assist you in making an informed decision.  
 * If you want to explore the available career options based on your profile, this program can help you identify and evaluate your options.  
 * If you need to finalise a course or university before college application deadlines, this program can guide you through the decision-making process.
 
@@ -211,11 +211,11 @@ Certainly\! It's completely normal to not have a clear vision or goals at the st
 
 7. How is a detailed career plan given in a few hours? Will it be enough? 
 
-We understand your concerns regarding the duration of the session and we want to assure you that our career experts are well-equipped to guide you through a detailed career plan within 2 hours. Through a rigorous evaluation process, we delve deep into your background, skills, and aspirations to create a personalised plan that caters to your specific needs. Rest assured, we leave no stone unturned in ensuring that you have a clear understanding of your career path. 
+We understand your concerns regarding the duration of the session and we want to assure you that our career experts are well-equipped to guide you through a detailed career plan within two sessions of about 2.5 hours each. Through a rigorous evaluation process, we delve deep into your background, skills, and aspirations to create a personalised plan that caters to your specific needs. Rest assured, we leave no stone unturned in ensuring that you have a clear understanding of your career path. 
 
 8. How do I extend my session? 
 
-We offer a buffer time of 15 minutes over each session to ensure all your queries are addressed. In case you require further time, you can always book a second session of the same program. However, our systematic approach ensures that the given time is sufficient to resolve all your queries and that you would not need to have any further extensions r re-bookings.
+We offer a buffer time of 15 minutes over each session to ensure all your queries are addressed. In case you require further time, you can always book a second session of the same program. However, our systematic approach ensures that the given time is sufficient to resolve all your queries and that you would not need to have any further extensions or re-bookings.
 
 9. Will I receive a record or report of my session?
 
@@ -287,7 +287,7 @@ The Bloom Program aims to help you discover the ‘one perfect career option’ 
 
 Our mentors rarely hear of this concern, but if you still feel unsure, we recommend considering a longer personality-based mentoring program with us. Alternatively, you can connect with us over a phone call to discuss your concerns and we can explore what options are available to help you make a confident decision.
 
-15. Why am I only being allowed to book a 2-hour session when it is a 2-months program?
+15. Why am I only being allowed to book a 2.5-hour session when it is a 2-month program?
 
 Our program is designed as a series of recurring sessions that take place over the course of several weeks. We recommend booking each session as you make progress, based on the guidance of your mentor. Once you have completed the tasks from your previous session, our team will coordinate with you to book your next session with your mentor. This approach allows for a personalised and flexible mentoring experience tailored to your needs and progress.
 
@@ -301,7 +301,7 @@ We understand that you may be eager to make a career decision as soon as possibl
 
 1. What is a Breakthrough program?
 
-It is a very systematically devised program that is divided into two important stages- planning and application stage. These stages will not only help you decide on the best career options but will also provide you with personalized career mentoring throughout the program. We keep track of your regular progress, using it as a learning tool for future sessions. Finally, the right set of thoughts, ideas, attitude, and results are generated that are very essential to transform you into a future leader.
+It is a very systematically devised program that is divided into two important stages: Mindset Building and Application. These stages will not only help you decide on the best career options but will also provide you with personalized career mentoring throughout the program. We keep track of your regular progress, using it as a learning tool for future sessions. Finally, the right set of thoughts, ideas, attitude, and results are generated that are very essential to transform you into a future leader.
 
 2. How do I know, I need this program?
 
@@ -311,9 +311,9 @@ It’s simple just check the “Program Journey & Benefits” section on the Bre
 
 Just like any tree takes time to grow and bear fruits, the Breakthrough Program is a comprehensive mentoring program that takes time to develop and bear the fruits of success. The program is designed to help individuals not only make an informed career decision but also develop the skills and mindset of a future leader.
 
-The first stage of the program is the planning stage, which is like planting a tree. This stage involves identifying your strengths, weaknesses, interests, and goals. Just like how the tree needs the right soil, water, and sunlight to grow, you need the right guidance, mentorship, and resources to develop your potential. The planning stage ensures that you have a clear direction and roadmap for your career journey.
+The first stage of the program is the Mindset Building stage, which is like planting a tree. This stage involves identifying your strengths, weaknesses, interests, and goals. Just like how the tree needs the right soil, water, and sunlight to grow, you need the right guidance, mentorship, and resources to develop your potential. The Mindset Building stage ensures that you have a clear direction and roadmap for your career journey.
 
-The second stage is the application stage, which is like nurturing and taking care of that tree. This stage involves putting the plan into action, gaining practical experience, and developing the required skills and knowledge. Just like how the tree needs proper care and attention to bear fruits, you need to consistently work on your goals, learn from your experiences, and build your professional profile. The application stage helps you build a strong foundation and prepare for a successful career.
+The second stage is the Application stage, which is like nurturing and taking care of that tree. This stage involves putting the plan into action, gaining practical experience, and developing the required skills and knowledge. Just like how the tree needs proper care and attention to bear fruits, you need to consistently work on your goals, learn from your experiences, and build your professional profile. The Application stage helps you build a strong foundation and prepare for a successful career.
 
 The program ensures that you have ample time to evolve into an entrepreneurial personality, with the right set of thoughts, ideas, attitude, and results that are essential for long-term success. The investment of time is worth it, and the program prepares you for a fulfilling and successful future just like how the mango tree provides fruits for a lifetime.
 
@@ -363,13 +363,9 @@ Keeping track of your progress is an important aspect of our program. We'll prov
 
 15. How many career options will be guided after the development in the process?
 
-The Bloom Program aims to help you discover the one perfect career option that aligns with your strengths and interests. You will have the opportunity to experiment with multiple ideas and options during the course of the program.
+The Breakthrough Program does not stop at a single career option. Over the two years you explore several ideas and options, test them through real tasks and experiences, and narrow them down to the path that best fits your strengths, interests and goals — and then keep building towards it with your mentor.
 
-16. What if I don't have a decision even by the end of the session? 
-
-Although our counselors rarely ever hear of this concern, in such cases, we would recommend you opt for a repeat of the same program with us since there is still confusion.
-
-17. Why am I only allowed to book a 2-hour session when it is a 2-year program?
+16. Why am I only allowed to book a 2.5-hour session when it is a 2-year program?
 
 We understand your concern about the limited duration of each session. However, please note that this is a comprehensive 2-year program that requires consistency and regularity to achieve the desired results. We have designed a system of recurring sessions that will happen based on your progress and completion of tasks. Your mentor will coordinate with you to schedule the next session at a mutually convenient time. Once you complete the tasks associated with the previous session.
 
@@ -556,23 +552,15 @@ Nirmaan has been created with the belief that preparing for a career is about mo
 
 Because your future is not built only by what you study, but also by how you think, how you respond and how you act. Nirmaan gives you the opportunity to explore yourself, strengthen important skills and start preparing for the challenges and choices that lie ahead.
 
-24. What will I gain from Nirmaan?
-
-Nirmaan aims to help you become more self-aware, confident, adaptable and prepared for your future. Throughout the journey, you will have opportunities to understand your strengths, work on areas that need development and practise skills that can be useful in academics, careers and everyday life.
-
-25. How is the Nirmaan course structured?
+24. How is the Nirmaan course structured?
 
 Nirmaan is structured as a gradual development journey rather than a collection of lessons. You will move through 24 short sessions, 1 each week, supported by 6 days activities, reflection and practical tasks, allowing you to understand a concept and then experience it for yourself.
 
-26. How much time do I need to give Nirmaan every day?
-
-Nirmaan is designed to fit into your existing routine without feeling like another subject. Each learning session takes approximately 15 minutes, followed by a small activity or task that generally takes another 5–10 minutes.
-
-27. What if I am not able to complete Nirmaan within the recommended timeline?
+25. What if I am not able to complete Nirmaan within the recommended timeline?
 
 You don't have to worry about missing the journey because of a busy day or week. Nirmaan is designed to give you flexibility, so you can catch up and continue from where you stopped. However, staying consistent will help you experience the development journey more effectively.
 
-28. What will I get at the end of the Nirmaan course?
+26. What will I get at the end of the Nirmaan course?
 
 The biggest outcome is not simply something you receive at the end, but what you build along the way. By completing Nirmaan, you will have the opportunity to develop greater self-awareness, stronger skills, better understanding and more confidence to take your next steps towards the future.
 

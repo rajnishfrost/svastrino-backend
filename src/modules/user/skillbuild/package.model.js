@@ -59,6 +59,11 @@ const packageSchema = new mongoose.Schema(
     trustLine: { type: String, default: '' },
     durationLabel: { type: String, default: '' },
     sessionsLabel: { type: String, default: '' },
+    // The one-line sessions summary on the booking page. Empty = worked out
+    // from sessionsCount × the slot length ("2 sessions × 2.5 hrs"); set it when
+    // a programme has options that sum can't say (Breakthrough: 10 × 2.5 h or
+    // 20 × 1–1.5 h).
+    sessionsShort: { type: String, default: '' },
     deliveryMode: { type: String, default: '' },
 
     // Wording the card cannot work out on its own.

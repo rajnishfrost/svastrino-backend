@@ -126,7 +126,7 @@ const PACKAGES = [
       "1 year validity to complete the course",
       "India's best psychometric testing",
       "Guidance based on the RIASEC scale",
-      "Up to 40-page test report covering strengths, weakness, personality, interest, preferences and your top 5 suitable career options",
+      "20 - 40-page test report covering strengths, weakness, personality, interest, preferences and your top 5 suitable career options",
       "Psychometric testing is available only for students in Classes 7 to 12",
       "Flat 25% support for students paying the whole fees at once"
     ],
@@ -171,7 +171,7 @@ const PACKAGES = [
       "After the 1-year course period ends, tasks can be viewed for 3 years",
       "India's best psychometric testing",
       "Guidance based on the RIASEC scale",
-      "Up to 40-page test report covering strengths, weakness, personality, interest, preferences and your top 5 suitable career options",
+      "20 - 40-page test report covering strengths, weakness, personality, interest, preferences and your top 5 suitable career options",
       "Psychometric testing is available only for students in Classes 7 to 12",
       "Spread the cost across 6 equal installments (Without Interest)"
     ],

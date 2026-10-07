@@ -177,7 +177,7 @@ export async function listPackages() {
   return Package.find().populate('skillBuild', 'name slug kind').sort({ order: 1 })
 }
 
-const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'benefits', 'modeLabel', 'priceNote', 'summary', 'trustLine', 'durationLabel', 'sessionsLabel', 'deliveryMode', 'buyMode', 'expertEnquiry', 'paymentMode', 'phases', 'includesPsychometric', 'cta', 'variant', 'featured', 'badge', 'order', 'active', 'listed']
+const PKG_FIELDS = ['name', 'tagline', 'price', 'earlyBird', 'period', 'durationDays', 'sessionsCount', 'sessionMins', 'features', 'benefits', 'modeLabel', 'priceNote', 'summary', 'trustLine', 'durationLabel', 'sessionsLabel', 'sessionsShort', 'deliveryMode', 'buyMode', 'expertEnquiry', 'paymentMode', 'phases', 'includesPsychometric', 'cta', 'variant', 'featured', 'badge', 'order', 'active', 'listed']
 
 /**
  * How long each of a package's text fields may be.

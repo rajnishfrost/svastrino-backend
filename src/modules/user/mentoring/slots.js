@@ -5,17 +5,19 @@ import { MentoringBooking } from './booking.model.js'
  *
  *  - First bookable day = today + 3 (spec example: 21 Jul → bookable from 24 Jul)
  *  - Advance bookings up to 2 months from today
- *  - Slots are 2 hours; start times 9:00 AM … 4:00 PM (last ends 6:00 PM)
+ *  - Sessions are 2.5 hours; start times 9:00 AM … 3:30 PM (last ends 6:00 PM)
  *  - Start times on a 30-minute grid (9:00, 9:30, …)
  *  - 30-minute breather around every existing booking (ends 2:00 → next 2:30)
+ *    (a booking keeps its own start/end, so ones made as 2-hour slots still count as 2 hours)
  *  - Sunday: only slots that END by 1:00 PM · Monday: fully closed
  */
 const IST_OFFSET_MIN = 330 // +05:30, no DST
-export const SLOT_MINS = 120
+export const SLOT_MINS = 150 // one session: 2.5 hours
 export const BUFFER_MINS = 30
 const GRID_MINS = 30
 const FIRST_START = 9 * 60 // 09:00
-const LAST_START = 16 * 60 // 16:00 (ends 18:00)
+const DAY_END = 18 * 60 // the last session must end by 18:00
+const LAST_START = DAY_END - SLOT_MINS // 15:30 for a 2.5-hour session
 const SUNDAY_END_CUTOFF = 13 * 60 // Sunday: slot must END by 13:00
 const MIN_LEAD_DAYS = 3
 const MAX_AHEAD_MONTHS = 2

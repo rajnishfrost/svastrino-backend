@@ -26,6 +26,11 @@ const httpError = (message, status, code) => {
  * course page's gate uses (learn.service.js userRank).
  */
 async function requireEntitlement(userId, product) {
+  // Bought on its own (₹900, product 'psychometric-testing'): the test is theirs
+  // whether or not they also hold a course plan. The assessment record itself
+  // stays keyed to the course product, so a student has one test either way.
+  if (await Enrollment.exists({ user: userId, product: 'psychometric-testing', status: 'active', trial: { $ne: true } })) return
+
   const enrollments = await Enrollment.find({ user: userId, product, status: 'active' }).select('packageId').lean()
   if (!enrollments.length)
     throw httpError('Enrol in this product to take the psychometric test', 403, 'NOT_ENROLLED')

@@ -9,8 +9,9 @@ const httpError = (message, status) => {
 
 /** All active skill-build products (without packages). */
 export async function listSkillBuilds() {
-  // Only video courses — mentoring programs have their own catalog/listing.
-  return SkillBuild.find({ active: true, kind: { $ne: 'mentoring' } }).sort({ order: 1, name: 1 })
+  // Only video courses — mentoring programs have their own catalog/listing, and
+  // the stand-alone psychometric test is sold on its own page.
+  return SkillBuild.find({ active: true, kind: { $nin: ['mentoring', 'test'] } }).sort({ order: 1, name: 1 })
 }
 
 /** One skill-build by slug, with its active packages (ordered). */

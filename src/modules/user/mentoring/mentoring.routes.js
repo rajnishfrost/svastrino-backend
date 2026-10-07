@@ -18,7 +18,7 @@ router.get('/categories', asyncHandler(async (req, res) => {
   res.json({ categories: await service.listCategories() })
 }))
 
-// GET /slots?date=YYYY-MM-DD → available 2-hour starts for that IST date
+// GET /slots?date=YYYY-MM-DD → available 2.5-hour starts for that IST date
 router.get('/slots', asyncHandler(async (req, res) => {
   res.json(await service.slotsFor(str(req.query.date, 10)))
 }))

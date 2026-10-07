@@ -115,6 +115,44 @@ const httpError = (message, status, code) => {
   return err
 }
 
+// --- The stand-alone psychometric test ---------------------------------------
+//
+// The test is also sold on its own (₹900, /skill-build/psychometric-testing),
+// as a product of its own so buying it is never mistaken for a Nirmaan plan
+// change. One test per student, however they came by it:
+//   • someone who already has the test — on its own, or inside Nirmaan +
+//     Psychometric — is not sold it again;
+//   • someone who bought it on its own cannot buy a Nirmaan plan that bundles
+//     it (nor upgrade into one); the Nirmaan course plans stay open to them.
+// A Nirmaan student without the test may still either buy it here or take the
+// usual upgrade to Nirmaan + Psychometric — that flow is untouched.
+export const TEST_PRODUCT = 'psychometric-testing'
+
+/** Bought the test on its own (an active stand-alone enrollment). */
+export async function ownsStandaloneTest(userId) {
+  if (!userId) return false
+  return !!(await Enrollment.exists({ user: userId, product: TEST_PRODUCT, status: 'active', trial: { $ne: true } }))
+}
+
+/** Has the test by any route: on its own, or in an active plan that bundles it. */
+async function hasTest(userId) {
+  if (await ownsStandaloneTest(userId)) return true
+  const rows = await Enrollment.find({ user: userId, status: 'active', trial: { $ne: true } }).select('packageId').lean()
+  if (!rows.length) return false
+  return !!(await Package.exists({ sku: { $in: rows.map((r) => r.packageId) }, includesPsychometric: true }))
+}
+
+const TEST_OWNED = {
+  state: 'owned',
+  code: 'TEST_ALREADY_OWNED',
+  message: 'You already have the psychometric test.',
+}
+const TEST_IN_HAND = {
+  state: 'blocked',
+  code: 'TEST_ALREADY_OWNED',
+  message: 'You already have the psychometric test, so you only need the Nirmaan Course plan.',
+}
+
 /**
  * Where a buyer stands with one package, by the rules of the checkout: one plan
  * per course, upward only, inside the upgrade window — except a pay-as-you-use
@@ -131,8 +169,22 @@ const httpError = (message, status, code) => {
  *   { state: 'blocked', code, message }              any other refusal
  */
 async function standingFor(userId, pkg, ctx) {
+  // The stand-alone test: sold once, to anyone who does not have the test yet.
+  if (pkg.product === TEST_PRODUCT) {
+    return userId && (await hasTest(userId)) ? TEST_OWNED : { state: 'buy' }
+  }
+
   const current = ctx?.currentPkg
-  if (!current) return { state: 'buy' }
+
+  // A plan that bundles the test is not for someone who bought the test on its
+  // own — buying or upgrading into it would sell them the test twice. Their own
+  // plan is still reported as theirs below.
+  const bundlesTestTheyHave = async () =>
+    pkg.includesPsychometric && userId && (await ownsStandaloneTest(userId))
+
+  if (!current) return (await bundlesTestTheyHave()) ? TEST_IN_HAND : { state: 'buy' }
+
+  if (pkg.sku !== current.sku && (await bundlesTestTheyHave())) return TEST_IN_HAND
 
   if (pkg.sku === current.sku) {
     if (current.paymentMode !== 'per-phase') {
@@ -298,7 +350,7 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
     })
     if (!cleared) {
       throw httpError(
-        'This program starts with a call from our team. Request one on the program page and we will open your booking right after.',
+        'This programme starts with a call from our team. Request one on the programme page and we will open your booking right after.',
         400,
       )
     }
@@ -665,7 +717,16 @@ export async function listEnrollments(userId) {
  */
 export async function upgradeStatus(userId, product) {
   const ctx = await activeContext(userId, product)
-  if (!ctx?.currentPkg) return { hasEnrollment: false, canUpgrade: false, options: [], packages: {} }
+  if (!ctx?.currentPkg) {
+    // Owns no plan here — but someone who bought the test on its own must still
+    // see the plans that bundle it as not for them, so report every plan.
+    if (!(await ownsStandaloneTest(userId))) return { hasEnrollment: false, canUpgrade: false, options: [], packages: {} }
+    const catalogue = await listPackagesByProduct(product)
+    const packages = Object.fromEntries(
+      await Promise.all(catalogue.map(async (p) => [p.sku, { ...(await standingFor(userId, p, null)), amount: null, rupees: null }]))
+    )
+    return { hasEnrollment: false, canUpgrade: false, options: [], packages }
+  }
 
   const current = ctx.currentPkg
   const catalogue = await listPackagesByProduct(product)
