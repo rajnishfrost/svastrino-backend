@@ -454,7 +454,7 @@ export async function resetPassword({ token, password }) {
 
 export async function findUserById(id) {
   // Select the hash so toUserDTO can report `hasPassword` accurately.
-  return User.findById(id).select('+passwordHash')
+  return User.findById(id).select('+passwordHash +googleId')
 }
 
 // --- Profile & password management ------------------------------------------
@@ -462,7 +462,7 @@ export async function findUserById(id) {
 /** Update name, phone and/or class. Changing the phone marks it unverified again. */
 export async function updateProfile(userId, changes) {
   // Select the hash so the returned DTO reports `hasPassword` correctly.
-  const user = await User.findById(userId).select('+passwordHash')
+  const user = await User.findById(userId).select('+passwordHash +googleId')
   if (!user) throw httpError('User not found', 404)
 
   if (changes.name !== undefined) user.name = changes.name
@@ -492,7 +492,7 @@ export async function updateProfile(userId, changes) {
  * have no local key and are simply overwritten.
  */
 export async function updateAvatar(userId, url) {
-  const user = await User.findById(userId).select('+passwordHash')
+  const user = await User.findById(userId).select('+passwordHash +googleId')
   if (!user) throw httpError('User not found', 404)
 
   const oldKey = keyFromUrl(user.avatar)
@@ -507,7 +507,7 @@ export async function updateAvatar(userId, url) {
  * already exists the current one must be provided and verified.
  */
 export async function changePassword(userId, { currentPassword, newPassword }) {
-  const user = await User.findById(userId).select('+passwordHash')
+  const user = await User.findById(userId).select('+passwordHash +googleId')
   if (!user) throw httpError('User not found', 404)
 
   if (user.passwordHash) {
