@@ -46,7 +46,7 @@ async function run() {
 
     for (const [label, row, filter, Model] of [
       ['catalogue', pkg, { sku }, Package],
-      ['program page', prog, { slug }, MentoringProgram],
+      ['programme page', prog, { slug }, MentoringProgram],
     ]) {
       if (!row) {
         console.log(`  ${slug} · ${label}: not found — skipped`)

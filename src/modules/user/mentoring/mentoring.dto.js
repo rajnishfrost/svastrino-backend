@@ -24,7 +24,7 @@ const SKU_RE = /^[a-z0-9][a-z0-9_-]{1,79}$/
 
 export function validateBooking(body = {}) {
   const sku = lower(body.sku, LIMITS.slug)
-  if (!SKU_RE.test(sku)) throw badRequest('Please choose a program from the list', 'sku')
+  if (!SKU_RE.test(sku)) throw badRequest('Please choose a programme from the list', 'sku')
   return { sku, ...validateSlot(body) }
 }
 

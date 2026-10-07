@@ -32,10 +32,10 @@ const PROGRAMS = [
     bookingSku: 'mentoring-bullseye',
     tagline: "Get a quick yet accurate solution for your 'Career Confusion'",
     summary:
-      'A focused 2-hour session designed to achieve clarity when you are stuck between ' +
+      'Two focused sessions of about 2.5 hours each, designed to achieve clarity when you are stuck between ' +
       'options or facing a deadline — ending with concrete career recommendations and a plan.',
     duration: '10 days',
-    sessions: '3 sessions of 2 hours each — about 6 hours in total, plus the pre-work and the follow-up',
+    sessions: '2 sessions of 2.5 hours each, including the pre-session, with follow-ups in between',
     mode: 'Online',
     chooseIf: [
       'You want a second opinion on a career plan with multiple options',
@@ -70,11 +70,11 @@ const PROGRAMS = [
     bookingSku: 'mentoring-bloom',
     tagline: 'Cultivate a visionary mindset and set goals for a bright future',
     summary:
-      "Svastrino's personality-based mentoring program. Over 45–60 days it moves from a full " +
+      "Svastrino's personality-based mentoring programme. Over about 2 months it moves from a full " +
       'personality analysis through self-discovery tasks and vision building, ending in a ' +
       'personalised 5-year career plan.',
     duration: '2 months',
-    sessions: '5 sessions of 2 hours each plus weekly follow-ups — about 10 hours in total',
+    sessions: 'A 90-minute pre-session and 3 sessions of 2.5 hours each, plus weekly follow-ups',
     mode: 'Online',
     chooseIf: [
       'You want to discover your unique potential and build a customised vision',
@@ -119,7 +119,7 @@ const PROGRAMS = [
       'building mindset first, then attitude, with consistent mentoring and accountability ' +
       'across academics, professional skills, experience, extracurriculars and social work.',
     duration: '2 years',
-    sessions: '22 sessions of 2 hours each, at your own pace, plus weekly follow-ups — about 44 hours in total',
+    sessions: 'A 90-minute pre-session and 10 sessions of 2.5 hours each, or 20 sessions of 1 to 1.5 hours each, plus weekly follow-ups',
     mode: 'Online',
     chooseIf: [
       'You want a comprehensive analysis of your career needs and strengths',

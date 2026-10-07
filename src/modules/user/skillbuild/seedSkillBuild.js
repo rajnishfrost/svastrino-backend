@@ -71,7 +71,7 @@ const PACKAGES = [
       'Daily task reminders',
       'Total course validity 1 year from the date of enrolment',
       "India's best psychometric testing, guiding students on the RIASEC scale",
-      'Up to a 40-page report covering strengths, weaknesses, personality, interests, preferences and your top 5 career options',
+      'A 20 - 40-page report covering strengths, weaknesses, personality, interests, preferences and your top 5 career options',
       'Psychometric testing is for students of class 7 to 12 only',
       'Pay at once and get a 25% discount immediately',
     ],

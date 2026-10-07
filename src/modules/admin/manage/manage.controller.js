@@ -36,7 +36,7 @@ const pkgDTO = (p) => ({
   price: p.price, priceInr: rupees(p.price),
   earlyBird: p.earlyBird, earlyBirdInr: p.earlyBird != null ? rupees(p.earlyBird) : null,
   period: p.period, durationDays: p.durationDays,
-  sessionsCount: p.sessionsCount, sessionMins: p.sessionMins,
+  sessionsCount: p.sessionsCount, sessionMins: p.sessionMins, sessionsShort: p.sessionsShort || '',
   features: p.features, benefits: p.benefits || [],
   modeLabel: p.modeLabel || '', priceNote: p.priceNote || '',
   summary: p.summary || '', trustLine: p.trustLine || '',

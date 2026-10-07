@@ -10,13 +10,14 @@ kind: 'mentoring' }` — is the category; each program is a **Package** under it
 
 | Program      | Package SKU              | Sessions |
 |--------------|--------------------------|----------|
-| Bull's Eye   | `mentoring-bullseye`     | 3        |
-| Bloom        | `mentoring-bloom`        | 5        |
-| Breakthrough | `mentoring-breakthrough` | 22       |
+| Bull's Eye   | `mentoring-bullseye`     | 2        |
+| Bloom        | `mentoring-bloom`        | 3        |
+| Breakthrough | `mentoring-breakthrough` | 10       |
 
 - `SkillBuild.kind = 'mentoring'` keeps the category OUT of the course listings
   (user `listSkillBuilds` and admin content both filter `kind ≠ mentoring`).
-- `Package.sessionsCount` / `sessionMins` (120) drive the dashboard tables.
+- `Package.sessionsCount` drives the dashboard tables. Session length shown to visitors is
+  the slot engine's `SLOT_MINS` (150 = 2.5 h); `Package.sessionMins` is kept equal to it.
 - Prices are placeholders (₹2,999 / ₹4,999 / ₹19,999) — **edit in Admin →
   Packages**; new programs = Admin → Packages → "+ New package" under Mentoring.
 - Seed is idempotent and also migrates from the earlier per-program-SkillBuild
@@ -33,18 +34,18 @@ owned program books free against its enrollment (`product = sku`).
 
 - First bookable day: **today + 3** (spec: 21 Jul → from 24 Jul) · max **2
   months** ahead (`bookingWindow()`).
-- Slots are **2 hours**, starts on a **30-min grid**, **9:00 AM–4:00 PM** starts
-  (last ends 6 PM).
+- Slots are **2.5 hours** (`SLOT_MINS = 150`), starts on a **30-min grid**, **9:00 AM–3:30 PM**
+  starts (last ends 6 PM). Bookings made as 2-hour slots before Oct 2026 keep their own times.
 - **30-min breather** on both sides of every existing booking (2:00 PM end →
   next start 2:30 PM).
-- **Sunday**: only slots that END by 1 PM (so last start 11 AM). **Monday**:
+- **Sunday**: only slots that END by 1 PM (so last start 10:30 AM). **Monday**:
   closed.
 - Pure core `slotsForDate(dateStr, existing, now)` is unit-testable without a
   DB; `availableSlots(date)` returns `{ date, window, closed, slots:[{start,
   end, startAt}] }`; `isSlotAvailable(date,'HH:MM')` re-validates server-side at
   booking time (race → 409 `SLOT_TAKEN`).
 - Known corner: a 9 AM Sunday booking leaves that Sunday with zero further
-  slots (11:30 start would end 1:30 PM > cutoff). Correct per rules.
+  slots (a 12:00 start would end 2:30 PM > cutoff). Correct per rules.
 
 ## Booking model — `booking.model.js`
 

@@ -28,8 +28,8 @@ const SUBCATEGORIES = [
       {
         sku: 'mentoring-bullseye', slug: 'bulls-eye', name: "Bull's Eye Program",
         tagline: 'Sharp, focused guidance — 3 sessions',
-        price: 799000, sessionsCount: 3, sessionMins: 120, period: 'one-time',
-        features: ['3 one-on-one sessions (2 hrs each)', 'Personalised action plan', 'Session notes & tasks in your dashboard'],
+        price: 799000, sessionsCount: 2, sessionMins: 150, period: 'one-time',
+        features: ['2 one-on-one sessions (2.5 hrs each)', 'Personalised action plan', 'Session notes & tasks in your dashboard'],
         cta: 'Book Bull’s Eye', order: 1,
       },
     ],
@@ -43,8 +43,8 @@ const SUBCATEGORIES = [
       {
         sku: 'mentoring-bloom', slug: 'bloom', name: 'Bloom Program',
         tagline: 'Grow steadily — 5 sessions',
-        price: 2790000, sessionsCount: 5, sessionMins: 120, period: 'one-time',
-        features: ['5 one-on-one sessions (2 hrs each)', 'Progress tracking across sessions', 'Session notes & tasks in your dashboard'],
+        price: 2790000, sessionsCount: 3, sessionMins: 150, period: 'one-time',
+        features: ['3 one-on-one sessions (2.5 hrs each)', 'Progress tracking across sessions', 'Session notes & tasks in your dashboard'],
         cta: 'Book Bloom', featured: true, badge: 'Most Popular', order: 1,
       },
       {
@@ -54,8 +54,8 @@ const SUBCATEGORIES = [
         // file and seedServicePrograms.js cannot disagree about it again.
         sku: 'mentoring-breakthrough', slug: 'breakthrough', name: 'Breakthrough Program',
         tagline: 'The full journey — 22 sessions',
-        price: 13900000, sessionsCount: 22, sessionMins: 120, period: 'one-time',
-        features: ['22 one-on-one sessions (2 hrs each)', 'Deep long-term mentoring', 'Session notes & tasks in your dashboard'],
+        price: 13900000, sessionsCount: 10, sessionMins: 150, period: 'one-time',
+        features: ['10 one-on-one sessions (2.5 hrs each)', 'Deep long-term mentoring', 'Session notes & tasks in your dashboard'],
         cta: 'Book Breakthrough', order: 2,
       },
     ],

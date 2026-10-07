@@ -91,7 +91,7 @@ export const listEnrollments = asyncHandler(async (req, res) => {
       // itself only stores the plan name ("Bull's Eye Program") and cannot say
       // whether that plan is a course or a mentoring program.
       const pkg = await getPackageBySku(e.packageId, { includeInactive: true })
-      const kind = pkg?.kind === 'mentoring' ? 'mentoring' : 'course'
+      const kind = pkg?.kind === 'mentoring' || pkg?.kind === 'test' ? pkg.kind : 'course'
 
       return {
         ...toEnrollmentDTO(e, { kind, courseName: pkg?.courseName || '', courseSlug: e.product }),

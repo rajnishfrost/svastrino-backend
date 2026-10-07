@@ -65,13 +65,16 @@ const programDTO = ({ pkg, parent }) => ({
   price: pkg.price,
   earlyBird: pkg.earlyBird,
   sessions: pkg.sessionsCount || 1,
-  sessionMins: pkg.sessionMins || SLOT_MINS,
+  // The calendar's real session length. The package has its own field, but the
+  // slots are cut by SLOT_MINS, so that is what a visitor is told.
+  sessionMins: SLOT_MINS,
   // The card copy on /services. `sessionsLabel` is the sentence a visitor
   // reads; `sessions` above stays the number the booking calendar counts.
   summary: pkg.summary || '',
   trustLine: pkg.trustLine || '',
   durationLabel: pkg.durationLabel || '',
   sessionsLabel: pkg.sessionsLabel || '',
+  sessionsShort: pkg.sessionsShort || '',
   deliveryMode: pkg.deliveryMode || '',
   buyMode: pkg.buyMode || 'self-serve',
   // Whether the /services card offers the call-back form instead of the
@@ -110,14 +113,14 @@ export async function listCategories() {
 
 async function programBySku(sku) {
   const pkg = await Package.findOne({ sku, active: true }).populate('skillBuild', 'name slug kind')
-  if (!pkg || pkg.skillBuild?.kind !== 'mentoring') throw httpError('Unknown program', 404)
+  if (!pkg || pkg.skillBuild?.kind !== 'mentoring') throw httpError('Unknown programme', 404)
   return pkg
 }
 
 /** Does this user own the program (paid, active)? Mentoring product = the SKU. */
 async function requireEnrollment(userId, pkg) {
   const enr = await Enrollment.findOne({ user: userId, product: pkg.sku, status: 'active' })
-  if (!enr) throw httpError('Please purchase this program first', 403, 'NOT_ENROLLED')
+  if (!enr) throw httpError('Please purchase this programme first', 403, 'NOT_ENROLLED')
   return enr
 }
 
@@ -140,7 +143,7 @@ export async function createBooking(userId, { sku, date, start }) {
     programSku: sku,
     status: { $ne: 'cancelled' },
   })
-  if (used >= total) throw httpError(`All ${total} sessions of this program are already booked`, 409)
+  if (used >= total) throw httpError(`All ${total} sessions of this programme are already booked`, 409)
 
   if (!(await isSlotAvailable(date, start))) {
     throw httpError('That slot is no longer available — please pick another', 409, 'SLOT_TAKEN')

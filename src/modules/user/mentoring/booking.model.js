@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * One booked counselling/mentoring appointment (a 2-hour slot). A program
+ * One booked counselling/mentoring appointment (a 2.5-hour slot). A program
  * (Bulls-eye 3 / Bloom 5 / Breakthrough 22) is paid for ONCE via the normal
  * payments flow (its SKU lives in `packages`); each of its sessions is then
  * booked here, one slot at a time.
@@ -16,7 +16,7 @@ const bookingSchema = new mongoose.Schema(
     sessionNumber: { type: Number, required: true },           // 1..sessionsCount
 
     startAt: { type: Date, required: true, index: true },      // UTC instant (slot start)
-    endAt: { type: Date, required: true },                     // start + 2h
+    endAt: { type: Date, required: true },                     // start + 2.5h (SLOT_MINS)
 
     status: {
       type: String,
