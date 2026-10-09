@@ -27,7 +27,7 @@ router.get('/', asyncHandler(async (req, res) => {
   })
   res.json({
     ...list,
-    organisations: list.items.map(orgService.fullOrgDTO),
+    organisations: list.items.map(orgService.adminOrgDTO),
     types: ORG_TYPES.map((key) => ({ key, label: ORG_TYPE_LABELS[key] })),
     orgModules: ORG_MODULES,
   })
@@ -48,21 +48,21 @@ router.get('/:id', asyncHandler(async (req, res) => {
       .sort({ createdAt: -1 })
     if (o) pendingPayment = { orderId: o._id, payLink: o.payLink, amountInr: o.amount / 100, students: o.quantity, createdAt: o.createdAt }
   }
-  res.json({ organisation: orgService.fullOrgDTO(org), stats, pendingPayment })
+  res.json({ organisation: orgService.adminOrgDTO(org), stats, pendingPayment })
 }))
 
 // PATCH /api/admin/organisations/:id — approve / reject
 // Body: { status: 'approved' | 'rejected', reason }
 router.patch('/:id', asyncHandler(async (req, res) => {
   const org = await orgService.reviewOrganisation(req.admin.id, req.params.id, req.body || {})
-  res.json({ organisation: orgService.fullOrgDTO(org) })
+  res.json({ organisation: orgService.adminOrgDTO(org) })
 }))
 
 // PUT /api/admin/organisations/:id — edit profile, modules, listing, suspension.
 // Kept separate from the review PATCH so the two can never be confused.
 router.put('/:id', asyncHandler(async (req, res) => {
   const org = await orgService.updateOrganisationByAdmin(req.params.id, req.body || {})
-  res.json({ organisation: orgService.fullOrgDTO(org) })
+  res.json({ organisation: orgService.adminOrgDTO(org) })
 }))
 
 // POST /api/admin/organisations/students/:userId/restore — undo a removal

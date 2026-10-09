@@ -4,6 +4,7 @@ import { asyncHandler } from '../../utils/asyncHandler.js'
 import { requireOrgModule } from '../../middleware/auth.js'
 import * as orgService from '../user/organisation/organisation.service.js'
 import { sponsoredCourses } from '../user/organisation/sponsorship.js'
+import { studentReports } from '../user/organisation/reports.js'
 import { ORG_MODULES, ORG_TYPE_LABELS } from '../user/organisation/organisation.model.js'
 
 // Mounted at /api/org — every route below already passed requireOrgAuth, so
@@ -108,5 +109,22 @@ students.delete('/:id', asyncHandler(async (req, res) => {
 }))
 
 router.use('/students', students)
+
+// ---- Student Reports ---------------------------------------------------------
+
+const reports = Router()
+reports.use(requireOrgModule('reports'))
+
+// GET /api/org/reports — each student's psychometric test, as we last heard
+reports.get('/', asyncHandler(async (req, res) => {
+  res.json(await studentReports(req.org.id))
+}))
+
+// POST /api/org/reports/refresh — ask Mindler again about open tests first
+reports.post('/refresh', asyncHandler(async (req, res) => {
+  res.json(await studentReports(req.org.id, { refresh: true }))
+}))
+
+router.use('/reports', reports)
 
 export default router

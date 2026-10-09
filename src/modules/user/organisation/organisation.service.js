@@ -12,6 +12,7 @@ import {
   EMAIL_RE, LIMITS, optionalPhone, optionalPincode, optionalUrl, str as sstr,
 } from '../../../utils/validate.js'
 import { seatsUsed, seatSummary } from './seats.js'
+import { canEncrypt, encryptSecret, decryptSecret } from '../../../utils/secretBox.js'
 
 const httpError = (message, status, code) => {
   const err = new Error(message)
@@ -106,6 +107,100 @@ export const fullOrgDTO = (o) => ({
   createdAt: o.createdAt,
 })
 
+/**
+ * The institution's Mindler account as staff see it: never the password, only
+ * whether one is saved. Not part of fullOrgDTO, which the institution's own
+ * portal receives too.
+ */
+export const mindlerDTO = (o) => ({
+  loginId: o.mindler?.loginId || '',
+  schoolId: o.mindler?.schoolId || '',
+  passwordSetAt: o.mindler?.passwordSetAt || null,
+})
+
+/** fullOrgDTO plus what only our admin may see. */
+export const adminOrgDTO = (o) => ({ ...fullOrgDTO(o), mindler: mindlerDTO(o) })
+
+// ---- Mindler account --------------------------------------------------------
+
+const MINDLER_CAPS = { loginId: LIMITS.email, password: 200, schoolId: 40 }
+
+/**
+ * Check and normalise the Mindler fields an admin typed: { loginId, password,
+ * schoolId }. The school id stands on its own — it can be set before the
+ * institution has a login. A blank password means "keep the saved one". Clearing the login
+ * clears the password with it — a password for no account is no use to anyone.
+ * Throws before anything is written, so a bad field never half-saves a form.
+ */
+function cleanMindler(m) {
+  if (m == null) return null
+  if (typeof m !== 'object' || Array.isArray(m)) throw httpError('Mindler details must be an object', 400)
+  const loginId = String(m.loginId ?? '').trim().toLowerCase().slice(0, MINDLER_CAPS.loginId)
+  const password = typeof m.password === 'string' ? m.password : ''
+  const schoolId = String(m.schoolId ?? '').trim().slice(0, MINDLER_CAPS.schoolId)
+  if (schoolId && !/^[A-Za-z0-9_-]+$/.test(schoolId)) throw httpError('The Mindler school ID may only hold letters, digits, - and _', 400)
+  if (loginId && !isEmail(loginId)) throw httpError('The Mindler login must be an email address', 400)
+  if (password.length > MINDLER_CAPS.password) throw httpError('That Mindler password is too long', 400)
+  if (password && !loginId) throw httpError('Enter the Mindler login along with its password', 400)
+  if (password && !canEncrypt()) {
+    throw httpError('Saving passwords is not set up on this server yet (CREDENTIALS_ENCRYPTION_KEY is missing).', 503, 'ENCRYPTION_NOT_CONFIGURED')
+  }
+  return { loginId, password, schoolId }
+}
+
+/** Validate the Mindler part of a draft without writing anything. */
+export function assertMindlerDraft(m) {
+  cleanMindler(m)
+}
+
+/**
+ * Write cleaned Mindler fields onto an organisation document (not saved).
+ * Returns true when the school id changed, so the caller can pass it on to the
+ * students already on the roster once the organisation is saved.
+ */
+function applyMindler(org, m) {
+  const clean = cleanMindler(m)
+  if (!clean) return false
+  const schoolChanged = (org.mindler?.schoolId || '') !== clean.schoolId
+  org.set('mindler.schoolId', clean.schoolId)
+  org.set('mindler.loginId', clean.loginId)
+  if (!clean.loginId) {
+    org.set('mindler.password', '')
+    org.set('mindler.passwordSetAt', null)
+  } else if (clean.password) {
+    org.set('mindler.password', encryptSecret(clean.password))
+    org.set('mindler.passwordSetAt', new Date())
+  }
+  return schoolChanged
+}
+
+/** The value a student of this organisation carries in User.mindlerSchoolId. */
+const studentSchoolId = (org) => org?.mindler?.schoolId || null
+
+/**
+ * Give every student on the roster the organisation's current school id —
+ * after it changes, so students added before it was set (or under an old id)
+ * reach Mindler under the right school from their next test on.
+ */
+async function syncRosterSchoolId(org) {
+  await User.updateMany(
+    { organisation: org._id, organisationRole: 'member' },
+    { $set: { mindlerSchoolId: studentSchoolId(org) } }
+  )
+}
+
+/**
+ * The institution's Mindler sign-in, decrypted, for the server's own use when
+ * signing the institution in to Mindler. Null when none is saved or it cannot
+ * be opened. Never send the result to a browser.
+ */
+export async function mindlerCredentials(orgId) {
+  const org = await Organisation.findById(orgId).select('+mindler.password')
+  if (!org?.mindler?.loginId) return null
+  const password = decryptSecret(org.mindler.password)
+  return { loginId: org.mindler.loginId, schoolId: org.mindler.schoolId || '', password }
+}
+
 // ---- Partner application (public form) --------------------------------------
 
 /** Public form submission. One application per client IP, as before. */
@@ -188,6 +283,7 @@ export function assertOrganisationDraft(draft, ownerEmail) {
   if (d.packages !== undefined && !Array.isArray(d.packages)) {
     throw httpError('Sponsored courses must be a list of package SKUs', 400)
   }
+  assertMindlerDraft(d.mindler)
 }
 
 /**
@@ -206,7 +302,7 @@ export async function createOrganisationForOwner(owner, draft = {}) {
   const fields = {}
   for (const [field, max] of Object.entries(PROFILE_CAPS)) fields[field] = str(draft[field], max)
   const name = fields.name
-  return Organisation.create({
+  const org = new Organisation({
     ...fields,
     type: ORG_TYPES.includes(draft.type) ? draft.type : 'school',
     pincode: optionalPincode(draft.pincode),
@@ -224,6 +320,8 @@ export async function createOrganisationForOwner(owner, draft = {}) {
     publicListed: draft.publicListed !== false,
     active: true,
   })
+  applyMindler(org, draft.mindler)
+  return org.save()
 }
 
 /** Does this account own an organisation? Used by the account-edit guards. */
@@ -336,8 +434,10 @@ export async function updateOrganisationByAdmin(id, body = {}) {
   if (body.packages !== undefined) org.packages = await normalisePackageSkus(body.packages)
   if (body.publicListed !== undefined) org.publicListed = !!body.publicListed
   if (body.active !== undefined) org.active = !!body.active
+  const schoolChanged = body.mindler !== undefined && applyMindler(org, body.mindler)
 
   await org.save()
+  if (schoolChanged) await syncRosterSchoolId(org)
   return org
 }
 
@@ -509,6 +609,12 @@ async function addStudent(org, row) {
   // Belongs to someone else already — never steal them, just report it.
   if (String(user.organisation || '') !== String(org._id)) {
     return { user, status: 'conflict', message: 'Already belongs to another organisation' }
+  }
+
+  // The institution's Mindler school, so the test files them under it.
+  if ((user.mindlerSchoolId || null) !== studentSchoolId(org)) {
+    user.mindlerSchoolId = studentSchoolId(org)
+    await user.save()
   }
 
   // Adding back a student this organisation had removed. The removal switched
@@ -702,6 +808,8 @@ export async function removeOrgStudent(orgId, userId) {
   user.removedFromOrganisationAt = new Date()
   user.organisation = null
   user.organisationRole = null
+  // No longer this school's student, so no longer filed under it on Mindler.
+  user.mindlerSchoolId = null
 
   // Switch the account off — but ONLY when this organisation is what brought it
   // into existence. A roster can also pick up somebody who had already signed
@@ -734,6 +842,7 @@ export async function restoreOrgStudent(userId) {
 
   user.organisation = org._id
   user.organisationRole = 'member'
+  user.mindlerSchoolId = studentSchoolId(org)
   user.removedFromOrganisation = null
   user.removedFromOrganisationAt = null
   if (user.signupMethod === 'invite') user.active = true
