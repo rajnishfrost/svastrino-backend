@@ -53,11 +53,8 @@ router.get('/me', asyncHandler(async (req, res) => {
   })
 }))
 
-// PATCH /api/org/profile — the organisation editing its own public details
-router.patch('/profile', requireOrgModule('profile'), asyncHandler(async (req, res) => {
-  const org = await orgService.updateOwnProfile(req.org.id, req.body || {})
-  res.json({ organisation: orgService.fullOrgDTO(org) })
-}))
+// The institute's details are read-only to it (GET /me carries them); only our
+// admin edits them. There is deliberately no PATCH /profile.
 
 // ---- Students ----------------------------------------------------------------
 
@@ -112,8 +109,9 @@ router.use('/students', students)
 
 // ---- Student Reports ---------------------------------------------------------
 
+// Every institution has this section — it is not one of the admin-granted
+// modules — so there is no requireOrgModule here.
 const reports = Router()
-reports.use(requireOrgModule('reports'))
 
 // GET /api/org/reports — each student's psychometric test, as we last heard
 reports.get('/', asyncHandler(async (req, res) => {

@@ -454,17 +454,6 @@ function applyProfileFields(org, body) {
   if (body.pincode !== undefined) org.pincode = optionalPincode(body.pincode)
 }
 
-/** The organisation editing its own profile — never its status/modules/email. */
-export async function updateOwnProfile(orgId, body = {}) {
-  const org = await Organisation.findById(orgId)
-  if (!org) throw httpError('Organisation not found', 404)
-  applyProfileFields(org, body)
-  // Opting out of the public directory is the organisation's own call.
-  if (body.publicListed !== undefined) org.publicListed = !!body.publicListed
-  await org.save()
-  return org
-}
-
 // ---- Public directory --------------------------------------------------------
 
 /** /organisations — approved, active, and opted in to being listed. */
@@ -608,7 +597,7 @@ async function addStudent(org, row) {
 
   // Belongs to someone else already — never steal them, just report it.
   if (String(user.organisation || '') !== String(org._id)) {
-    return { user, status: 'conflict', message: 'Already belongs to another organisation' }
+    return { user, status: 'conflict', message: 'Already belongs to another institute' }
   }
 
   // The institution's Mindler school, so the test files them under it.
@@ -650,7 +639,7 @@ async function addStudent(org, row) {
     message: created
       ? 'Account created'
       : attached
-        ? 'Existing account linked to your organisation'
+        ? 'Existing account linked to your institute'
         : 'Already a member',
   }
 }
@@ -801,7 +790,7 @@ export async function bulkImportStudents(orgId, csvText, { dryRun = false } = {}
  */
 export async function removeOrgStudent(orgId, userId) {
   const user = await User.findOne({ _id: userId, organisation: orgId, organisationRole: 'member' })
-  if (!user) throw httpError('Student not found in your organisation', 404)
+  if (!user) throw httpError('Student not found in your institute', 404)
 
   // Remembered so an admin can undo a removal made by mistake (restoreOrgStudent).
   user.removedFromOrganisation = user.organisation

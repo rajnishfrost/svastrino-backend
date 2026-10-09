@@ -33,9 +33,9 @@ export const ORG_TYPE_LABELS = {
 
 // Sections of the organisation portal an admin can grant. Kept deliberately
 // small — an organisation never reaches the admin panel or anyone else's data.
-// 'reports' is Student Reports: each student's psychometric test progress, and
-// the way into the institution's own Mindler admin for the full reports.
-export const ORG_MODULES = ['students', 'profile', 'reports']
+// Student Reports is not in this list: every institution has it, like the
+// dashboard (see org.routes.js).
+export const ORG_MODULES = ['students', 'profile']
 
 // What a freshly approved organisation gets. Admin can trim it afterwards.
 export const DEFAULT_ORG_MODULES = [...ORG_MODULES]
