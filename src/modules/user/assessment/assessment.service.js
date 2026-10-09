@@ -55,7 +55,7 @@ async function requireEntitlement(userId, product) {
  */
 async function missingForTest(userId) {
   if (!mindler.isApiMode()) return { user: null, needs: [] }
-  const user = await User.findById(userId).select('name email phone studentClass').lean()
+  const user = await loadMindlerUser(userId)
   const needs = []
   if (!mindler.userTypeFor(user?.studentClass)) needs.push('studentClass')
   if (!user?.phone) needs.push('phone')
@@ -125,7 +125,15 @@ async function guidesFor(userId) {
 /** The student's details the Mindler calls need, or null outside API mode. */
 async function mindlerUser(userId) {
   if (!mindler.isApiMode()) return null
-  return User.findById(userId).select('name email phone studentClass').lean()
+  return loadMindlerUser(userId)
+}
+
+/**
+ * The student as the Mindler calls take them. `mindlerSchoolId` is set only
+ * for a student an institution added — see User.mindlerSchoolId.
+ */
+async function loadMindlerUser(userId) {
+  return User.findById(userId).select('name email phone studentClass mindlerSchoolId').lean()
 }
 
 function toDTO(a, needs = [], guides = null) {
@@ -173,6 +181,59 @@ function reportDTO(report = {}) {
     topCareers: report.topCareers || [],
     summary: report.summary || '',
   }
+}
+
+// Student Reports (institution portal): how stale an open test's status may
+// be before "Refresh" asks Mindler again, how many it asks per press, and how
+// many at once. Each ask is three calls against our account.
+const REFRESH_AFTER_MS = 5 * 60 * 1000
+const REFRESH_CAP = 40
+const REFRESH_PARALLEL = 4
+
+/**
+ * The psychometric test, student by student, for an institution's Student
+ * Reports page: a Map of user id → that student's most recently touched test.
+ * Students who never opened one are simply absent.
+ *
+ * `refresh` first asks Mindler again about open tests not checked in the last
+ * few minutes, oldest check first and capped, so a big roster takes a few
+ * presses rather than one very long one. A check that fails changes nothing.
+ */
+export async function testsForStudents(userIds, { refresh = false } = {}) {
+  if (refresh && mindler.isApiMode()) {
+    const stale = await Assessment.find({
+      user: { $in: userIds },
+      status: { $in: ['in_progress', 'submitted'] },
+      $or: [{ providerCheckedAt: null }, { providerCheckedAt: { $lt: new Date(Date.now() - REFRESH_AFTER_MS) } }],
+    }).sort({ providerCheckedAt: 1 }).limit(REFRESH_CAP)
+    for (let i = 0; i < stale.length; i += REFRESH_PARALLEL) {
+      await Promise.all(stale.slice(i, i + REFRESH_PARALLEL).map(async (a) => {
+        try {
+          await syncWithMindler(a, await loadMindlerUser(a.user), { force: true })
+        } catch (err) {
+          console.error(`✗ Student Reports refresh failed for assessment ${a._id}:`, err.message)
+        }
+      }))
+    }
+  }
+
+  const rows = await Assessment.find({ user: { $in: userIds } })
+    .sort({ updatedAt: -1 })
+    .select('user status providerPercent providerCheckedAt startedAt completedAt updatedAt')
+    .lean()
+  const byUser = new Map()
+  for (const a of rows) {
+    const key = String(a.user)
+    if (byUser.has(key)) continue
+    byUser.set(key, {
+      status: a.status,
+      percent: a.status === 'completed' ? 100 : a.providerPercent ?? null,
+      startedAt: a.startedAt || null,
+      completedAt: a.completedAt || null,
+      checkedAt: a.providerCheckedAt || null,
+    })
+  }
+  return byUser
 }
 
 /** Status for the course page card. */

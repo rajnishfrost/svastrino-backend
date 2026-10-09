@@ -74,6 +74,12 @@ const userSchema = new mongoose.Schema(
     // Cleared the moment they are restored or re-added.
     removedFromOrganisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null },
     removedFromOrganisationAt: { type: Date, default: null },
+    // The Mindler school id of the institution that added this student, sent
+    // as `school_id` when they open the psychometric test so Mindler files them
+    // under that school and the school sees their report. Null for anyone who
+    // signed up on their own. Set when an institution adds them (and when its
+    // school id changes), cleared when it removes them.
+    mindlerSchoolId: { type: String, default: null },
 
     /**
      * How this account came into being. Written once, at creation, and never

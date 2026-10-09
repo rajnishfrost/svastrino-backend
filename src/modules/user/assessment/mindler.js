@@ -68,6 +68,10 @@ const SIGNUP_STEPS = (process.env.MINDLER_SIGNUP_STEPS || '')
 
 export const isApiMode = () => MINDLER_MODE === 'api'
 
+// Mindler's admin portal on our domain, where an institution reads its
+// students' full reports with its own Mindler login.
+export const ADMIN_URL = `${ORIGIN}/admin`
+
 /** Static handoff details for the student card (test URL, access code, steps). */
 export function handoffInfo() {
   return {
@@ -165,6 +169,12 @@ async function generateAuthToken(user) {
     // the response. Sent as the request example has it until Mindler confirms.
     ...(last ? { Last_name: last } : {}),
     ...(mindlerPhone(user.phone) ? { phone: mindlerPhone(user.phone) } : {}),
+    // The school the student belongs to on Mindler, so the school sees their
+    // report — only for students an institution added (User.mindlerSchoolId).
+    // The guide's example sends a number, so a numeric id goes as one.
+    ...(user.mindlerSchoolId
+      ? { school_id: /^\d+$/.test(user.mindlerSchoolId) ? Number(user.mindlerSchoolId) : user.mindlerSchoolId }
+      : {}),
   }
 
   let res
@@ -196,7 +206,8 @@ async function generateAuthToken(user) {
  * site, where they sign up themselves. In API mode, a one-time login link that
  * lands them in the assessment already signed in.
  *
- * `user` needs name, email, phone and studentClass.
+ * `user` needs name, email, phone and studentClass, plus mindlerSchoolId for a
+ * student an institution added.
  */
 export async function testUrlFor(user) {
   if (!isApiMode()) return STUDENT_URL

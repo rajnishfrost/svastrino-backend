@@ -33,7 +33,9 @@ export const ORG_TYPE_LABELS = {
 
 // Sections of the organisation portal an admin can grant. Kept deliberately
 // small — an organisation never reaches the admin panel or anyone else's data.
-export const ORG_MODULES = ['students', 'profile']
+// 'reports' is Student Reports: each student's psychometric test progress, and
+// the way into the institution's own Mindler admin for the full reports.
+export const ORG_MODULES = ['students', 'profile', 'reports']
 
 // What a freshly approved organisation gets. Admin can trim it afterwards.
 export const DEFAULT_ORG_MODULES = [...ORG_MODULES]
@@ -77,6 +79,21 @@ const organisationSchema = new mongoose.Schema(
     // account (sets the invite password, or first signs in with Google) — see
     // sponsorship.js. Empty = the organisation runs its scholarship only.
     packages: { type: [String], default: [] },
+
+    // The institution's own account on Mindler (the psychometric test
+    // provider), which Mindler issues per school. Typed in by our admin.
+    //   loginId   — what it signs in to Mindler's admin with (an email)
+    //   password  — AES-GCM encrypted (utils/secretBox.js), never sent to any
+    //               browser; `select: false` so no query reads it by accident
+    //   schoolId  — Mindler's id for the school. Copied onto each student it
+    //               adds (User.mindlerSchoolId) and sent to Mindler from there
+    mindler: {
+      loginId: { type: String, trim: true, lowercase: true, default: '' },
+      password: { type: String, default: '', select: false },
+      // When a password was last saved — what the admin form shows instead.
+      passwordSetAt: { type: Date, default: null },
+      schoolId: { type: String, trim: true, default: '' },
+    },
 
     // How many students the institution has paid for — each paid institution
     // order adds its quantity. Null = no limit, which is every institution made
