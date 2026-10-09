@@ -5,6 +5,7 @@ import { requireOrgModule } from '../../middleware/auth.js'
 import * as orgService from '../user/organisation/organisation.service.js'
 import { sponsoredCourses } from '../user/organisation/sponsorship.js'
 import { studentReports } from '../user/organisation/reports.js'
+import { adminLogin } from '../user/assessment/mindler.js'
 import { ORG_MODULES, ORG_TYPE_LABELS } from '../user/organisation/organisation.model.js'
 
 // Mounted at /api/org — every route below already passed requireOrgAuth, so
@@ -121,6 +122,21 @@ reports.get('/', asyncHandler(async (req, res) => {
 // POST /api/org/reports/refresh — ask Mindler again about open tests first
 reports.post('/refresh', asyncHandler(async (req, res) => {
   res.json(await studentReports(req.org.id, { refresh: true }))
+}))
+
+// POST /api/org/reports/mindler-login — sign the institute in to Mindler's
+// admin with the login our admin saved for it, and hand the result to its
+// browser to store the way Mindler's own login form does.
+reports.post('/mindler-login', asyncHandler(async (req, res) => {
+  const creds = await orgService.mindlerCredentials(req.org.id)
+  if (!creds?.loginId || !creds.password) {
+    const err = new Error('Your account on the assessment site is not set up yet.')
+    err.status = 404
+    err.code = 'MINDLER_NOT_SET_UP'
+    throw err
+  }
+  res.set('Cache-Control', 'no-store')
+  res.json(await adminLogin(creds.loginId, creds.password))
 }))
 
 router.use('/reports', reports)
