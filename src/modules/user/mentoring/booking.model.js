@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * One booked counselling/mentoring appointment (a 2.5-hour slot). A program
+ * One booked counseling/mentoring appointment (a 2.5-hour slot). A program
  * (Bulls-eye 3 / Bloom 5 / Breakthrough 22) is paid for ONCE via the normal
  * payments flow (its SKU lives in `packages`); each of its sessions is then
  * booked here, one slot at a time.

@@ -46,7 +46,7 @@ const PROGRAMS = [
     "slug": "bloom",
     "name": "Bloom Program",
     "tagline": "Cultivate a visionary mindset and set goals for a bright future",
-    "summary": "Svastrino's personality-based mentoring programme. Over about 2 months it moves from a full personality analysis through self-discovery tasks and vision building, ending in a personalised 5-year career plan.",
+    "summary": "Svastrino's personality-based mentoring program. Over about 2 months it moves from a full personality analysis through self-discovery tasks and vision building, ending in a personalised 5-year career plan.",
     "trustLine": "",
     "durationLabel": "About 2 months",
     "sessionsLabel": "Pre-session of 90 minutes, 3 sessions of about 2.5 hours each, weekly follow-ups and support throughout the program",

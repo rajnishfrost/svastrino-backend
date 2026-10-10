@@ -21,7 +21,7 @@ const mentoringProgramSchema = new mongoose.Schema(
   {
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, trim: true },
-    // "Services" sub-category this program sits under (Career Counselling /
+    // "Services" sub-category this program sits under (Career Counseling /
     // Personalised Mentoring) — drives the site nav + landing grouping.
     category: {
       slug: { type: String, default: '' },

@@ -10,7 +10,7 @@ const skillBuildSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true }, // 'nirmaan'
     name: { type: String, required: true, trim: true },                                 // 'Nirmaan'
     tagline: { type: String, default: '' },
-    // 'course' = video course (Nirmaan); 'mentoring' = bookable counselling program
+    // 'course' = video course (Nirmaan); 'mentoring' = bookable counseling program
     kind: { type: String, enum: ['course', 'mentoring', 'test'], default: 'course' }, // 'test' = the ₹900 psychometric test on its own
     description: { type: String, default: '' },
     active: { type: Boolean, default: true },

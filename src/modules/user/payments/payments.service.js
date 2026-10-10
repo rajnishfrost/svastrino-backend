@@ -350,7 +350,7 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
     })
     if (!cleared) {
       throw httpError(
-        'This programme starts with a call from our team. Request one on the programme page and we will open your booking right after.',
+        'This program starts with a call from our team. Request one on the program page and we will open your booking right after.',
         400,
       )
     }

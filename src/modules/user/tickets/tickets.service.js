@@ -56,7 +56,7 @@ export async function createTicket(userId, { subject, category, product, text })
   // is also the key that decides whether this is a repeat press of the same
   // problem, so a slug nobody owns must not be able to open a fresh thread.
   // It keeps this in step with grantAccess too, which looks for the same
-  // enrolment — without the check a student could open a conversation that no
+  // enrollment — without the check a student could open a conversation that no
   // admin could ever act on.
   if (product) {
     const holds = await Enrollment.exists({ user: userId, product })
@@ -274,7 +274,7 @@ export async function setStatus(adminId, id, status) {
  * locked — the grant would look done and change nothing. So the days are always
  * counted from whichever is later, the existing expiry or right now.
  *
- * Every enrolment for that course is moved, not just one. A pay-as-you-use
+ * Every enrollment for that course is moved, not just one. A pay-as-you-use
  * student holds several (one per phase they bought), and courseAccess decides
  * the lock from the EARLIEST of them, so leaving one behind would let the grant
  * look done while the course stayed shut.
@@ -297,10 +297,10 @@ export async function grantAccess(adminId, id, days) {
   }
 
   const studentId = ticket.user?._id || ticket.user
-  const enrolments = await Enrollment.find({ user: studentId, product: ticket.product })
-  if (!enrolments.length) {
+  const enrollments = await Enrollment.find({ user: studentId, product: ticket.product })
+  if (!enrollments.length) {
     throw httpError(
-      `We could not find an enrolment for “${ticket.product}” on this account, so there is nothing to reopen.`,
+      `We could not find an enrollment for “${ticket.product}” on this account, so there is nothing to reopen.`,
       400,
       'NO_ENROLMENT'
     )
@@ -309,11 +309,11 @@ export async function grantAccess(adminId, id, days) {
   const now = new Date()
   let moved = 0
 
-  for (const e of enrolments) {
-    // A refunded enrolment stays shut: the money went back, so the access does
+  for (const e of enrollments) {
+    // A refunded enrollment stays shut: the money went back, so the access does
     // not come back with a support conversation.
     if (e.status === 'revoked') continue
-    // No end date anywhere is a lifetime enrolment. Writing a date onto it would
+    // No end date anywhere is a lifetime enrollment. Writing a date onto it would
     // take access away in the name of giving it, so it is left exactly as it is.
     const current = await effectiveExpiry(e)
     if (!current) continue
@@ -330,16 +330,16 @@ export async function grantAccess(adminId, id, days) {
 
   if (!moved) {
     throw httpError(
-      'This student has no enrolment that can be reopened for that course — it is either refunded or already open with no end date.',
+      'This student has no enrollment that can be reopened for that course — it is either refunded or already open with no end date.',
       400,
       'NOTHING_TO_REOPEN'
     )
   }
 
   // The date we promise has to be the date the course really locks on, and that
-  // is read off the earliest enrolment, not the most generous one. Asking
+  // is read off the earliest enrollment, not the most generous one. Asking
   // courseAccess after the rows have moved is the only way that sentence stays
-  // true for a student who holds one enrolment per phase.
+  // true for a student who holds one enrollment per phase.
   const access = await courseAccess(studentId, ticket.product)
   const until = access.expiresAt ? readableDate(access.expiresAt) : null
   const body = until

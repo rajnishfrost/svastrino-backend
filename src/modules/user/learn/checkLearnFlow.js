@@ -78,12 +78,12 @@ async function run() {
   const sb = await SkillBuild.findOne({ slug })
   if (!sb) { console.error(`✗ No skill-build "${slug}"`); process.exit(1) }
 
-  const enrolments = await Enrollment.find({ user: user._id, product: slug, status: 'active' })
-  if (!enrolments.length) {
+  const enrollments = await Enrollment.find({ user: user._id, product: slug, status: 'active' })
+  if (!enrollments.length) {
     console.error(`✗ ${email} is not enrolled in "${slug}" — buy it for this account first (or seed an enrollment), then run this again.`)
     process.exit(1)
   }
-  const phases = enrolments.reduce((a, b) => (b.phasesUnlocked > a.phasesUnlocked ? b : a))
+  const phases = enrollments.reduce((a, b) => (b.phasesUnlocked > a.phasesUnlocked ? b : a))
   console.log(`\nWalking "${slug}" as ${email} — package ${phases.packageName}, phases ${phases.phasesUnlocked}/${phases.phasesTotal}\n`)
 
   // --- clean slate -------------------------------------------------------

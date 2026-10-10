@@ -490,7 +490,7 @@ export async function getCourse(userId, slug) {
 /** Begin the course (idempotent). Sets the schedule anchor; Video 1 opens now. */
 export async function startCourse(userId, slug) {
   await assertActiveCourse(userId, slug)   // the year must still be running
-  const st = await loadState(userId, slug) // also enforces enrolment
+  const st = await loadState(userId, slug) // also enforces enrollment
   // Bought with the test: the course starts after it. Starting now would set
   // the daily clock running on a course the student cannot open yet, and they
   // would be "behind" on the first day it opens.
@@ -1003,7 +1003,7 @@ export async function courseRecord(userId, slug) {
 /**
  * One week's written resource — the companion document to its video.
  *
- * Three gates, and each one is here for its own reason. Enrolment, because the
+ * Three gates, and each one is here for its own reason. Enrollment, because the
  * document belongs to the course. The session's tier against the package rank,
  * because a student on Discover must not be able to read Launch's weeks by
  * asking for their id. And the video, because that is the promise the page
@@ -1015,7 +1015,7 @@ export async function courseRecord(userId, slug) {
  */
 export async function getSessionResource(userId, slug, sessionId) {
   // Who may have this is decided ONCE, by the same pass that builds the page:
-  // enrolment, the week's tier against the package rank, the phase it sits in,
+  // enrollment, the week's tier against the package rank, the phase it sits in,
   // the psychometric gate, and the video itself. Asking getCourse rather than
   // re-testing each gate here is what stops the download from ever being more
   // generous than the section that offers it — the two cannot drift apart

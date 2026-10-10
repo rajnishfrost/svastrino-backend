@@ -34,7 +34,7 @@ async function dispatchBookingEmail(userId, pkg, booking, rescheduled = false) {
 }
 
 /**
- * Counselling & Mentoring catalog: ONE parent SkillBuild (kind 'mentoring') —
+ * Counseling & Mentoring catalog: ONE parent SkillBuild (kind 'mentoring') —
  * the category — with each program (Bull's Eye / Bloom / Breakthrough) as a
  * Package under it. Payments treats every program as an independent product
  * (product = the package SKU, see getPackageBySku), so owning one program never
@@ -113,14 +113,14 @@ export async function listCategories() {
 
 async function programBySku(sku) {
   const pkg = await Package.findOne({ sku, active: true }).populate('skillBuild', 'name slug kind')
-  if (!pkg || pkg.skillBuild?.kind !== 'mentoring') throw httpError('Unknown programme', 404)
+  if (!pkg || pkg.skillBuild?.kind !== 'mentoring') throw httpError('Unknown program', 404)
   return pkg
 }
 
 /** Does this user own the program (paid, active)? Mentoring product = the SKU. */
 async function requireEnrollment(userId, pkg) {
   const enr = await Enrollment.findOne({ user: userId, product: pkg.sku, status: 'active' })
-  if (!enr) throw httpError('Please purchase this programme first', 403, 'NOT_ENROLLED')
+  if (!enr) throw httpError('Please purchase this program first', 403, 'NOT_ENROLLED')
   return enr
 }
 
@@ -143,7 +143,7 @@ export async function createBooking(userId, { sku, date, start }) {
     programSku: sku,
     status: { $ne: 'cancelled' },
   })
-  if (used >= total) throw httpError(`All ${total} sessions of this programme are already booked`, 409)
+  if (used >= total) throw httpError(`All ${total} sessions of this program are already booked`, 409)
 
   if (!(await isSlotAvailable(date, start))) {
     throw httpError('That slot is no longer available — please pick another', 409, 'SLOT_TAKEN')

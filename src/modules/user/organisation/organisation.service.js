@@ -483,7 +483,7 @@ export async function directoryStates() {
   return states.sort((a, b) => a.localeCompare(b))
 }
 
-/** Approved + active organisations — the student enrolment dropdown. */
+/** Approved + active organisations — the student enrollment dropdown. */
 export async function enrollableOrganisations() {
   return Organisation.find({ status: 'approved', active: true })
     .collation({ locale: 'en', strength: 2 })

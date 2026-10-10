@@ -109,7 +109,7 @@ const organisationSchema = new mongoose.Schema(
     publicListed: { type: Boolean, default: true, index: true },
 
     // Suspend an organisation without deleting it — blocks the portal and hides
-    // it from the enrolment dropdown, but keeps every record intact.
+    // it from the enrollment dropdown, but keeps every record intact.
     active: { type: Boolean, default: true, index: true },
 
     // One application per IP on the public form — stored so the service can
@@ -122,7 +122,7 @@ const organisationSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-// The directory and the enrolment dropdown both ask for "approved, listed,
+// The directory and the enrollment dropdown both ask for "approved, listed,
 // active" — one index covers both.
 organisationSchema.index({ status: 1, active: 1, publicListed: 1 })
 

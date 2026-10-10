@@ -35,7 +35,7 @@ export function toPackageDTO(pkg) {
     badge: pkg.badge,
     priceInr: rupees(pkg.price),
     // Phase-wise selling. 'per-phase' cards charge `price` once per phase, so
-    // the card shows the instalment and the full run alongside it.
+    // the card shows the installment and the full run alongside it.
     paymentMode: pkg.paymentMode || 'one-time',
     phases: pkg.phases || 1,
     includesPsychometric: !!pkg.includesPsychometric,

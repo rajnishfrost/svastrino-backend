@@ -28,7 +28,7 @@ const PROGRAMS = [
     name: "Bull's Eye Program",
     // Which "Services" sub-category this program sits under (for the site nav
     // + landing grouping). Matches the mentoring catalog sub-categories.
-    category: { slug: 'career-counselling', name: 'Career Counselling' },
+    category: { slug: 'career-counselling', name: 'Career Counseling' },
     bookingSku: 'mentoring-bullseye',
     tagline: "Get a quick yet accurate solution for your 'Career Confusion'",
     summary:
@@ -70,7 +70,7 @@ const PROGRAMS = [
     bookingSku: 'mentoring-bloom',
     tagline: 'Cultivate a visionary mindset and set goals for a bright future',
     summary:
-      "Svastrino's personality-based mentoring programme. Over about 2 months it moves from a full " +
+      "Svastrino's personality-based mentoring program. Over about 2 months it moves from a full " +
       'personality analysis through self-discovery tasks and vision building, ending in a ' +
       'personalised 5-year career plan.',
     duration: '2 months',
@@ -266,7 +266,7 @@ const TESTIMONIALS = [
     name: 'Tara Chheda',
     role: 'Mother of Khushi, FYJC, NM College, Mumbai',
     quote:
-      'The counselling sessions were very fruitful for me. I appreciate the unique ways of mentorship and ' +
+      'The counseling sessions were very fruitful for me. I appreciate the unique ways of mentorship and ' +
       'the examples which were used to explain topics to me. It helped me choose my goal in my life. ' +
       'Also, the suggestions about taking up physical activities were very helpful. If my friends or ' +
       'relatives are ever in a fix to choose their career, I would like to refer you to them.',
@@ -279,9 +279,9 @@ const TESTIMONIALS = [
     role: 'Brother of Actor Arshad Warsi',
     quote:
       "Svastrino & surely Mr. Rohit Gala have been a source of my kids' inspiration, guidance and support " +
-      'through his career counselling — right from my first visit to Svastrino Consultancy in the year ' +
+      'through his career counseling — right from my first visit to Svastrino Consultancy in the year ' +
       "2015. He has been a driving force in shaping my kids' career path in the field of their interests. " +
-      'I would like to thank Mr. Rohit Gala for his invaluable counselling with immense patience and an ' +
+      'I would like to thank Mr. Rohit Gala for his invaluable counseling with immense patience and an ' +
       'ever smiling face.',
     photo: 'https://svastrino.com/wp-content/uploads/2023/03/70-Iqbal.jpg',
     program: 'breakthrough',
