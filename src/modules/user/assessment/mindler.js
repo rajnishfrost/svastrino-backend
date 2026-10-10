@@ -170,11 +170,13 @@ async function generateAuthToken(user) {
     ...(last ? { Last_name: last } : {}),
     ...(mindlerPhone(user.phone) ? { phone: mindlerPhone(user.phone) } : {}),
     // The school the student belongs to on Mindler, so the school sees their
-    // report — only for students an institution added (User.mindlerSchoolId).
-    // The guide's example sends a number, so a numeric id goes as one.
-    ...(user.mindlerSchoolId
-      ? { school_id: /^\d+$/.test(user.mindlerSchoolId) ? Number(user.mindlerSchoolId) : user.mindlerSchoolId }
-      : {}),
+    // report. Always sent: a student an institution added carries its id
+    // (User.mindlerSchoolId), and a student who belongs to no institution
+    // sends null. The guide's example sends a number, so a numeric id goes as
+    // one; a non-numeric id goes as the string it is.
+    school_id: user.mindlerSchoolId
+      ? (/^\d+$/.test(user.mindlerSchoolId) ? Number(user.mindlerSchoolId) : user.mindlerSchoolId)
+      : null,
   }
 
   let res
