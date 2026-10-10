@@ -35,7 +35,7 @@ router.get('/filters', asyncHandler(async (req, res) => {
   })
 }))
 
-// GET /api/user/organisations/enrollable — the student enrolment dropdown
+// GET /api/user/organisations/enrollable — the student enrollment dropdown
 router.get('/enrollable', asyncHandler(async (req, res) => {
   const list = await service.enrollableOrganisations()
   res.json({ organisations: list.map(service.publicOrgDTO) })

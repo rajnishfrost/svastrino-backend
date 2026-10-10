@@ -3,12 +3,12 @@
 //
 // Structure (3-level, like Skill Build → course → packages):
 //   Services (kind:'mentoring' SkillBuilds = sub-categories)
-//     • Career Counselling      → Bull's Eye Program
+//     • Career Counseling      → Bull's Eye Program
 //     • Personalised Mentoring   → Bloom Program, Breakthrough Program
 //
 // Each program is a Package. Payments treats every program as an independent
 // product (product = its SKU), so buying one is never an "upgrade" of another.
-// SKUs are kept stable so existing enrolments/bookings keep working.
+// SKUs are kept stable so existing enrollments/bookings keep working.
 // Prices are PLACEHOLDERS in paise — edit any time in Admin → Services.
 import '../../../config/env.js'
 import mongoose from 'mongoose'
@@ -21,7 +21,7 @@ import { formatInr } from '../../../utils/money.js'
 const SUBCATEGORIES = [
   {
     slug: 'career-counselling',
-    name: 'Career Counselling',
+    name: 'Career Counseling',
     tagline: 'Focused guidance to get unstuck and choose with clarity',
     order: 1,
     programs: [

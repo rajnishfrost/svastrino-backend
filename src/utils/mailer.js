@@ -302,10 +302,10 @@ export function buildExpertApprovalEmail({ name, program }) {
   const link = `${clientUrl()}/book-online${sku ? `?program=${sku}` : ''}`
 
   return {
-    subject: 'You can book your programme now',
+    subject: 'You can book your program now',
     text: `Hi ${first}, thanks for speaking with us. You can pick your first session and pay here: ${link}`,
     html: template({
-      heading: 'Your programme is ready to book 🎉',
+      heading: 'Your program is ready to book 🎉',
       preheader: 'Pick your first session and complete the payment.',
       intro:
         `Hi ${esc(first)}! Thank you for taking the time to speak with us. ` +

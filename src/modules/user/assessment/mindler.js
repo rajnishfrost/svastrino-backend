@@ -170,11 +170,13 @@ async function generateAuthToken(user) {
     ...(last ? { Last_name: last } : {}),
     ...(mindlerPhone(user.phone) ? { phone: mindlerPhone(user.phone) } : {}),
     // The school the student belongs to on Mindler, so the school sees their
-    // report — only for students an institution added (User.mindlerSchoolId).
-    // The guide's example sends a number, so a numeric id goes as one.
-    ...(user.mindlerSchoolId
-      ? { school_id: /^\d+$/.test(user.mindlerSchoolId) ? Number(user.mindlerSchoolId) : user.mindlerSchoolId }
-      : {}),
+    // report. Always sent: a student an institution added carries its id
+    // (User.mindlerSchoolId), and a student who belongs to no institution
+    // sends null. The guide's example sends a number, so a numeric id goes as
+    // one; a non-numeric id goes as the string it is.
+    school_id: user.mindlerSchoolId
+      ? (/^\d+$/.test(user.mindlerSchoolId) ? Number(user.mindlerSchoolId) : user.mindlerSchoolId)
+      : null,
   }
 
   let res
@@ -299,6 +301,44 @@ export async function fetchAssessmentStatus(user) {
   } catch (err) {
     console.error(`✗ Mindler status check failed for ${user.email}:`, err.name === 'TimeoutError' ? `timed out after ${STATUS_TIMEOUT_MS}ms` : err.message)
     return null
+  }
+}
+
+/**
+ * Sign an institute in to Mindler's admin with its own Mindler login — the
+ * same call Mindler's admin login form makes (POST graftAuth/v1/adminLogin,
+ * { email, password }). Not in the API guide; read from their admin app.
+ *
+ * Returns what their form keeps in the browser: the session (`admin_key`),
+ * the JWT (`admin_token`), the role and the customisations. Throws a 502 the
+ * institute can act on when Mindler refuses or is down; the password is never
+ * logged.
+ */
+export async function adminLogin(email, password) {
+  let res
+  try {
+    res = await fetch(`${API_BASE}/api/graftAuth/v1/adminLogin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: ORIGIN },
+      body: JSON.stringify({ email, password }),
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    })
+  } catch (err) {
+    console.error(`✗ Mindler adminLogin unreachable for ${email}:`, err.name === 'TimeoutError' ? `timed out after ${API_TIMEOUT_MS}ms` : err.message)
+    throw httpError('The assessment site is not responding right now. Please try again in a minute.', 502, 'MINDLER_UNAVAILABLE')
+  }
+  const data = await res.json().catch(() => null)
+  const d = data?.data
+  if (!res.ok || !data?.success || !d?.sessionDetails?.session) {
+    const why = data?.message || (data?.errors || []).map((e) => e.message).join(', ') || `HTTP ${res.status}`
+    console.error(`✗ Mindler adminLogin refused for ${email}: ${why}`)
+    throw httpError('The assessment site did not accept this institute’s login. Ask the Svastrino team to check it.', 502, 'MINDLER_LOGIN_REFUSED')
+  }
+  return {
+    session: d.sessionDetails.session,
+    token: d.sessionDetails.token,
+    role: d.role ?? null,
+    customizations: d.customizations || {},
   }
 }
 

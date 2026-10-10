@@ -4,13 +4,13 @@
 
 1. How and when did Svastrino start?
 
- Our story began with our founder, Rohit Gala, who experienced the challenge of selecting the right educational path firsthand. He struggled to find the right guidance and as a result, ended up exploring multiple fields before finding his calling as an Educationist. He realised the value of career counselling and mentoring and decided to make it his mission to help students avoid the same struggle. In 2009, Svastrino was established with a focus on personalised career counselling & mentoring programs and providing career guidance to youth in need. Our goal is to help you discover their potential, align their career goals with their unique personalities, and achieve success with our Mentoring for Career Development services.
+ Our story began with our founder, Rohit Gala, who experienced the challenge of selecting the right educational path firsthand. He struggled to find the right guidance and as a result, ended up exploring multiple fields before finding his calling as an Educationist. He realised the value of career counseling and mentoring and decided to make it his mission to help students avoid the same struggle. In 2009, Svastrino was established with a focus on personalised career counseling & mentoring programs and providing career guidance to youth in need. Our goal is to help you discover their potential, align their career goals with their unique personalities, and achieve success with our Mentoring for Career Development services.
 
 2\. What are Svastrino’s Vision and Mission?
 
 Vision: To create a generation of confident, capable and self-directed individuals who can shape their own success stories through Svastrino’s career development ecosystem.  
 
-Mission: To provide accessible, structured, and continuous career development through online skill-building, career counselling, and mentoring that is practical, personalised, and future-ready. 
+Mission: To provide accessible, structured, and continuous career development through online skill-building, career counseling, and mentoring that is practical, personalised, and future-ready. 
 
 # Process Basics
 
@@ -18,13 +18,13 @@ Mission: To provide accessible, structured, and continuous career development th
 
 Mentoring is an ever-evolving process that plays a vital role in shaping one's personal and professional growth. It is a personality-driven approach that recognizes and caters to an individual's specific requirements and ambitions for their life and career. The process involves frequent feedback and guidance, which is tailored to cater to the participant's distinct personality traits, strengths, and areas that require improvement. With Mentoring for Career Development, individuals receive the support and guidance required to achieve their career aspirations, providing them with the necessary tools and resources to not just succeed but be a leader in their domain of work.
 
-2. What is Counselling? 
+2. What is Counseling? 
 
-Counselling is a process of meaningful conversation between a licensed counsellor and an individual. It involves exploring challenges, identifying potential solutions, and developing the necessary mental and emotional tools for successful implementation. At Svastrino, our personalised counselling services are designed to help you navigate life's challenges with confidence and clarity.
+Counseling is a process of meaningful conversation between a licensed counsellor and an individual. It involves exploring challenges, identifying potential solutions, and developing the necessary mental and emotional tools for successful implementation. At Svastrino, our personalised counseling services are designed to help you navigate life's challenges with confidence and clarity.
 
-3. How is counselling different from mentoring?
+3. How is counseling different from mentoring?
 
-Counselling and Mentoring are both valuable tools to get support and guidance for personal and professional development. While Counselling is a short-term guidance program that helps individuals explore immediate problems and identify quick fix solutions, mentoring is a longer-term, personalised training program that helps individuals get guidance, advice, and support to drive results in a more comprehensive and focused way. Mentoring is tailored to each individual's unique needs and provides a detailed plan for achieving their career goals. At Svastrino, we offer both counselling and mentoring services, including personality-based mentoring programs that are personalised as per the individuals needs, to help our clients succeed in their life and careers.
+Counseling and Mentoring are both valuable tools to get support and guidance for personal and professional development. While Counseling is a short-term guidance program that helps individuals explore immediate problems and identify quick fix solutions, mentoring is a longer-term, personalised training program that helps individuals get guidance, advice, and support to drive results in a more comprehensive and focused way. Mentoring is tailored to each individual's unique needs and provides a detailed plan for achieving their career goals. At Svastrino, we offer both counseling and mentoring services, including personality-based mentoring programs that are personalised as per the individuals needs, to help our clients succeed in their life and careers.
 
 4. How is Mentoring done?   
    
@@ -68,7 +68,7 @@ To get the most out of your session and receive the best possible guidance, we u
 
 10. When should I get into any program? 
 
-Deciding to enroll in a program is a personal choice and can be done at any time when you feel it's right for you. If you aren’t sure which program is right for you, you can start with the [Bulls Eye Program](https://www.svastrino.com/bulls-eye) as that is the shortest career counselling program we offer. This will also give you the clarity of the way in which we work. This will also give you the confidence to enrol for the longer program for your life and career development through personalised mentoring. This could be done by enrolling in either [Bloom Program](https://www.svastrino.com/bloom) or [Breakthrough Program](https://www.svastrino.com/breakthrough) which are short and long term mentoring programs respectively.
+Deciding to enroll in a program is a personal choice and can be done at any time when you feel it's right for you. If you aren’t sure which program is right for you, you can start with the [Bulls Eye Program](https://www.svastrino.com/bulls-eye) as that is the shortest career counseling program we offer. This will also give you the clarity of the way in which we work. This will also give you the confidence to enrol for the longer program for your life and career development through personalised mentoring. This could be done by enrolling in either [Bloom Program](https://www.svastrino.com/bloom) or [Breakthrough Program](https://www.svastrino.com/breakthrough) which are short and long term mentoring programs respectively.
 
 # 
 
@@ -84,11 +84,11 @@ Neutral mentoring is a unique process of personalised training and guidance in w
 
 We understand that choosing the right program can be a daunting task, but don't worry \- we're here to help\! First, take some time to reflect on your concerns and/ or goals. Then, check out our programs and try to relate your needs to our services. And if you are still not sure, then you can start your journey by booking a [Bulls Eye Program](https://www.svastrino.com/bulls-eye) . This is where we would be able to help you with your initial queries and you can get an idea of how the Mentoring Programs can work for you. 
 
-3. What concerns are addressed in the Career Counselling & Career Mentoring programs?  
+3. What concerns are addressed in the Career Counseling & Career Mentoring programs?  
    
 
-At Svastrino, we offer career counseling & career mentoring programs that cater to every concern you may have when it comes to making informed career decisions and then evolve through it. Our counselling programs have helped over 14,000 students in the past 17 years and the mentoring program have helped over 790 mentees in the past 12 years.   
-Here are some of the concerns we address in our counselling programs:
+At Svastrino, we offer career counseling & career mentoring programs that cater to every concern you may have when it comes to making informed career decisions and then evolve through it. Our counseling programs have helped over 14,000 students in the past 17 years and the mentoring program have helped over 790 mentees in the past 12 years.   
+Here are some of the concerns we address in our counseling programs:
 
 * Needing a second opinion on selecting an academic journey (course, path, stream, college, university, etc.)  
 * Not having enough time to select a career pathway/field before application deadlines  
@@ -111,10 +111,10 @@ Here are some of the concerns we address in our counselling programs:
 
 At Svastrino, we understand that every student has unique needs, and we strive to provide tailored solutions to each individual. So, whatever your concern may be, we are here to help you achieve your career goals through our personalized career mentoring programs.
 
-4.  Is Career Counselling or Mentoring a one-time process?  
+4.  Is Career Counseling or Mentoring a one-time process?  
    
 
-The answer to this question is not as simple as a yes or no, as it depends on your individual needs and concerns. If you require immediate solutions for your career-related queries, then a Career Counselling session might suffice. However, for a more detailed examination of your personality, aptitude, and academic profile, a Career Mentoring program might be necessary. 
+The answer to this question is not as simple as a yes or no, as it depends on your individual needs and concerns. If you require immediate solutions for your career-related queries, then a Career Counseling session might suffice. However, for a more detailed examination of your personality, aptitude, and academic profile, a Career Mentoring program might be necessary. 
 
 Our programs are designed to provide you with the necessary guidance and support, but they do require ample time and effort from both sides to be successful. Therefore, we recommend that you select a program that best fits your availability and flexibility to ensure the formulation of a unique and evolving career plan that meets your needs.
 
@@ -126,7 +126,7 @@ To ensure we can provide the best guidance possible, we kindly request that you 
 6. Will these programs be effective online?  
    
 
-We completely understand your concerns about the effectiveness of online counselling or mentoring. We want to assure you that the process is all about personalized guidance, and it does not require any physical or face-to-face meetings. Our top priority is to address all your concerns and provide you with the best solutions for your future career. Whether it's an online or offline session, as long as we have a clear understanding of your needs and goals, we can provide you with the same quality of service. We have been successfully conducting online mentoring sessions since 2016, even with our clients from the Middle East, Africa, Australia and the USA. So, rest assured, you can expect a very personalised, productive, and fulfilling experience with our online program.
+We completely understand your concerns about the effectiveness of online counseling or mentoring. We want to assure you that the process is all about personalized guidance, and it does not require any physical or face-to-face meetings. Our top priority is to address all your concerns and provide you with the best solutions for your future career. Whether it's an online or offline session, as long as we have a clear understanding of your needs and goals, we can provide you with the same quality of service. We have been successfully conducting online mentoring sessions since 2016, even with our clients from the Middle East, Africa, Australia and the USA. So, rest assured, you can expect a very personalised, productive, and fulfilling experience with our online program.
 
 7. How does Svastrino verify which career options are futuristic?  
    
@@ -136,7 +136,7 @@ At Svastrino, we understand the importance of futuristic career options for our 
 8. Are these sessions and programs conducted individually or in a group?  
    
 
-We understand the importance of personalised attention and guidance when it comes to career counselling or mentoring. That's why all our sessions and programs are conducted on an individual and one on one level only.
+We understand the importance of personalised attention and guidance when it comes to career counseling or mentoring. That's why all our sessions and programs are conducted on an individual and one on one level only.
 
 9. Will the information shared in the program be confidential?
 
@@ -164,7 +164,7 @@ Booking a program with us is quite simple\! You can either visit the Book Online
 
 14. What are various programs that I can opt for?
 
-We have crafted our programs in a very systematic way and each program is optimum for a specific need to be resolved. We have 3 different Counselling and Mentoring programs that can be availed by you.
+We have crafted our programs in a very systematic way and each program is optimum for a specific need to be resolved. We have 3 different Counseling and Mentoring programs that can be availed by you.
 
 * [Bulls Eye Program](https://www.svastrino.com/bulls-eye)  
 * [Bloom Program](https://www.svastrino.com/bloom)   
@@ -325,9 +325,9 @@ We are working remotely so the whole session would be conducted Online only.
 
 We understand that you may have a lot on your plate already. That's why we make sure to work around your existing schedule to ensure you can manage this program along with your academics and other commitments. Our program is designed to help you prioritise your tasks and commitments, so you can lead a better and more balanced life. Our mentors will work with you to create a schedule that works best for you, while still making sure you complete the program successfully. You won't have to do anything extra, just follow a better schedule that will enhance your everyday living.
 
-6. What if I just want Counselling sessions and don’t want to indulge in activities outside it?
+6. What if I just want Counseling sessions and don’t want to indulge in activities outside it?
 
-We strongly believe that to make informed, long-term career decisions, it's important to gain practical experience and explore various options beyond just Counselling. The lessons, activities, and exercises we offer are designed to help you grow personally and academically, while also gaining a better understanding of yourself and the world around you. However, if you're set on just receiving Counselling, this program may not be the best fit for you. We recommend checking out our [Bulls Eye Program](https://www.svastrino.com/bulls-eye), which focuses specifically on quick and accurate Career Counselling.
+We strongly believe that to make informed, long-term career decisions, it's important to gain practical experience and explore various options beyond just Counseling. The lessons, activities, and exercises we offer are designed to help you grow personally and academically, while also gaining a better understanding of yourself and the world around you. However, if you're set on just receiving Counseling, this program may not be the best fit for you. We recommend checking out our [Bulls Eye Program](https://www.svastrino.com/bulls-eye), which focuses specifically on quick and accurate Career Counseling.
 
 7. Will the career plan be given at the beginning or the end of the program?
 

@@ -11,7 +11,7 @@ import { Package } from './package.model.js'
  * /api/user/skill-build/nirmaan, so a price edited in the admin panel is both
  * the price the visitor sees and the price checkout charges.
  *
- * Money is PAISE. For a per-phase plan `price` is ONE instalment and the whole
+ * Money is PAISE. For a per-phase plan `price` is ONE installment and the whole
  * run is price x phases — the convention payments already uses.
  *
  * Run:  node src/modules/user/skillbuild/seedNirmaanPackages.js [--dry]

@@ -148,16 +148,16 @@ export async function requireOrgAuth(req, res, next) {
       return res.status(401).json({ error: 'Account disabled', code: 'ACCOUNT_DISABLED' })
     }
     if (!user.organisation || user.organisationRole !== 'owner') {
-      return res.status(403).json({ error: 'This account does not manage an organisation', code: 'NOT_ORG_OWNER' })
+      return res.status(403).json({ error: 'This account does not manage an institute', code: 'NOT_ORG_OWNER' })
     }
 
     const org = await Organisation.findById(user.organisation)
-    if (!org) return res.status(403).json({ error: 'Organisation not found', code: 'ORG_NOT_FOUND' })
+    if (!org) return res.status(403).json({ error: 'Institute not found', code: 'ORG_NOT_FOUND' })
     if (org.status !== 'approved') {
-      return res.status(403).json({ error: 'Your organisation is not approved yet', code: 'ORG_NOT_APPROVED' })
+      return res.status(403).json({ error: 'Your institute is not approved yet', code: 'ORG_NOT_APPROVED' })
     }
     if (org.active === false) {
-      return res.status(403).json({ error: 'Your organisation has been suspended', code: 'ORG_SUSPENDED' })
+      return res.status(403).json({ error: 'Your institute has been suspended', code: 'ORG_SUSPENDED' })
     }
     if (org.awaitingPayment) {
       return res.status(403).json({ error: 'Your institution’s payment is still pending', code: 'PAYMENT_PENDING' })
@@ -182,7 +182,7 @@ export function requireOrgModule(...modules) {
     if (modules.some((m) => (req.org.modules || []).includes(m))) return next()
     return res
       .status(403)
-      .json({ error: 'Your organisation does not have access to this section', code: 'ORG_MODULE_FORBIDDEN' })
+      .json({ error: 'Your institute does not have access to this section', code: 'ORG_MODULE_FORBIDDEN' })
   }
 }
 

@@ -105,7 +105,7 @@ export async function getPackageBySku(sku, { includeInactive = false } = {}) {
     // "Talk to an Expert" form instead of the checkout. Falls back to the old
     // buyMode rule on rows written before the field existed.
     expertEnquiry: pkg.expertEnquiry ?? pkg.buyMode === 'expert-call',
-    // The parent the package hangs off: 'mentoring' for a counselling or
+    // The parent the package hangs off: 'mentoring' for a counseling or
     // mentoring program, otherwise a course. The dashboard needs this to put
     // a purchase under the right heading.
     kind: pkg.skillBuild?.kind || 'course',

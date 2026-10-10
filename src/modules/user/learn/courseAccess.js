@@ -33,12 +33,12 @@ function addYears(date, years) {
 }
 
 /**
- * Which enrolment starts the student's year?
+ * Which enrollment starts the student's year?
  *
- * The plans sheet says validity runs "from date of 1st enrolment", so the year
- * is anchored on the EARLIEST enrolment the student holds for this course —
+ * The plans sheet says validity runs "from date of 1st enrollment", so the year
+ * is anchored on the EARLIEST enrollment the student holds for this course —
  * never on the newest one. This is the part a future reader is most likely to
- * get wrong, so: a pay-as-you-use student holds one enrolment per phase they
+ * get wrong, so: a pay-as-you-use student holds one enrollment per phase they
  * have paid for, and each earlier one is marked 'upgraded' as the next phase is
  * bought. If we anchored on the newest row, buying phase 4 would quietly hand
  * them a whole new year and the one-year rule would mean nothing. That is why
@@ -60,12 +60,12 @@ async function anchorEnrollment(userId, productSlug) {
 }
 
 /**
- * The end date an enrolment row is really judged by.
+ * The end date an enrollment row is really judged by.
  *
  * Most rows carry their own expiresAt, written when the course was paid for.
  * Older rows do not, so the plan's own length is applied to the day they
  * started. A row whose plan has no length at all is a genuine lifetime
- * enrolment and has no end date, which is why null is a real answer here.
+ * enrollment and has no end date, which is why null is a real answer here.
  *
  * This is exported because more than one place has to agree with it. When an
  * admin reopens a locked course from a ticket, the rows it moves have to be the
@@ -93,10 +93,10 @@ export async function effectiveExpiry(e) {
  *                them, not what they may open.
  *   'archived' — three years past that. Only the fact of the course remains.
  *
- * This function deliberately does not save anything. Flipping the enrolment's
+ * This function deliberately does not save anything. Flipping the enrollment's
  * status to 'expired' as we pass the date would be easy to add here and would
  * be a mistake: when an admin resolves a ticket and gives a student more time,
- * they move the enrolment's end date forward, and a status left behind from an
+ * they move the enrollment's end date forward, and a status left behind from an
  * earlier read would then fight that new date. The dates are the truth; the
  * status is not.
  */

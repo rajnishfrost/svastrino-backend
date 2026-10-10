@@ -38,7 +38,7 @@ router.use('/learn', learnRoutes)
 // Payments & enrollments (checkout, orders, receipts)
 router.use('/payments', paymentsRoutes)
 
-// Counselling & mentoring — program catalog, slot calendar, bookings
+// Counseling & mentoring — program catalog, slot calendar, bookings
 router.use('/mentoring', mentoringRoutes)
 
 // Psychometric assessment (Mindler) — ships with every package

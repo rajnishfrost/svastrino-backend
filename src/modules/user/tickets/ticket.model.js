@@ -91,7 +91,7 @@ const ticketSchema = new mongoose.Schema(
      * The record of an admin reopening the course from this ticket: how many
      * days were given, when, and by whom. Kept on the ticket because the
      * conversation is the reason the access was given, and a question about it
-     * later ("who let them back in?") is asked of the ticket, not the enrolment.
+     * later ("who let them back in?") is asked of the ticket, not the enrollment.
      */
     accessGrant: {
       days: { type: Number, default: 0 },

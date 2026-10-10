@@ -280,7 +280,7 @@ async function cascadeDeleteUserData(userId) {
 }
 
 /**
- * Permanently delete an account AND everything it owns (orders, enrolments,
+ * Permanently delete an account AND everything it owns (orders, enrollments,
  * learn progress, mentoring bookings, assessments, its
  * uploaded avatar). Guard-rails mirror the edit rules: you can't delete
  * yourself, and the last active superadmin can't be deleted (so the panel can

@@ -1,7 +1,7 @@
 import { MentoringBooking } from './booking.model.js'
 
 /**
- * Slot engine for counselling/mentoring bookings. All rules are IST-based:
+ * Slot engine for counseling/mentoring bookings. All rules are IST-based:
  *
  *  - First bookable day = today + 3 (spec example: 21 Jul → bookable from 24 Jul)
  *  - Advance bookings up to 2 months from today

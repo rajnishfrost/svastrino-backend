@@ -21,7 +21,7 @@ export async function listPrograms() {
 
 export async function getProgramBySlug(slug) {
   const program = await MentoringProgram.findOne({ slug, active: true })
-  if (!program) throw httpError('Programme not found', 404)
+  if (!program) throw httpError('Program not found', 404)
   return program
 }
 

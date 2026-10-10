@@ -70,9 +70,9 @@ export const getOrder = asyncHandler(async (req, res) => {
 
 // GET /api/user/payments/enrollments  (with course progress, for the dashboard)
 //
-// The dates come from `courseAccess`, not from the enrolment row itself, and the
-// reason matters. The year runs from the student's FIRST enrolment for a course,
-// but a pay-as-you-use student holds one enrolment per phase they have paid for
+// The dates come from `courseAccess`, not from the enrollment row itself, and the
+// reason matters. The year runs from the student's FIRST enrollment for a course,
+// but a pay-as-you-use student holds one enrollment per phase they have paid for
 // and only the newest is still 'active' — so the row we list here carries an end
 // date written a full year after whichever phase they bought last. Reading the
 // row would have the dashboard promise a "valid till" date the learn page will

@@ -33,9 +33,9 @@ export const ORG_TYPE_LABELS = {
 
 // Sections of the organisation portal an admin can grant. Kept deliberately
 // small — an organisation never reaches the admin panel or anyone else's data.
-// 'reports' is Student Reports: each student's psychometric test progress, and
-// the way into the institution's own Mindler admin for the full reports.
-export const ORG_MODULES = ['students', 'profile', 'reports']
+// Student Reports is not in this list: every institution has it, like the
+// dashboard (see org.routes.js).
+export const ORG_MODULES = ['students', 'profile']
 
 // What a freshly approved organisation gets. Admin can trim it afterwards.
 export const DEFAULT_ORG_MODULES = [...ORG_MODULES]
@@ -109,7 +109,7 @@ const organisationSchema = new mongoose.Schema(
     publicListed: { type: Boolean, default: true, index: true },
 
     // Suspend an organisation without deleting it — blocks the portal and hides
-    // it from the enrolment dropdown, but keeps every record intact.
+    // it from the enrollment dropdown, but keeps every record intact.
     active: { type: Boolean, default: true, index: true },
 
     // One application per IP on the public form — stored so the service can
@@ -122,7 +122,7 @@ const organisationSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-// The directory and the enrolment dropdown both ask for "approved, listed,
+// The directory and the enrollment dropdown both ask for "approved, listed,
 // active" — one index covers both.
 organisationSchema.index({ status: 1, active: 1, publicListed: 1 })
 
