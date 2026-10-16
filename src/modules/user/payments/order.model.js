@@ -27,7 +27,7 @@ const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
 
-    kind: { type: String, enum: ['self', 'institution'], default: 'self', index: true },
+    kind: { type: String, enum: ['self', 'institution', 'gift'], default: 'self', index: true },
     organisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
     quantity: { type: Number, default: 1, min: 1 },
     paymentMethod: { type: String, enum: ['online', 'cash'], default: 'online' },
@@ -42,6 +42,14 @@ const orderSchema = new mongoose.Schema(
     // browser can never add them twice.
     seatsGranted: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
+    // `kind: 'gift'` — a student buying gift coupons (gifts/gift.service.js):
+    // `quantity` coupons worth `giftValue` paise each, issued when it is paid and
+    // emailed to `giftEmail` (the buyer's chosen address, kept in case they lose
+    // them).
+    giftValue: { type: Number, default: null },
+    giftEmail: { type: String, trim: true, lowercase: true, default: '' },
+    giftEmailedAt: { type: Date, default: null },
 
     // Snapshot of the purchased package (so later catalog changes don't rewrite history).
     packageId: { type: String, required: true },

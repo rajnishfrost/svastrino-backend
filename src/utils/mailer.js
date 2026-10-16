@@ -104,9 +104,11 @@ function actionBlock(cta, link) {
                 <p style="margin:0;font-size:12.5px;word-break:break-all"><a href="${href}" style="color:#2f7ae5;text-decoration:none">${href}</a></p>`
 }
 
-function template({ heading, preheader, intro, cta, link, note }) {
+function template({ heading, preheader, intro, cta, link, note, html = '' }) {
   const noteHtml = note ? `<p style="${NOTE_STYLE}">${esc(note)}</p>` : ''
-  const values = { preheader, heading, intro, note: noteHtml, action: actionBlock(cta, link) }
+  // `html`: a pre-built block (already escaped) shown above the button — the
+  // gift coupons' tickets.
+  const values = { preheader, heading, intro, note: noteHtml, action: html + actionBlock(cta, link) }
   return layout().replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
     // `note` and `action` are pre-built HTML; the rest is escaped plain text.
     key === 'note' || key === 'action' ? values[key] : esc(values[key] ?? '')
@@ -167,6 +169,55 @@ export function buildReceiptEmail({ receiptNo, item, amount, date }) {
 
 export async function sendReceiptEmail(to, details) {
   await sendMail({ to, ...buildReceiptEmail(details) })
+}
+
+/**
+ * Gift coupons, bought to hand on. Each coupon is drawn as a ticket — a navy
+ * stub with the value, a dashed tear line, then the code and validity — out of
+ * tables, since email clients ignore modern CSS. `coupons`: [{ code, value
+ * (paise), expiresAt }]; `amount` in paise.
+ */
+export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [] }) {
+  const first = String(name || '').split(/\s+/)[0] || 'there'
+  const money = (p) => '₹' + (Number(p) / 100).toLocaleString('en-IN')
+  const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  const n = coupons.length
+  const tickets = coupons.map((c) => `
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border-collapse:separate;border:1px solid #e3d9c4;border-radius:14px;overflow:hidden;background:#fffaf0">
+                  <tr>
+                    <td width="34%" align="center" valign="middle" style="background:#1c2a4a;padding:18px 10px;color:#ffffff">
+                      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#f0c674">Gift coupon</div>
+                      <div style="font-size:28px;font-weight:800;line-height:1.2;margin-top:4px">${esc(money(c.value))}</div>
+                      <div style="font-size:11px;color:#c9d3e6;margin-top:2px">off any course</div>
+                    </td>
+                    <td width="1" style="border-left:2px dashed #e3d9c4;padding:0;font-size:0">&nbsp;</td>
+                    <td valign="middle" style="padding:16px 18px">
+                      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7f6a">Your code</div>
+                      <div style="font-family:'Courier New',monospace;font-size:20px;font-weight:700;letter-spacing:2px;color:#1c2a4a;margin:4px 0 8px">${esc(c.code)}</div>
+                      <div style="font-size:12.5px;color:#5b6677">Valid till <strong>${esc(day(c.expiresAt))}</strong> · one-time use</div>
+                      <div style="font-size:12px;color:#8a7f6a;margin-top:6px">svastrino.com</div>
+                    </td>
+                  </tr>
+                </table>`).join('')
+  return {
+    subject: `Your ${BRAND} gift coupon${n === 1 ? '' : 's'} (${n})`,
+    text: `Hi ${first}, here ${n === 1 ? 'is your gift coupon' : `are your ${n} gift coupons`} for ${BRAND}:\n` +
+      coupons.map((c) => `${c.code} — ${money(c.value)} off, valid till ${day(c.expiresAt)}, one-time use`).join('\n') +
+      `\nPaid ${money(amount)}${receiptNo ? `, receipt ${receiptNo}` : ''}. To use one, enter the code in the coupon box at checkout on svastrino.com.`,
+    html: template({
+      heading: n === 1 ? 'Your gift coupon is ready' : `Your ${n} gift coupons are ready`,
+      preheader: `${n} ${BRAND} gift coupon${n === 1 ? '' : 's'} to hand on — keep this email safe.`,
+      intro: `Hi ${first}, thank you for gifting ${BRAND}! Share a code with someone you want to help. They enter it in the coupon box at checkout on svastrino.com, and the value comes off any course or programme.`,
+      html: tickets,
+      cta: 'See your coupons',
+      link: `${clientUrl()}/gift-coupons`,
+      note: `Each code works once, for a year. It counts as used only when the purchase it is applied to is completed. Paid ${money(amount)}${receiptNo ? ` · receipt ${receiptNo}` : ''}. Keep this email — it is your copy if you lose the coupons.`,
+    }),
+  }
+}
+
+export async function sendGiftCouponsEmail(to, details) {
+  await sendMail({ to, ...buildGiftCouponsEmail(details) })
 }
 
 /** Send the "confirm your email" link. Link expires per the service TTL. */
