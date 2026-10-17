@@ -182,20 +182,31 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], d
   const money = (p) => '₹' + (Number(p) / 100).toLocaleString('en-IN')
   const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
   const n = coupons.length
+  // Drawn to match the site's ticket (GiftTicket.jsx / the download page):
+  // navy stub with the value and stars, a dashed tear line, and the cream side
+  // with the logo, "A gift for your journey", the code in a dashed box, the
+  // validity and how to use it. Email clients cannot punch the round notches.
   const tickets = coupons.map((c) => `
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;border-collapse:separate;border:1px solid #e3d9c4;border-radius:14px;overflow:hidden;background:#fffaf0">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-collapse:separate;border:1px solid #e3d9c4;border-radius:16px;overflow:hidden;background:#fffaf0">
                   <tr>
-                    <td width="34%" align="center" valign="middle" style="background:#1c2a4a;padding:18px 10px;color:#ffffff">
-                      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#f0c674">Gift coupon</div>
-                      <div style="font-size:28px;font-weight:800;line-height:1.2;margin-top:4px">${esc(money(c.value))}</div>
-                      <div style="font-size:11px;color:#c9d3e6;margin-top:2px">off any course</div>
+                    <td width="34%" align="center" valign="middle" style="background:#0f2c5c;background-image:linear-gradient(150deg,#0f2c5c,#0a1f43);padding:20px 10px;color:#ffffff;border-radius:16px 0 0 16px">
+                      <div style="font-size:10.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#f0c674">Gift coupon</div>
+                      <div style="font-size:30px;font-weight:800;line-height:1.15;margin-top:4px;color:#ffffff">${esc(money(c.value))}</div>
+                      <div style="font-size:12px;color:#c9d3e6;margin-top:2px">off any course</div>
+                      <div style="font-size:10px;letter-spacing:6px;color:#c9a75c;margin-top:8px">&#10022; &#10022; &#10022;</div>
                     </td>
-                    <td width="1" style="border-left:2px dashed #e3d9c4;padding:0;font-size:0">&nbsp;</td>
-                    <td valign="middle" style="padding:16px 18px">
-                      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8a7f6a">Your code</div>
-                      <div style="font-family:'Courier New',monospace;font-size:20px;font-weight:700;letter-spacing:2px;color:#1c2a4a;margin:4px 0 8px">${esc(c.code)}</div>
-                      <div style="font-size:12.5px;color:#5b6677">Valid till <strong>${esc(day(c.expiresAt))}</strong> · one-time use</div>
-                      <div style="font-size:12px;color:#8a7f6a;margin-top:6px">svastrino.com</div>
+                    <td width="1" style="border-left:2px dashed #cfc3a8;padding:0;font-size:0;line-height:0">&nbsp;</td>
+                    <td valign="top" style="padding:16px 18px 14px">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="left" valign="middle"><img src="cid:svastrino-logo" width="72" height="26" alt="Svastrino" style="display:block;width:72px;height:26px;border:0" /></td>
+                          <td align="right" valign="middle" style="font-size:11px;font-weight:700;letter-spacing:0.6px;color:#8a7f6a">svastrino.com</td>
+                        </tr>
+                      </table>
+                      <div style="font-size:12px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#c8102e;margin:10px 0 8px">A gift for your journey</div>
+                      <div style="display:inline-block;padding:6px 12px;border:1.5px dashed #9aa6bd;border-radius:10px;background:#ffffff;font-family:'Courier New',monospace;font-size:19px;font-weight:700;letter-spacing:2px;color:#0f2c5c">${esc(c.code)}</div>
+                      <div style="font-size:12.5px;color:#475569;margin-top:10px">Valid till <strong style="color:#0f2c5c">${esc(day(c.expiresAt))}</strong> &nbsp;&bull;&nbsp; One-time use</div>
+                      <div style="font-size:11.5px;color:#8a7f6a;margin-top:6px">Enter the code in the coupon box at checkout on svastrino.com &mdash; it comes off any course or programme.</div>
                     </td>
                   </tr>
                 </table>`).join('')

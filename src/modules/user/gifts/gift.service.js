@@ -216,10 +216,12 @@ const dayGb = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', m
  * the same design as the site's Download (client/src/utils/giftTicket.js) and
  * the tickets on /gift-coupons. Used and expired coupons are shown stamped.
  */
-export function ticketsPageHtml(gift, nonce) {
+export function ticketsPageHtml(gift, nonce, onlyCode = '') {
   // Relative: on the live site the API and the site share one address.
   const logo = '/logo-256.png'
-  const tickets = gift.coupons.map((c) => {
+  // One coupon's Download shows just that ticket.
+  const list = onlyCode ? gift.coupons.filter((c) => c.code === String(onlyCode).toUpperCase()) : gift.coupons
+  const tickets = list.map((c) => {
     const off = c.status !== 'active'
     return `
   <div class="t${off ? ' off' : ''}">
@@ -235,7 +237,7 @@ export function ticketsPageHtml(gift, nonce) {
     ${off ? `<span class="stamp">${c.status === 'used' ? 'Used' : c.status === 'expired' ? 'Expired' : 'Off'}</span>` : ''}
   </div>`
   }).join('')
-  const n = gift.coupons.length
+  const n = list.length
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
 <title>Svastrino gift coupon${n === 1 ? '' : 's'}</title>
@@ -285,6 +287,9 @@ export function couponDTO(c, now = new Date()) {
 function giftOrderDTO(order, coupons) {
   return {
     orderId: order._id.toString(),
+    // The one printable tickets page — the site's Download buttons and the
+    // email's both open it, so they can never look different.
+    downloadUrl: order.giftToken ? ticketsUrl(order) : null,
     receiptNo: order.receiptNo || null,
     paidAt: order.paidAt || null,
     amount: order.amount,

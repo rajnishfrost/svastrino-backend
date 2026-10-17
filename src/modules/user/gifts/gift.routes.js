@@ -60,7 +60,7 @@ router.get('/orders/:id/tickets', giftLimiter, validId, asyncHandler(async (req,
     "script-src-attr 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
   res.set('Cache-Control', 'no-store')
   res.set('X-Robots-Tag', 'noindex')
-  res.type('html').send(gifts.ticketsPageHtml(gift, nonce))
+  res.type('html').send(gifts.ticketsPageHtml(gift, nonce, req.query.code))
 }))
 
 // GET /api/user/gifts — everything this account has bought (signed in only)
