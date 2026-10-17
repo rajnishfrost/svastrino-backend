@@ -35,7 +35,7 @@ function getTransport() {
 // The layout's <img src="cid:svastrino-logo"> resolves to this attachment.
 const LOGO_CID = 'svastrino-logo'
 
-async function sendMail({ to, subject, html, text, replyTo }) {
+async function sendMail({ to, subject, html, text, replyTo, attachments = [] }) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER
   return getTransport().sendMail({
     from,
@@ -48,6 +48,8 @@ async function sendMail({ to, subject, html, text, replyTo }) {
     text,
     attachments: [
       { filename: 'svastrino-logo.png', path: LOGO_PATH, cid: LOGO_CID },
+      // Inline pictures a message carries of its own (the gift coupon tickets).
+      ...attachments,
     ],
   })
 }
@@ -177,7 +179,7 @@ export async function sendReceiptEmail(to, details) {
  * tables, since email clients ignore modern CSS. `coupons`: [{ code, value
  * (paise), expiresAt }]; `amount` in paise.
  */
-export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], downloadUrl }) {
+export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], downloadUrl, images = [] }) {
   const first = String(name || '').split(/\s+/)[0] || 'there'
   const money = (p) => '₹' + (Number(p) / 100).toLocaleString('en-IN')
   const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -186,6 +188,15 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], d
   // navy stub with the value and stars, a dashed tear line, and the cream side
   // with the logo, "A gift for your journey", the code in a dashed box, the
   // validity and how to use it. Email clients cannot punch the round notches.
+  // Preferred: each ticket as a picture (gifts/ticketImage.js), identical to
+  // the site's, with its code under it as text so it can be copied. The table
+  // version below is the fallback when no picture could be drawn.
+  const pictured = images.length === coupons.length && images.every(Boolean)
+  const pictures = coupons.map((c, i) => `
+                <div style="margin:0 0 18px">
+                  <img src="cid:gift-ticket-${i}" width="560" alt="${esc(`Gift coupon ${money(c.value)} — code ${c.code}, valid till ${day(c.expiresAt)}, one-time use`)}" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:16px" />
+                  <p style="margin:8px 0 0;font-size:13px;color:#5b6677;text-align:center">Code: <strong style="font-family:'Courier New',monospace;font-size:15px;letter-spacing:2px;color:#0f2c5c">${esc(c.code)}</strong></p>
+                </div>`).join('')
   const tickets = coupons.map((c) => `
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-collapse:separate;border:1px solid #e3d9c4;border-radius:16px;overflow:hidden;background:#fffaf0">
                   <tr>
@@ -219,7 +230,7 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], d
       heading: n === 1 ? 'Your gift coupon is ready' : `Your ${n} gift coupons are ready`,
       preheader: `${n} ${BRAND} gift coupon${n === 1 ? '' : 's'} to hand on — keep this email safe.`,
       intro: `Hi ${first}, thank you for gifting ${BRAND}! Share a code with someone you want to help. They enter it in the coupon box at checkout on svastrino.com, and the value comes off any course or programme.`,
-      html: tickets,
+      html: pictured ? pictures : tickets,
       // Opens the tickets as a page ready to save as PDF (works with no
       // account — the link carries the order's secret).
       cta: n === 1 ? 'Download your coupon' : 'Download your coupons',
@@ -230,7 +241,11 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], d
 }
 
 export async function sendGiftCouponsEmail(to, details) {
-  await sendMail({ to, ...buildGiftCouponsEmail(details) })
+  const images = details.images || []
+  const attachments = images.every(Boolean) && images.length === (details.coupons || []).length
+    ? images.map((png, i) => ({ filename: `gift-coupon-${i + 1}.png`, content: png, cid: `gift-ticket-${i}` }))
+    : []
+  await sendMail({ to, ...buildGiftCouponsEmail(details), attachments })
 }
 
 /** Send the "confirm your email" link. Link expires per the service TTL. */

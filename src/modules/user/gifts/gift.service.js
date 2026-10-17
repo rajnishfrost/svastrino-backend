@@ -6,6 +6,7 @@ import * as gateway from '../payments/gateway.js'
 import { User } from '../credentials/credentials.model.js'
 import { EMAIL_RE } from '../../../utils/validate.js'
 import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
+import { ticketPng } from './ticketImage.js'
 
 /**
  * Gift coupons — anyone buys coupons to hand to a younger sibling or a friend
@@ -183,7 +184,16 @@ export async function issueGiftCoupons(order) {
   if (claimed) {
     try {
       const buyer = order.user ? await User.findById(order.user).select('name') : null
+      // The tickets as pictures, identical to the site's. If drawing fails the
+      // email still goes, with its plain-table tickets.
+      let images = []
+      try {
+        images = existing.map((c) => ticketPng({ code: c.code, value: c.value, expiresAt: c.expiresAt }))
+      } catch (err) {
+        console.error('✗ Could not draw gift ticket images:', err.message)
+      }
       await sendGiftCouponsEmail(order.giftEmail, {
+        images,
         name: buyer?.name,
         downloadUrl: ticketsUrl(order),
         receiptNo: order.receiptNo,
