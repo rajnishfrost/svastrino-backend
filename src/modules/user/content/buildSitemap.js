@@ -38,6 +38,7 @@ const STATIC_PATHS = [
   '/skill-build/nirmaan',
   '/skill-build/psychometric-testing',
   '/book-online',
+  '/gift-coupons',
   '/resources',
   '/resources/career-library',
   '/resources/faqs',

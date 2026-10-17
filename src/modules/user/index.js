@@ -11,6 +11,7 @@ import contentRoutes from './content/content.routes.js'
 import enquiryRoutes from './enquiry/enquiry.routes.js'
 import notificationsRoutes from './notifications/notifications.routes.js'
 import ticketsRoutes from './tickets/tickets.routes.js'
+import giftRoutes from './gifts/gift.routes.js'
 import { getMe, updateProfile, changePassword } from './credentials/credentials.controller.js'
 import { uploadAvatar, removeAvatar, uploadAvatarMw } from './credentials/avatar.controller.js'
 import { requireUserAuth } from '../../middleware/auth.js'
@@ -64,6 +65,9 @@ router.use('/notifications', notificationsRoutes)
 // Support conversations. A student whose course year has run out talks to the
 // team here, and an admin can reopen their access from the same thread.
 router.use('/tickets', ticketsRoutes)
+
+// Gift coupons a student buys for someone else (footer → /gift-coupons).
+router.use('/gifts', giftRoutes)
 
 // router.use('/courses', coursesRoutes)
 

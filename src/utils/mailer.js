@@ -35,7 +35,7 @@ function getTransport() {
 // The layout's <img src="cid:svastrino-logo"> resolves to this attachment.
 const LOGO_CID = 'svastrino-logo'
 
-async function sendMail({ to, subject, html, text, replyTo }) {
+async function sendMail({ to, subject, html, text, replyTo, attachments = [] }) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER
   return getTransport().sendMail({
     from,
@@ -48,6 +48,8 @@ async function sendMail({ to, subject, html, text, replyTo }) {
     text,
     attachments: [
       { filename: 'svastrino-logo.png', path: LOGO_PATH, cid: LOGO_CID },
+      // Inline pictures a message carries of its own (the gift coupon tickets).
+      ...attachments,
     ],
   })
 }
@@ -104,9 +106,11 @@ function actionBlock(cta, link) {
                 <p style="margin:0;font-size:12.5px;word-break:break-all"><a href="${href}" style="color:#2f7ae5;text-decoration:none">${href}</a></p>`
 }
 
-function template({ heading, preheader, intro, cta, link, note }) {
+function template({ heading, preheader, intro, cta, link, note, html = '' }) {
   const noteHtml = note ? `<p style="${NOTE_STYLE}">${esc(note)}</p>` : ''
-  const values = { preheader, heading, intro, note: noteHtml, action: actionBlock(cta, link) }
+  // `html`: a pre-built block (already escaped) shown above the button — the
+  // gift coupons' tickets.
+  const values = { preheader, heading, intro, note: noteHtml, action: html + actionBlock(cta, link) }
   return layout().replace(/{{\s*(\w+)\s*}}/g, (_, key) =>
     // `note` and `action` are pre-built HTML; the rest is escaped plain text.
     key === 'note' || key === 'action' ? values[key] : esc(values[key] ?? '')
@@ -167,6 +171,81 @@ export function buildReceiptEmail({ receiptNo, item, amount, date }) {
 
 export async function sendReceiptEmail(to, details) {
   await sendMail({ to, ...buildReceiptEmail(details) })
+}
+
+/**
+ * Gift coupons, bought to hand on. Each coupon is drawn as a ticket — a navy
+ * stub with the value, a dashed tear line, then the code and validity — out of
+ * tables, since email clients ignore modern CSS. `coupons`: [{ code, value
+ * (paise), expiresAt }]; `amount` in paise.
+ */
+export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], downloadUrl, images = [] }) {
+  const first = String(name || '').split(/\s+/)[0] || 'there'
+  const money = (p) => '₹' + (Number(p) / 100).toLocaleString('en-IN')
+  const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  const n = coupons.length
+  // Drawn to match the site's ticket (GiftTicket.jsx / the download page):
+  // navy stub with the value and stars, a dashed tear line, and the cream side
+  // with the logo, "A gift for your journey", the code in a dashed box, the
+  // validity and how to use it. Email clients cannot punch the round notches.
+  // Preferred: each ticket as a picture (gifts/ticketImage.js), identical to
+  // the site's, with its code under it as text so it can be copied. The table
+  // version below is the fallback when no picture could be drawn.
+  const pictured = images.length === coupons.length && images.every(Boolean)
+  const pictures = coupons.map((c, i) => `
+                <div style="margin:0 0 18px">
+                  <img src="cid:gift-ticket-${i}" width="560" alt="${esc(`Gift coupon ${money(c.value)} — code ${c.code}, valid till ${day(c.expiresAt)}, one-time use`)}" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:16px" />
+                  <p style="margin:8px 0 0;font-size:13px;color:#5b6677;text-align:center">Code: <strong style="font-family:'Courier New',monospace;font-size:15px;letter-spacing:2px;color:#0f2c5c">${esc(c.code)}</strong></p>
+                </div>`).join('')
+  const tickets = coupons.map((c) => `
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;border-collapse:separate;border:1px solid #e3d9c4;border-radius:16px;overflow:hidden;background:#fffaf0">
+                  <tr>
+                    <td width="34%" align="center" valign="middle" style="background:#0f2c5c;background-image:linear-gradient(150deg,#0f2c5c,#0a1f43);padding:20px 10px;color:#ffffff;border-radius:16px 0 0 16px">
+                      <div style="font-size:10.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#f0c674">Gift coupon</div>
+                      <div style="font-size:30px;font-weight:800;line-height:1.15;margin-top:4px;color:#ffffff">${esc(money(c.value))}</div>
+                      <div style="font-size:12px;color:#c9d3e6;margin-top:2px">off any course</div>
+                      <div style="font-size:10px;letter-spacing:6px;color:#c9a75c;margin-top:8px">&#10022; &#10022; &#10022;</div>
+                    </td>
+                    <td width="1" style="border-left:2px dashed #cfc3a8;padding:0;font-size:0;line-height:0">&nbsp;</td>
+                    <td valign="top" style="padding:16px 18px 14px">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="left" valign="middle"><img src="cid:svastrino-logo" width="72" height="26" alt="Svastrino" style="display:block;width:72px;height:26px;border:0" /></td>
+                          <td align="right" valign="middle" style="font-size:11px;font-weight:700;letter-spacing:0.6px;color:#8a7f6a">svastrino.com</td>
+                        </tr>
+                      </table>
+                      <div style="font-size:12px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:#c8102e;margin:10px 0 8px">A gift for your journey</div>
+                      <div style="display:inline-block;padding:6px 12px;border:1.5px dashed #9aa6bd;border-radius:10px;background:#ffffff;font-family:'Courier New',monospace;font-size:19px;font-weight:700;letter-spacing:2px;color:#0f2c5c">${esc(c.code)}</div>
+                      <div style="font-size:12.5px;color:#475569;margin-top:10px">Valid till <strong style="color:#0f2c5c">${esc(day(c.expiresAt))}</strong> &nbsp;&bull;&nbsp; One-time use</div>
+                      <div style="font-size:11.5px;color:#8a7f6a;margin-top:6px">Enter the code in the coupon box at checkout on svastrino.com &mdash; it comes off any course or programme.</div>
+                    </td>
+                  </tr>
+                </table>`).join('')
+  return {
+    subject: `Your ${BRAND} gift coupon${n === 1 ? '' : 's'} (${n})`,
+    text: `Hi ${first}, here ${n === 1 ? 'is your gift coupon' : `are your ${n} gift coupons`} for ${BRAND}:\n` +
+      coupons.map((c) => `${c.code} — ${money(c.value)} off, valid till ${day(c.expiresAt)}, one-time use`).join('\n') +
+      `\nPaid ${money(amount)}${receiptNo ? `, receipt ${receiptNo}` : ''}. To use one, enter the code in the coupon box at checkout on svastrino.com.`,
+    html: template({
+      heading: n === 1 ? 'Your gift coupon is ready' : `Your ${n} gift coupons are ready`,
+      preheader: `${n} ${BRAND} gift coupon${n === 1 ? '' : 's'} to hand on — keep this email safe.`,
+      intro: `Hi ${first}, thank you for gifting ${BRAND}! Share a code with someone you want to help. They enter it in the coupon box at checkout on svastrino.com, and the value comes off any course or programme.`,
+      html: pictured ? pictures : tickets,
+      // Opens the tickets as a page ready to save as PDF (works with no
+      // account — the link carries the order's secret).
+      cta: n === 1 ? 'Download your coupon' : 'Download your coupons',
+      link: downloadUrl || `${clientUrl()}/gift-coupons`,
+      note: `Each code works once, for a year. It counts as used only when the purchase it is applied to is completed. Paid ${money(amount)}${receiptNo ? ` · receipt ${receiptNo}` : ''}. Keep this email — it is your copy if you lose the coupons.`,
+    }),
+  }
+}
+
+export async function sendGiftCouponsEmail(to, details) {
+  const images = details.images || []
+  const attachments = images.every(Boolean) && images.length === (details.coupons || []).length
+    ? images.map((png, i) => ({ filename: `gift-coupon-${i + 1}.png`, content: png, cid: `gift-ticket-${i}` }))
+    : []
+  await sendMail({ to, ...buildGiftCouponsEmail(details), attachments })
 }
 
 /** Send the "confirm your email" link. Link expires per the service TTL. */

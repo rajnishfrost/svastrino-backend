@@ -10,6 +10,7 @@ import { istDaysBetween } from '../../../utils/schedule.js'
 import { rupees } from '../../../utils/money.js'
 import * as gateway from './gateway.js'
 import { grantSeats } from '../organisation/seats.js'
+import { issueGiftCoupons } from '../gifts/gift.service.js'
 
 const clientUrl = () =>
   (process.env.CLIENT_URL || process.env.CLIENT_ORIGIN || 'http://localhost:5174').replace(/\/$/, '')
@@ -240,7 +241,7 @@ export async function validateCoupon(rawCode, packageId, base) {
   if (!coupon || !coupon.active) throw httpError('Invalid coupon code', 400)
   if (coupon.expiresAt && coupon.expiresAt < new Date()) throw httpError('This coupon has expired', 400)
   if (coupon.maxRedemptions != null && coupon.redemptions >= coupon.maxRedemptions)
-    throw httpError('This coupon is no longer available', 400)
+    throw httpError(coupon.source === 'gift' ? 'This gift coupon has already been used' : 'This coupon is no longer available', 400)
   if (coupon.applicablePackages.length && !coupon.applicablePackages.includes(packageId))
     throw httpError('This coupon does not apply to that package', 400)
 
@@ -393,6 +394,39 @@ export async function createOrder({ userId, packageId, couponCode, referralCode 
 
   const amount = Math.max(0, base - discount - creditApplied)
 
+  // Nothing to pay — a coupon (e.g. a gift coupon) covers the whole price. The
+  // gateway cannot take a ₹0 payment, so the order completes here; that IS the
+  // purchase completing, so the coupon is used up exactly as a paid one is.
+  if (amount === 0) {
+    const order = await Order.create({
+      user: userId,
+      packageId: pkg.sku,
+      packageLabel: pkg.label,
+      product: pkg.product,
+      listPrice: pkg.price,
+      basePrice: base,
+      discount,
+      amount: 0,
+      earlyBirdApplied: pkg.earlyBird != null,
+      couponCode: code,
+      referralCode: referralCode ? String(referralCode).trim().toUpperCase() : null,
+      isUpgrade,
+      creditApplied,
+      previousPackageId,
+      status: 'created',
+      gateway: 'none',
+      gatewayOrderId: `free_${crypto.randomBytes(6).toString('hex')}`,
+    })
+    await completePaidOrder(order)
+    return {
+      orderId: order._id.toString(),
+      free: true,
+      amount: 0,
+      currency: 'INR',
+      packageLabel: pkg.label,
+    }
+  }
+
   const gatewayOrder = await gateway.createOrder({
     amount,
     currency: 'INR',
@@ -488,6 +522,13 @@ async function completePaidOrder(order, { paymentId } = {}) {
     return { order: current, enrollment: null }
   }
 
+  // Gift coupons enrol nobody either: the payment buys coupons, issued and
+  // emailed here (once, however many times this runs).
+  if (current.kind === 'gift') {
+    await issueGiftCoupons(current)
+    return { order: current, enrollment: null }
+  }
+
   // Paid with nothing granted is the wreckage the old webhook left behind (and
   // what a crash mid-grant leaves too), so that case falls through and finishes
   // the job rather than handing back an order with no access attached.
@@ -499,7 +540,13 @@ async function completePaidOrder(order, { paymentId } = {}) {
   // burned by whoever paid it — counting it again would exhaust a capped
   // coupon on other buyers.
   if (claimed?.couponCode) {
-    await Coupon.updateOne({ code: claimed.couponCode }, { $inc: { redemptions: 1 } })
+    await Coupon.updateOne(
+      { code: claimed.couponCode },
+      {
+        $inc: { redemptions: 1 },
+        $set: { lastRedeemedAt: new Date(), lastRedeemedBy: userId, lastRedeemedOrder: current._id },
+      }
+    )
   }
 
   // Grant access. On an upgrade, supersede the old enrollment and PRESERVE its
@@ -608,6 +655,20 @@ export async function verifyAndComplete({ userId, orderId, paymentId, signature 
   const order = await Order.findOne({ _id: orderId, user: userId })
   if (!order) throw httpError('Order not found', 404)
   return verifyOrder(order, { paymentId, signature })
+}
+
+/**
+ * Confirm a gift order for whoever placed it, signed in or not: they prove it
+ * with the order's secret token rather than an account.
+ */
+export async function verifyGiftOrder({ orderId, token }) {
+  const order = await Order.findOne({ _id: orderId, kind: 'gift' }).select('+giftToken')
+  const given = Buffer.from(String(token || ''))
+  const kept = Buffer.from(String(order?.giftToken || ''))
+  if (!order || !kept.length || given.length !== kept.length || !crypto.timingSafeEqual(given, kept)) {
+    throw httpError('Gift order not found', 404)
+  }
+  return verifyOrder(order)
 }
 
 /** The part of verifyAndComplete after the order is found — shared with pay links. */
@@ -850,6 +911,11 @@ export async function adminRefund({ orderId, reason }) {
   // conversation with the institution, not a button.
   if (order.kind === 'institution') {
     throw httpError('Institution orders are refunded by hand: talk to the institution about its seats, then refund the payment from the Cashfree dashboard.', 400, 'INSTITUTION_ORDER')
+  }
+  // Its coupons may already have been handed on or used. Deactivate the unused
+  // ones (Admin → Coupons) and refund from the Cashfree dashboard.
+  if (order.kind === 'gift') {
+    throw httpError('Gift coupon orders are refunded by hand: switch off its unused coupons in Admin → Coupons, then refund the payment from the Cashfree dashboard.', 400, 'GIFT_ORDER')
   }
   // An order taken by a gateway we no longer run (Razorpay, before Cashfree)
   // cannot be refunded through the current one.

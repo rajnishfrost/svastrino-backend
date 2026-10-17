@@ -140,6 +140,9 @@ export const adminListOrders = asyncHandler(async (req, res) => {
       organisation: o.organisation ? { id: o.organisation._id, name: o.organisation.name } : null,
       reference: o.reference || '',
       gatewayPaymentId: o.gatewayPaymentId || null,
+      // A gift coupon order: the email the coupons went to (the only trace of
+      // a buyer who was not signed in).
+      giftEmail: o.kind === 'gift' ? o.giftEmail || null : null,
       // The institution's payment link, while it is still waiting to be paid.
       // The institution's payment link as emailed, while it is still unpaid.
       payLink: o.kind === 'institution' && o.payToken && o.status !== 'paid' && o.status !== 'refunded'
