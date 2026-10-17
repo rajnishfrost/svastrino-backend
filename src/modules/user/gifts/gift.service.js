@@ -9,7 +9,8 @@ import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
 /**
  * Gift coupons — a student buys coupons to hand to a younger sibling or a
  * friend (footer → /gift-coupons). Each coupon:
- *   • is worth one of GIFT_VALUES off ANY course or programme at checkout,
+ *   • is worth one of GIFT_VALUES — or any whole-rupee amount from ₹100 to
+ *     ₹1,00,000 the buyer types — off ANY course or programme at checkout,
  *   • costs its face value,
  *   • works ONCE, for a year from the day it was bought,
  *   • counts as used only when the purchase it is applied to completes — the
@@ -22,6 +23,9 @@ import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
  */
 
 export const GIFT_VALUES = [50000, 100000, 200000, 450000] // paise: ₹500 · ₹1,000 · ₹2,000 · ₹4,500
+// Or any whole-rupee amount the buyer types, ₹100 to ₹1,00,000.
+export const GIFT_MIN = 10000
+export const GIFT_MAX = 10000000
 export const MAX_GIFT_QUANTITY = 10
 export const GIFT_VALID_DAYS = 365
 
@@ -49,6 +53,7 @@ function newCode() {
 export function giftOptions() {
   return {
     values: GIFT_VALUES.map((v) => ({ value: v, rupees: v / 100 })),
+    custom: { min: GIFT_MIN / 100, max: GIFT_MAX / 100 }, // rupees
     maxQuantity: MAX_GIFT_QUANTITY,
     validDays: GIFT_VALID_DAYS,
   }
@@ -59,7 +64,10 @@ export async function createGiftOrder({ userId, value, quantity, email }) {
   value = Number(value)
   quantity = Number(quantity)
   const to = String(email || '').trim().toLowerCase()
-  if (!GIFT_VALUES.includes(value)) throw httpError('Pick one of the coupon values shown', 400)
+  // A whole number of rupees in range: the fixed values are all inside it.
+  if (!Number.isInteger(value) || value % 100 !== 0 || value < GIFT_MIN || value > GIFT_MAX) {
+    throw httpError(`Enter a coupon value from ₹${GIFT_MIN / 100} to ₹${(GIFT_MAX / 100).toLocaleString('en-IN')}, in whole rupees`, 400)
+  }
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_GIFT_QUANTITY) {
     throw httpError(`You can buy 1 to ${MAX_GIFT_QUANTITY} coupons at a time`, 400)
   }
