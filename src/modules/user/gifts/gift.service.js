@@ -14,7 +14,7 @@ import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
  * the order and on every coupon so a purchase can always be traced. A buyer who
  * is signed in also has the order linked to their account. Each coupon:
  *   • is worth one of GIFT_VALUES — or any whole-rupee amount from ₹100 to
- *     ₹1,00,000 the buyer types — off ANY course or programme at checkout,
+ *     ₹99,999 the buyer types — off ANY course or programme at checkout,
  *   • costs its face value,
  *   • works ONCE, for a year from the day it was bought,
  *   • counts as used only when the purchase it is applied to completes — the
@@ -27,9 +27,9 @@ import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
  */
 
 export const GIFT_VALUES = [50000, 100000, 200000, 450000] // paise: ₹500 · ₹1,000 · ₹2,000 · ₹4,500
-// Or any whole-rupee amount the buyer types, ₹100 to ₹1,00,000.
+// Or any whole-rupee amount the buyer types, ₹100 to ₹99,999.
 export const GIFT_MIN = 10000
-export const GIFT_MAX = 10000000
+export const GIFT_MAX = 9999900
 export const MAX_GIFT_QUANTITY = 10
 export const GIFT_VALID_DAYS = 365
 
