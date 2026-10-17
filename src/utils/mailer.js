@@ -177,7 +177,7 @@ export async function sendReceiptEmail(to, details) {
  * tables, since email clients ignore modern CSS. `coupons`: [{ code, value
  * (paise), expiresAt }]; `amount` in paise.
  */
-export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [] }) {
+export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], downloadUrl }) {
   const first = String(name || '').split(/\s+/)[0] || 'there'
   const money = (p) => '₹' + (Number(p) / 100).toLocaleString('en-IN')
   const day = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -209,8 +209,10 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [] })
       preheader: `${n} ${BRAND} gift coupon${n === 1 ? '' : 's'} to hand on — keep this email safe.`,
       intro: `Hi ${first}, thank you for gifting ${BRAND}! Share a code with someone you want to help. They enter it in the coupon box at checkout on svastrino.com, and the value comes off any course or programme.`,
       html: tickets,
-      cta: 'See your coupons',
-      link: `${clientUrl()}/gift-coupons`,
+      // Opens the tickets as a page ready to save as PDF (works with no
+      // account — the link carries the order's secret).
+      cta: n === 1 ? 'Download your coupon' : 'Download your coupons',
+      link: downloadUrl || `${clientUrl()}/gift-coupons`,
       note: `Each code works once, for a year. It counts as used only when the purchase it is applied to is completed. Paid ${money(amount)}${receiptNo ? ` · receipt ${receiptNo}` : ''}. Keep this email — it is your copy if you lose the coupons.`,
     }),
   }

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { Router } from 'express'
 import mongoose from 'mongoose'
 import rateLimit from 'express-rate-limit'
@@ -44,6 +45,22 @@ router.post('/orders/:id/verify', giftLimiter, validId, asyncHandler(async (req,
 router.get('/orders/:id', giftLimiter, validId, asyncHandler(async (req, res) => {
   res.set('Cache-Control', 'no-store')
   res.json({ gift: await gifts.getGiftByToken(req.params.id, req.query.t) })
+}))
+
+// GET /api/user/gifts/orders/:id/tickets?t=<token> — the email's "Download your
+// coupons": a printable page of the tickets (save as PDF). No account needed.
+router.get('/orders/:id/tickets', giftLimiter, validId, asyncHandler(async (req, res) => {
+  const gift = await gifts.getGiftByToken(req.params.id, req.query.t)
+  // This page's own policy, replacing the API's default (which allows no
+  // inline script): only its one nonce-marked script — the Download button and
+  // the save dialog — may run; styles are inline; images from this site.
+  const nonce = crypto.randomBytes(16).toString('base64')
+  res.set('Content-Security-Policy',
+    `default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; ` +
+    "script-src-attr 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
+  res.set('Cache-Control', 'no-store')
+  res.set('X-Robots-Tag', 'noindex')
+  res.type('html').send(gifts.ticketsPageHtml(gift, nonce))
 }))
 
 // GET /api/user/gifts — everything this account has bought (signed in only)
