@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import mongoose from 'mongoose'
 import { Order } from '../payments/order.model.js'
 import { Coupon } from '../payments/coupon.model.js'
 import * as gateway from '../payments/gateway.js'
@@ -7,8 +8,11 @@ import { EMAIL_RE } from '../../../utils/validate.js'
 import { sendGiftCouponsEmail } from '../../../utils/mailer.js'
 
 /**
- * Gift coupons — a student buys coupons to hand to a younger sibling or a
- * friend (footer → /gift-coupons). Each coupon:
+ * Gift coupons — anyone buys coupons to hand to a younger sibling or a friend
+ * (footer → /gift-coupons). No account is needed: the buyer gives an email the
+ * coupons are sent to (their copy if they lose them), and that email is kept on
+ * the order and on every coupon so a purchase can always be traced. A buyer who
+ * is signed in also has the order linked to their account. Each coupon:
  *   • is worth one of GIFT_VALUES — or any whole-rupee amount from ₹100 to
  *     ₹1,00,000 the buyer types — off ANY course or programme at checkout,
  *   • costs its face value,
@@ -59,8 +63,13 @@ export function giftOptions() {
   }
 }
 
-/** Start buying `quantity` coupons worth `value` paise, emailed to `email`. */
-export async function createGiftOrder({ userId, value, quantity, email }) {
+/**
+ * Start buying `quantity` coupons worth `value` paise, emailed to `email`.
+ * `userId` is set when the buyer is signed in, null otherwise. Returns the
+ * order's secret `giftToken`, which the browser uses to confirm the payment and
+ * read the coupons (see verifyGiftOrder / getGiftByToken).
+ */
+export async function createGiftOrder({ userId = null, value, quantity, email }) {
   value = Number(value)
   quantity = Number(quantity)
   const to = String(email || '').trim().toLowerCase()
@@ -73,23 +82,33 @@ export async function createGiftOrder({ userId, value, quantity, email }) {
   }
   if (!EMAIL_RE.test(to)) throw httpError('Enter a valid email address for your coupons', 400)
 
-  const buyer = await User.findById(userId).select('name email phone')
-  if (!buyer) throw httpError('Please sign in again to buy gift coupons', 401, 'ACCOUNT_NOT_FOUND')
+  // Signed in: link the account (a stale session of a deleted account is
+  // simply treated as a guest). Not signed in: the email is the buyer.
+  const buyer = userId ? await User.findById(userId).select('name email phone') : null
 
   const amount = value * quantity
   const label = `Gift coupon ${inr(value)} × ${quantity}`
+  const _id = new mongoose.Types.ObjectId()
+  const giftToken = crypto.randomBytes(24).toString('hex')
   const gatewayOrder = await gateway.createOrder({
     amount,
     currency: 'INR',
     receipt: `rcpt_${crypto.randomBytes(6).toString('hex')}`,
-    customer: { id: userId, name: buyer.name, email: buyer.email, phone: buyer.phone },
+    customer: {
+      id: buyer ? String(buyer._id) : `guest_${_id}`,
+      name: buyer?.name || '',
+      email: buyer?.email || to,
+      phone: buyer?.phone,
+    },
     // Only when Cashfree takes the buyer away to pay (an in-app browser): back
-    // to the gift page, which lists what they have bought.
-    returnUrl: `${clientUrl()}/gift-coupons`,
+    // to the gift page, which reads this order's coupons with its token.
+    returnUrl: `${clientUrl()}/gift-coupons?order=${_id}&t=${giftToken}`,
   })
 
   const order = await Order.create({
-    user: userId,
+    _id,
+    user: buyer?._id || null,
+    giftToken,
     kind: 'gift',
     quantity,
     giftValue: value,
@@ -114,6 +133,7 @@ export async function createGiftOrder({ userId, value, quantity, email }) {
     currency: 'INR',
     packageLabel: label,
     mock: gateway.GATEWAY === 'mock',
+    giftToken,
   }
 }
 
@@ -143,7 +163,8 @@ export async function issueGiftCoupons(order) {
           maxRedemptions: 1,
           source: 'gift',
           giftOrder: order._id,
-          purchasedBy: order.user,
+          purchasedBy: order.user || null,
+          purchaserEmail: order.giftEmail,
         }))
         break
       } catch (err) {
@@ -161,7 +182,7 @@ export async function issueGiftCoupons(order) {
   )
   if (claimed) {
     try {
-      const buyer = await User.findById(order.user).select('name')
+      const buyer = order.user ? await User.findById(order.user).select('name') : null
       await sendGiftCouponsEmail(order.giftEmail, {
         name: buyer?.name,
         receiptNo: order.receiptNo,
@@ -203,12 +224,30 @@ function giftOrderDTO(order, coupons) {
   }
 }
 
-/** Every gift this student has bought, newest first, with each coupon's state. */
+/**
+ * Every gift this account has bought, newest first, with each coupon's state —
+ * including ones bought without signing in to the same email.
+ */
 export async function listGifts(userId) {
-  const orders = await Order.find({ user: userId, kind: 'gift', status: 'paid' }).sort({ paidAt: -1 }).limit(100)
+  const me = await User.findById(userId).select('email')
+  const who = [{ user: userId }]
+  if (me?.email) who.push({ giftEmail: me.email })
+  const orders = await Order.find({ kind: 'gift', status: 'paid', $or: who }).sort({ paidAt: -1 }).limit(100)
   const out = []
   for (const o of orders) out.push(giftOrderDTO(o, await issueGiftCoupons(o)))
   return out
+}
+
+/** One gift order, for whoever holds its secret token (signed in or not). */
+export async function getGiftByToken(orderId, token) {
+  const order = await Order.findOne({ _id: orderId, kind: 'gift' })
+  const given = Buffer.from(String(token || ''))
+  const kept = Buffer.from(String(order?.giftToken || ''))
+  if (!order || !kept.length || given.length !== kept.length || !crypto.timingSafeEqual(given, kept)) {
+    throw httpError('Gift order not found', 404)
+  }
+  if (order.status !== 'paid') throw httpError('This gift order is not paid yet', 409, 'NOT_PAID')
+  return giftOrderDTO(order, await issueGiftCoupons(order))
 }
 
 /** One gift order of this student's — the page shows it right after paying. */

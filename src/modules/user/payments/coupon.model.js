@@ -22,6 +22,8 @@ const couponSchema = new mongoose.Schema(
     source: { type: String, enum: ['admin', 'gift'], default: 'admin', index: true },
     giftOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null, index: true },
     purchasedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    // The email the buyer gave — set for every gift coupon, account or not.
+    purchaserEmail: { type: String, lowercase: true, trim: true, default: '', index: true },
 
     // The last purchase that used it — set when that payment completes, which is
     // the only moment a coupon counts as used.

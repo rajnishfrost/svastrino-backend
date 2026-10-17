@@ -657,6 +657,20 @@ export async function verifyAndComplete({ userId, orderId, paymentId, signature 
   return verifyOrder(order, { paymentId, signature })
 }
 
+/**
+ * Confirm a gift order for whoever placed it, signed in or not: they prove it
+ * with the order's secret token rather than an account.
+ */
+export async function verifyGiftOrder({ orderId, token }) {
+  const order = await Order.findOne({ _id: orderId, kind: 'gift' }).select('+giftToken')
+  const given = Buffer.from(String(token || ''))
+  const kept = Buffer.from(String(order?.giftToken || ''))
+  if (!order || !kept.length || given.length !== kept.length || !crypto.timingSafeEqual(given, kept)) {
+    throw httpError('Gift order not found', 404)
+  }
+  return verifyOrder(order)
+}
+
 /** The part of verifyAndComplete after the order is found — shared with pay links. */
 async function verifyOrder(order, { paymentId, signature } = {}) {
   // Already paid: there is nothing left to verify, and a browser reload arrives

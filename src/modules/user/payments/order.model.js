@@ -25,7 +25,12 @@ import mongoose from 'mongoose'
  */
 const orderSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    // Every order belongs to an account, except a gift coupon bought without
+    // signing in: that one is traced by `giftEmail` instead.
+    user: {
+      type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, default: null,
+      required: function () { return this.kind !== 'gift' },
+    },
 
     kind: { type: String, enum: ['self', 'institution', 'gift'], default: 'self', index: true },
     organisation: { type: mongoose.Schema.Types.ObjectId, ref: 'Organisation', default: null, index: true },
@@ -50,6 +55,10 @@ const orderSchema = new mongoose.Schema(
     giftValue: { type: Number, default: null },
     giftEmail: { type: String, trim: true, lowercase: true, default: '' },
     giftEmailedAt: { type: Date, default: null },
+    // Secret handed to the browser that placed a gift order, so a buyer who is
+    // not signed in can confirm the payment and see the coupons — and nobody
+    // else can, by guessing an order id. Never sent anywhere else.
+    giftToken: { type: String, default: undefined },
 
     // Snapshot of the purchased package (so later catalog changes don't rewrite history).
     packageId: { type: String, required: true },
