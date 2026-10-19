@@ -235,7 +235,7 @@ export function buildGiftCouponsEmail({ name, receiptNo, amount, coupons = [], d
       // account — the link carries the order's secret).
       cta: n === 1 ? 'Download your coupon' : 'Download your coupons',
       link: downloadUrl || `${clientUrl()}/gift-coupons`,
-      note: `Each code works once, for a year. It counts as used only when the purchase it is applied to is completed. Paid ${money(amount)}${receiptNo ? ` · receipt ${receiptNo}` : ''}. Keep this email — it is your copy if you lose the coupons.`,
+      note: `Each code works once, for a year, and one coupon can be used per purchase. A coupon counts as exhausted only when the purchase it is applied to is completed. Paid ${money(amount)}${receiptNo ? ` · receipt ${receiptNo}` : ''}. Keep this email — it is your copy if you lose the coupons.`,
     }),
   }
 }
