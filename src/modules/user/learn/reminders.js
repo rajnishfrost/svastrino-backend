@@ -47,6 +47,7 @@ async function sweep({ dedupField, send, log, counterFor }) {
 
       const user = await User.findById(st.user)
       if (!user?.email) { skipped++; continue }
+      if (user.taskEmails === false) { skipped++; continue } // switched off on the admin Users page
 
       let course
       try {

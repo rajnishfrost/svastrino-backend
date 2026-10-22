@@ -11,6 +11,11 @@ const userDTO = (u) => ({
   // Whether the student portal is open to this account. Meaningless for a
   // student (it always is), so the Users page only offers it on other roles.
   siteAccess: u.siteAccess !== false,
+  // Daily course emails (learn/reminders.js), and whether the account has
+  // Nirmaan at all — the switch is only offered when it does. `undefined` on
+  // a single-row response (a PATCH); the page keeps what the list said.
+  taskEmails: u.taskEmails !== false,
+  nirmaanSubscribed: u.nirmaanSubscribed,
   // 'active' | 'invited' | 'disabled' — the same rule the organisation's own
   // roster shows, so one person cannot read two ways on two screens.
   status: accountStatus(u),
@@ -84,6 +89,12 @@ export const patchUserRole = asyncHandler(async (req, res) => {
 // Whether this non-student account may use the student portal at all.
 export const patchUserSiteAccess = asyncHandler(async (req, res) => {
   const user = await service.setUserSiteAccess(req.admin, req.params.id, !!req.body.siteAccess)
+  res.json({ user: userDTO(user) })
+})
+
+// PATCH /api/admin/users/:id/task-emails  { taskEmails }
+export const patchUserTaskEmails = asyncHandler(async (req, res) => {
+  const user = await service.setUserTaskEmails(req.params.id, !!req.body.taskEmails)
   res.json({ user: userDTO(user) })
 })
 
