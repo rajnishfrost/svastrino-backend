@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema(
     // ever read for someone whose role is something else.
     siteAccess: { type: Boolean, default: true },
 
+    // Whether the daily course emails (the 7 AM task / 7 PM still-pending
+    // reminders, learn/reminders.js) go to this account. On unless an admin
+    // turns it off from the Users page — e.g. a staff account enrolled to test.
+    taskEmails: { type: Boolean, default: true },
+
     // Which organisation this account came from (see modules/user/organisation).
     //   null      → a plain public signup, nobody added them
     //   ObjectId  → the organisation that bulk-added / registered them

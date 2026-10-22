@@ -87,6 +87,14 @@ export async function listUsers({ q, page, limit } = {}) {
       .populate('createdBy', 'name email'),
     User.countDocuments(filter),
   ])
+  // Who on this page has Nirmaan right now (bought, sponsored or on the free
+  // week) — the accounts the daily task emails are about, so the Users page
+  // offers its switch only on those rows.
+  const nirmaan = await Enrollment.distinct('user', {
+    user: { $in: items.map((u) => u._id) }, product: 'nirmaan', status: 'active',
+  })
+  const subscribed = new Set(nirmaan.map(String))
+  for (const u of items) u.nirmaanSubscribed = subscribed.has(String(u._id))
   return pageResult(items, total, p)
 }
 
@@ -132,6 +140,15 @@ export async function setUserSiteAccess(actor, userId, siteAccess) {
   }
 
   user.siteAccess = siteAccess
+  await user.save()
+  return user
+}
+
+/** Turn the daily course emails on or off for one account. */
+export async function setUserTaskEmails(userId, taskEmails) {
+  const user = await User.findById(userId)
+  if (!user) throw httpError('User not found', 404)
+  user.taskEmails = taskEmails
   await user.save()
   return user
 }
