@@ -429,8 +429,10 @@ export async function saveQuestions(sessionId, prompts) {
   if (!session) throw httpError('Session not found', 404)
 
   // Six questions per session is the product rule; the cap on each is what the
-  // student's screen shows above the answer box.
-  const clean = strList(prompts, { max: LIMITS.subject * 2, count: 6 })
+  // student's screen shows above the answer box. `text`, not `str`: a line
+  // break the admin typed on purpose is kept, and shown as typed.
+  const clean = (Array.isArray(prompts) ? prompts : [])
+    .map((v) => text(v, LIMITS.subject * 2)).filter(Boolean).slice(0, 6)
 
   // Upsert by order (keeps existing rows + any answers intact where possible).
   const ops = clean.map((prompt, i) => ({

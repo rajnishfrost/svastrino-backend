@@ -41,6 +41,17 @@ if (TEST_MODE) {
 }
 
 /**
+ * OPEN-ALL MODE (`LEARN_OPEN_ALL=1`), for checking content locally: every week's
+ * video opens the moment the course is started, instead of one after another.
+ * Tasks still follow the video they belong to. Off by default, restart to change.
+ */
+export const OPEN_ALL = process.env.LEARN_OPEN_ALL === '1' || process.env.LEARN_OPEN_ALL === 'true'
+
+if (OPEN_ALL) {
+  console.warn('\n⚠️  LEARN_OPEN_ALL is ON — every week\'s video is open from the start.\n')
+}
+
+/**
  * When does the thing after `date` open? Normally the next IST midnight; in test
  * mode, straight away. Every drip date in this file goes through here, so the
  * two schedules can never drift apart.
@@ -195,8 +206,10 @@ function computeQuestions(questions, answersByQid, videoDoneAt, now) {
   let current = null
   let nextUnlockAt = null
 
-  if (videoDoneAt && total > 0) {
-    let prevSource = videoDoneAt
+  // Open-all mode: tasks do not wait for the video either.
+  const anchor = videoDoneAt || (OPEN_ALL ? new Date(0) : null)
+  if (anchor && total > 0) {
+    let prevSource = anchor
     for (const q of questions) {
       const ans = answersByQid.get(String(q._id))
       if (ans) {
@@ -283,7 +296,7 @@ async function loadStateForSession(userId, sessionId) {
 /** When does a given session's VIDEO open? (chained, sequential, IST-midnight). */
 function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySession) {
   if (!startedAt) return null // course not started
-  if (index === 0) return startedAt // first video opens immediately on start
+  if (index === 0 || OPEN_ALL) return startedAt // first video opens immediately on start
   const prev = sessions[index - 1]
   const prevProg = progressMap.get(String(prev._id))
 
@@ -427,7 +440,7 @@ export async function getCourse(userId, slug) {
       // The week's written resource, offered only once the video has been
       // watched through — the same 90% mark that opens the first task. Before
       // that the page is told nothing about it, not even that it exists.
-      resource: resourceFor(s, !!prog?.videoDoneAt && !videoLocked),
+      resource: resourceFor(s, (!!prog?.videoDoneAt || OPEN_ALL) && !videoLocked),
       // Where they left the video last time, for the player's "Resume from".
       resumeAt: prog?.resumeAt || 0,
       resumeUpdatedAt: prog?.resumeUpdatedAt || null,
@@ -479,6 +492,10 @@ export async function getCourse(userId, slug) {
       // keep their session meaning and are not folded into the step count.
       completed: completedCount,
       total: shaped.length,
+      // The same, counted in weeks — what the student is shown. The
+      // introduction is a session but not one of the 24 weeks.
+      weeks: weekCount(shaped),
+      weeksDone: shaped.filter((s) => s.completed && s.order > 0).length,
       // Every video and task in the course, and how many are behind them.
       steps: steps.done,
       stepsTotal: steps.total,
@@ -774,18 +791,61 @@ export function todayTask(course) {
 }
 
 /**
- * The student's run of consecutive days. The drip opens exactly one step a day,
- * so an IST day with any step in it — a video watched or a task answered — is a
- * day they kept up, and the run is simply how many of those sit back to back.
+ * Streak badges, one for every 7 days in a row. Past the last one the student
+ * keeps the top badge. Lost with the streak, so they are earned again after a
+ * reset.
+ */
+export const STREAK_BADGES = [
+  { emoji: '🌱', name: 'Seed' },
+  { emoji: '🌿', name: 'Sprout' },
+  { emoji: '🍀', name: 'Lucky Leaf' },
+  { emoji: '🌳', name: 'Sapling' },
+  { emoji: '⭐', name: 'Rising Star' },
+  { emoji: '🌟', name: 'Bright Star' },
+  { emoji: '💫', name: 'Shooting Star' },
+  { emoji: '🥉', name: 'Bronze Achiever' },
+  { emoji: '🥈', name: 'Silver Achiever' },
+  { emoji: '🥇', name: 'Gold Achiever' },
+  { emoji: '🏅', name: 'Medal Holder' },
+  { emoji: '🎖️', name: 'Honour Holder' },
+  { emoji: '🛡️', name: 'Guardian' },
+  { emoji: '⚔️', name: 'Warrior' },
+  { emoji: '🦁', name: 'Lionheart' },
+  { emoji: '🦅', name: 'Eagle' },
+  { emoji: '🚀', name: 'Rocket' },
+  { emoji: '🌋', name: 'Unstoppable' },
+  { emoji: '💎', name: 'Diamond' },
+  { emoji: '👑', name: 'Crown' },
+  { emoji: '🏆', name: 'Champion' },
+  { emoji: '⚡', name: 'Legend' }, // not 🌠: Apple draws it as a square picture
+  { emoji: '🔱', name: 'Nirmaan Master' },
+]
+const BADGE_EVERY = 7
+
+const badgeAt = (level) => {
+  if (level < 1 || level > STREAK_BADGES.length) return null
+  const b = STREAK_BADGES[level - 1]
+  return { level, emoji: b.emoji, name: b.name }
+}
+const badgeFor = (days) => badgeAt(Math.min(Math.floor(days / BADGE_EVERY), STREAK_BADGES.length))
+// The one being worked towards; null once the top badge is held.
+const nextBadgeFor = (days) => badgeAt(Math.floor(days / BADGE_EVERY) + 1)
+
+/**
+ * The student's streak. The drip opens one step a day, so an IST day with any
+ * step in it — a video watched or a task answered — is a day they kept up.
  *
- * Today counts once it has a step; until then YESTERDAY holds the run, because
- * today is still theirs to spend. A whole empty day between then and now ends
- * the run at zero, which is the entire point of showing it. `best` is kept so a
- * reset still has something to show for the days that were earned.
+ * Walked day by day from the first step to today:
+ *   - a day with a step adds one to the streak; every 7th earns a badge AND a
+ *     grace day (🛡️). Grace days pile up: two weeks in a row, two of them.
+ *   - a day without one spends a grace day; the streak holds but does not grow.
+ *     With none left the streak, the badges and the grace days all go to zero
+ *     and are earned again from scratch.
+ *   - today is never a miss: until midnight it is still theirs to spend.
+ * `best` is the longest streak reached, so a reset still has something to show.
  *
- * Caveat worth knowing: a day the student COULD not act on — a phase they have
- * not bought, or the psychometric gate holding the week shut — looks the same
- * here as a day they chose to skip, and ends the run too.
+ * Caveat: a day the student COULD not act on (a phase not bought, the
+ * psychometric gate) counts as a miss too.
  */
 export function computeStreak(course, now) {
   const days = new Set()
@@ -797,22 +857,42 @@ export function computeStreak(course, now) {
   }
   const today = istDayIndex(now)
   const todayDone = days.has(today)
-
-  // Longest run anywhere in the course, for the line a reset day still deserves.
-  const sorted = [...days].sort((a, b) => a - b)
-  let best = 0
-  let run = 0
-  for (let i = 0; i < sorted.length; i += 1) {
-    run = i > 0 && sorted[i] === sorted[i - 1] + 1 ? run + 1 : 1
-    if (run > best) best = run
+  if (!days.size) {
+    return { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadge: nextBadgeFor(0), nextBadgeIn: BADGE_EVERY, badgesTotal: STREAK_BADGES.length }
   }
 
-  // Where the live run ends: today if it has a step, else yesterday's grace.
-  let cursor = todayDone ? today : days.has(today - 1) ? today - 1 : null
-  if (cursor === null) return { days: 0, best, todayDone: false, brokenAfter: sorted.length > 0 }
-  let count = 0
-  while (days.has(cursor)) { count += 1; cursor -= 1 }
-  return { days: count, best, todayDone, brokenAfter: false }
+  let streak = 0
+  let grace = 0
+  let best = 0
+  let brokenAfter = false
+  for (let d = Math.min(...days); d <= today; d += 1) {
+    if (days.has(d)) {
+      streak += 1
+      brokenAfter = false
+      if (streak % BADGE_EVERY === 0) grace += 1
+      if (streak > best) best = streak
+    } else if (d === today) {
+      // still open
+    } else if (grace > 0) {
+      grace -= 1
+    } else {
+      if (streak > 0) brokenAfter = true
+      streak = 0
+      grace = 0
+    }
+  }
+
+  return {
+    days: streak,
+    best,
+    todayDone,
+    brokenAfter: streak === 0 && brokenAfter,
+    graceDays: grace,
+    badge: badgeFor(streak),
+    nextBadge: nextBadgeFor(streak),
+    nextBadgeIn: BADGE_EVERY - (streak % BADGE_EVERY),
+    badgesTotal: STREAK_BADGES.length,
+  }
 }
 
 /**
@@ -872,7 +952,7 @@ export async function getReport(userId, slug) {
     // the daily reminder e-mail uses.
     todayTask: task,
     // { days, best, todayDone, brokenAfter } — the run of consecutive days.
-    streak: startedAt ? computeStreak(course, now) : { days: 0, best: 0, todayDone: false, brokenAfter: false },
+    streak: startedAt ? computeStreak(course, now) : computeStreak({ sessions: [] }, now),
   }
 }
 
@@ -909,6 +989,10 @@ export async function courseRecord(userId, slug) {
   }
   const sessionsTotal = st.sessions.length
   const completedAt = sessionsTotal > 0 && sessionsCompleted === sessionsTotal ? lastCompletedAt : null
+  // What the student is shown: weeks, so the introduction is left out.
+  const weeksTotal = weekCount(st.sessions)
+  const weeksCompleted = st.sessions
+    .filter((s) => s.order > 0 && st.progressMap.get(String(s._id))?.completed).length
 
   // Three years after the course expired, the work goes as well. What is left
   // is which course they did and when — no questions and no answers.
@@ -991,6 +1075,8 @@ export async function courseRecord(userId, slug) {
       : null,
     sessionsTotal,
     sessionsCompleted,
+    weeksTotal,
+    weeksCompleted,
     downloadable: true,
     sessions,
   }
@@ -1050,7 +1136,13 @@ export async function courseProgress(userId, skillBuildId, rank) {
   if (!total) return { completed: 0, total: 0, percent: 0 }
   const completed = await Progress.countDocuments({ user: userId, skillBuild: skillBuildId, completed: true })
   const capped = Math.min(completed, total)
-  return { completed: capped, total, percent: Math.round((capped / total) * 100) }
+  // What the dashboard card shows: weeks, so the introduction (order 0) is left out.
+  const weekIds = await Session.find({ skillBuild: skillBuildId, active: true, tier: { $lte: rank }, order: { $gt: 0 } }).distinct('_id')
+  const weeksDone = await Progress.countDocuments({ user: userId, session: { $in: weekIds }, completed: true })
+  return {
+    completed: capped, total, percent: Math.round((capped / total) * 100),
+    weeks: weekIds.length || total, weeksDone: weekIds.length ? Math.min(weeksDone, weekIds.length) : capped,
+  }
 }
 
 /** Progress for one enrollment (resolves its skill-build + package rank first). */
