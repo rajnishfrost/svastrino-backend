@@ -1060,7 +1060,13 @@ export async function courseProgress(userId, skillBuildId, rank) {
   if (!total) return { completed: 0, total: 0, percent: 0 }
   const completed = await Progress.countDocuments({ user: userId, skillBuild: skillBuildId, completed: true })
   const capped = Math.min(completed, total)
-  return { completed: capped, total, percent: Math.round((capped / total) * 100) }
+  // What the dashboard card shows: weeks, so the introduction (order 0) is left out.
+  const weekIds = await Session.find({ skillBuild: skillBuildId, active: true, tier: { $lte: rank }, order: { $gt: 0 } }).distinct('_id')
+  const weeksDone = await Progress.countDocuments({ user: userId, session: { $in: weekIds }, completed: true })
+  return {
+    completed: capped, total, percent: Math.round((capped / total) * 100),
+    weeks: weekIds.length || total, weeksDone: weekIds.length ? Math.min(weeksDone, weekIds.length) : capped,
+  }
 }
 
 /** Progress for one enrollment (resolves its skill-build + package rank first). */
