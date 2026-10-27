@@ -878,6 +878,9 @@ export async function getReport(userId, slug) {
     totalSessions,
     completedSessions: completedCount,
     targetDays,
+    // The longest streak shown to the student: one step a day through the 24
+    // weeks (23 × 7 + the last week's video = 162). The introduction is not a week.
+    streakMax: targetDays - course.sessions.filter((s) => !s.order).length,
     daysElapsed,
     actualDays,          // filled once the whole course is done
     finishedAt: allDone ? lastCompletedAt : null,
