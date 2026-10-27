@@ -206,8 +206,10 @@ function computeQuestions(questions, answersByQid, videoDoneAt, now) {
   let current = null
   let nextUnlockAt = null
 
-  if (videoDoneAt && total > 0) {
-    let prevSource = videoDoneAt
+  // Open-all mode: tasks do not wait for the video either.
+  const anchor = videoDoneAt || (OPEN_ALL ? new Date(0) : null)
+  if (anchor && total > 0) {
+    let prevSource = anchor
     for (const q of questions) {
       const ans = answersByQid.get(String(q._id))
       if (ans) {
