@@ -145,6 +145,20 @@ export async function createBooking(userId, { sku, date, start }) {
   })
   if (used >= total) throw httpError(`All ${total} sessions of this program are already booked`, 409)
 
+  // One session at a time: the next is booked only once the mentor has marked
+  // the one before it completed (Admin → Mentoring). Same rule for every program.
+  if (used > 0) {
+    const last = await MentoringBooking.findOne({
+      user: userId, programSku: sku, status: { $ne: 'cancelled' },
+    }).sort({ sessionNumber: -1 })
+    if (last && last.status !== 'completed') {
+      throw httpError(
+        `Session ${last.sessionNumber} needs to be completed before you can book the next one.`,
+        409, 'PREVIOUS_NOT_DONE',
+      )
+    }
+  }
+
   if (!(await isSlotAvailable(date, start))) {
     throw httpError('That slot is no longer available — please pick another', 409, 'SLOT_TAKEN')
   }
@@ -218,13 +232,19 @@ export async function myMentoring(userId) {
       status: { $ne: 'cancelled' },
     }).sort({ sessionNumber: 1 })
 
+    // See createBooking: the next session opens once the last one is completed.
+    const last = bookings[bookings.length - 1]
+    const remaining = Math.max(0, total - bookings.length)
     programs.push({
       slug: pkg?.slug,
       name: pkg?.name || enr.packageName,
       sku: pkg?.sku,
       sessionsTotal: total,
       sessionsBooked: bookings.length,
-      sessionsRemaining: Math.max(0, total - bookings.length),
+      sessionsRemaining: remaining,
+      canBookNext: remaining > 0 && (!last || last.status === 'completed'),
+      // The session that has to be completed first, when that is what blocks it.
+      waitingOn: remaining > 0 && last && last.status !== 'completed' ? last.sessionNumber : null,
       window: bookingWindow(),
       // The dashboard table, one row per session slot of the program.
       sessions: Array.from({ length: total }, (_, i) => {
