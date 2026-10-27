@@ -791,18 +791,59 @@ export function todayTask(course) {
 }
 
 /**
- * The student's run of consecutive days. The drip opens exactly one step a day,
- * so an IST day with any step in it — a video watched or a task answered — is a
- * day they kept up, and the run is simply how many of those sit back to back.
+ * Streak badges, one for every 7 days in a row. Past the last one the student
+ * keeps the top badge. Lost with the streak, so they are earned again after a
+ * reset.
+ */
+export const STREAK_BADGES = [
+  { emoji: '🌱', name: 'Seed' },
+  { emoji: '🌿', name: 'Sprout' },
+  { emoji: '🍀', name: 'Lucky Leaf' },
+  { emoji: '🌳', name: 'Sapling' },
+  { emoji: '⭐', name: 'Rising Star' },
+  { emoji: '🌟', name: 'Bright Star' },
+  { emoji: '💫', name: 'Shooting Star' },
+  { emoji: '🥉', name: 'Bronze Achiever' },
+  { emoji: '🥈', name: 'Silver Achiever' },
+  { emoji: '🥇', name: 'Gold Achiever' },
+  { emoji: '🏅', name: 'Medal Holder' },
+  { emoji: '🎖️', name: 'Honour Holder' },
+  { emoji: '🛡️', name: 'Guardian' },
+  { emoji: '⚔️', name: 'Warrior' },
+  { emoji: '🦁', name: 'Lionheart' },
+  { emoji: '🦅', name: 'Eagle' },
+  { emoji: '🚀', name: 'Rocket' },
+  { emoji: '🌋', name: 'Unstoppable' },
+  { emoji: '💎', name: 'Diamond' },
+  { emoji: '👑', name: 'Crown' },
+  { emoji: '🏆', name: 'Champion' },
+  { emoji: '🌠', name: 'Legend' },
+  { emoji: '🔱', name: 'Nirmaan Master' },
+]
+const BADGE_EVERY = 7
+
+const badgeFor = (days) => {
+  const level = Math.floor(days / BADGE_EVERY)
+  if (!level) return null
+  const b = STREAK_BADGES[Math.min(level, STREAK_BADGES.length) - 1]
+  return { level, emoji: b.emoji, name: b.name }
+}
+
+/**
+ * The student's streak. The drip opens one step a day, so an IST day with any
+ * step in it — a video watched or a task answered — is a day they kept up.
  *
- * Today counts once it has a step; until then YESTERDAY holds the run, because
- * today is still theirs to spend. A whole empty day between then and now ends
- * the run at zero, which is the entire point of showing it. `best` is kept so a
- * reset still has something to show for the days that were earned.
+ * Walked day by day from the first step to today:
+ *   - a day with a step adds one to the streak; every 7th earns a badge AND a
+ *     grace day (🛡️). Grace days pile up: two weeks in a row, two of them.
+ *   - a day without one spends a grace day; the streak holds but does not grow.
+ *     With none left the streak, the badges and the grace days all go to zero
+ *     and are earned again from scratch.
+ *   - today is never a miss: until midnight it is still theirs to spend.
+ * `best` is the longest streak reached, so a reset still has something to show.
  *
- * Caveat worth knowing: a day the student COULD not act on — a phase they have
- * not bought, or the psychometric gate holding the week shut — looks the same
- * here as a day they chose to skip, and ends the run too.
+ * Caveat: a day the student COULD not act on (a phase not bought, the
+ * psychometric gate) counts as a miss too.
  */
 export function computeStreak(course, now) {
   const days = new Set()
@@ -814,22 +855,40 @@ export function computeStreak(course, now) {
   }
   const today = istDayIndex(now)
   const todayDone = days.has(today)
-
-  // Longest run anywhere in the course, for the line a reset day still deserves.
-  const sorted = [...days].sort((a, b) => a - b)
-  let best = 0
-  let run = 0
-  for (let i = 0; i < sorted.length; i += 1) {
-    run = i > 0 && sorted[i] === sorted[i - 1] + 1 ? run + 1 : 1
-    if (run > best) best = run
+  if (!days.size) {
+    return { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadgeIn: BADGE_EVERY }
   }
 
-  // Where the live run ends: today if it has a step, else yesterday's grace.
-  let cursor = todayDone ? today : days.has(today - 1) ? today - 1 : null
-  if (cursor === null) return { days: 0, best, todayDone: false, brokenAfter: sorted.length > 0 }
-  let count = 0
-  while (days.has(cursor)) { count += 1; cursor -= 1 }
-  return { days: count, best, todayDone, brokenAfter: false }
+  let streak = 0
+  let grace = 0
+  let best = 0
+  let brokenAfter = false
+  for (let d = Math.min(...days); d <= today; d += 1) {
+    if (days.has(d)) {
+      streak += 1
+      brokenAfter = false
+      if (streak % BADGE_EVERY === 0) grace += 1
+      if (streak > best) best = streak
+    } else if (d === today) {
+      // still open
+    } else if (grace > 0) {
+      grace -= 1
+    } else {
+      if (streak > 0) brokenAfter = true
+      streak = 0
+      grace = 0
+    }
+  }
+
+  return {
+    days: streak,
+    best,
+    todayDone,
+    brokenAfter: streak === 0 && brokenAfter,
+    graceDays: grace,
+    badge: badgeFor(streak),
+    nextBadgeIn: BADGE_EVERY - (streak % BADGE_EVERY),
+  }
 }
 
 /**
@@ -878,9 +937,6 @@ export async function getReport(userId, slug) {
     totalSessions,
     completedSessions: completedCount,
     targetDays,
-    // The longest streak shown to the student: one step a day through the 24
-    // weeks (23 × 7 + the last week's video = 162). The introduction is not a week.
-    streakMax: targetDays - course.sessions.filter((s) => !s.order).length,
     daysElapsed,
     actualDays,          // filled once the whole course is done
     finishedAt: allDone ? lastCompletedAt : null,
@@ -892,7 +948,7 @@ export async function getReport(userId, slug) {
     // the daily reminder e-mail uses.
     todayTask: task,
     // { days, best, todayDone, brokenAfter } — the run of consecutive days.
-    streak: startedAt ? computeStreak(course, now) : { days: 0, best: 0, todayDone: false, brokenAfter: false },
+    streak: startedAt ? computeStreak(course, now) : { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadgeIn: 7 },
   }
 }
 
