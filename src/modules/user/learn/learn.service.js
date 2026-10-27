@@ -440,7 +440,7 @@ export async function getCourse(userId, slug) {
       // The week's written resource, offered only once the video has been
       // watched through — the same 90% mark that opens the first task. Before
       // that the page is told nothing about it, not even that it exists.
-      resource: resourceFor(s, !!prog?.videoDoneAt && !videoLocked),
+      resource: resourceFor(s, (!!prog?.videoDoneAt || OPEN_ALL) && !videoLocked),
       // Where they left the video last time, for the player's "Resume from".
       resumeAt: prog?.resumeAt || 0,
       resumeUpdatedAt: prog?.resumeUpdatedAt || null,
