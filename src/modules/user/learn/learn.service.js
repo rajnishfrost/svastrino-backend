@@ -817,7 +817,7 @@ export const STREAK_BADGES = [
   { emoji: '💎', name: 'Diamond' },
   { emoji: '👑', name: 'Crown' },
   { emoji: '🏆', name: 'Champion' },
-  { emoji: '🌠', name: 'Legend' },
+  { emoji: '⚡', name: 'Legend' }, // not 🌠: Apple draws it as a square picture
   { emoji: '🔱', name: 'Nirmaan Master' },
 ]
 const BADGE_EVERY = 7
