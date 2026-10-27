@@ -479,6 +479,10 @@ export async function getCourse(userId, slug) {
       // keep their session meaning and are not folded into the step count.
       completed: completedCount,
       total: shaped.length,
+      // The same, counted in weeks — what the student is shown. The
+      // introduction is a session but not one of the 24 weeks.
+      weeks: weekCount(shaped),
+      weeksDone: shaped.filter((s) => s.completed && s.order > 0).length,
       // Every video and task in the course, and how many are behind them.
       steps: steps.done,
       stepsTotal: steps.total,
@@ -909,6 +913,10 @@ export async function courseRecord(userId, slug) {
   }
   const sessionsTotal = st.sessions.length
   const completedAt = sessionsTotal > 0 && sessionsCompleted === sessionsTotal ? lastCompletedAt : null
+  // What the student is shown: weeks, so the introduction is left out.
+  const weeksTotal = weekCount(st.sessions)
+  const weeksCompleted = st.sessions
+    .filter((s) => s.order > 0 && st.progressMap.get(String(s._id))?.completed).length
 
   // Three years after the course expired, the work goes as well. What is left
   // is which course they did and when — no questions and no answers.
@@ -991,6 +999,8 @@ export async function courseRecord(userId, slug) {
       : null,
     sessionsTotal,
     sessionsCompleted,
+    weeksTotal,
+    weeksCompleted,
     downloadable: true,
     sessions,
   }
