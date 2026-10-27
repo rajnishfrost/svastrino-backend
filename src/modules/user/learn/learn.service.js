@@ -41,6 +41,17 @@ if (TEST_MODE) {
 }
 
 /**
+ * OPEN-ALL MODE (`LEARN_OPEN_ALL=1`), for checking content locally: every week's
+ * video opens the moment the course is started, instead of one after another.
+ * Tasks still follow the video they belong to. Off by default, restart to change.
+ */
+export const OPEN_ALL = process.env.LEARN_OPEN_ALL === '1' || process.env.LEARN_OPEN_ALL === 'true'
+
+if (OPEN_ALL) {
+  console.warn('\n⚠️  LEARN_OPEN_ALL is ON — every week\'s video is open from the start.\n')
+}
+
+/**
  * When does the thing after `date` open? Normally the next IST midnight; in test
  * mode, straight away. Every drip date in this file goes through here, so the
  * two schedules can never drift apart.
@@ -283,7 +294,7 @@ async function loadStateForSession(userId, sessionId) {
 /** When does a given session's VIDEO open? (chained, sequential, IST-midnight). */
 function videoUnlockAtFor(index, sessions, progressMap, startedAt, questionsBySession) {
   if (!startedAt) return null // course not started
-  if (index === 0) return startedAt // first video opens immediately on start
+  if (index === 0 || OPEN_ALL) return startedAt // first video opens immediately on start
   const prev = sessions[index - 1]
   const prevProg = progressMap.get(String(prev._id))
 
