@@ -822,12 +822,14 @@ export const STREAK_BADGES = [
 ]
 const BADGE_EVERY = 7
 
-const badgeFor = (days) => {
-  const level = Math.floor(days / BADGE_EVERY)
-  if (!level) return null
-  const b = STREAK_BADGES[Math.min(level, STREAK_BADGES.length) - 1]
+const badgeAt = (level) => {
+  if (level < 1 || level > STREAK_BADGES.length) return null
+  const b = STREAK_BADGES[level - 1]
   return { level, emoji: b.emoji, name: b.name }
 }
+const badgeFor = (days) => badgeAt(Math.min(Math.floor(days / BADGE_EVERY), STREAK_BADGES.length))
+// The one being worked towards; null once the top badge is held.
+const nextBadgeFor = (days) => badgeAt(Math.floor(days / BADGE_EVERY) + 1)
 
 /**
  * The student's streak. The drip opens one step a day, so an IST day with any
@@ -856,7 +858,7 @@ export function computeStreak(course, now) {
   const today = istDayIndex(now)
   const todayDone = days.has(today)
   if (!days.size) {
-    return { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadgeIn: BADGE_EVERY }
+    return { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadge: nextBadgeFor(0), nextBadgeIn: BADGE_EVERY, badgesTotal: STREAK_BADGES.length }
   }
 
   let streak = 0
@@ -887,7 +889,9 @@ export function computeStreak(course, now) {
     brokenAfter: streak === 0 && brokenAfter,
     graceDays: grace,
     badge: badgeFor(streak),
+    nextBadge: nextBadgeFor(streak),
     nextBadgeIn: BADGE_EVERY - (streak % BADGE_EVERY),
+    badgesTotal: STREAK_BADGES.length,
   }
 }
 
@@ -948,7 +952,7 @@ export async function getReport(userId, slug) {
     // the daily reminder e-mail uses.
     todayTask: task,
     // { days, best, todayDone, brokenAfter } — the run of consecutive days.
-    streak: startedAt ? computeStreak(course, now) : { days: 0, best: 0, todayDone: false, brokenAfter: false, graceDays: 0, badge: null, nextBadgeIn: 7 },
+    streak: startedAt ? computeStreak(course, now) : computeStreak({ sessions: [] }, now),
   }
 }
 
